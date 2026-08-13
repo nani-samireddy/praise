@@ -1,0 +1,15 @@
+{
+  "songCount": 1374,
+  "changedSongCount": 1373,
+  "normalizedRepeatCueCount": 9305,
+  "normalizedRepeatCountCount": 17688,
+  "repairedMalformedRepeatMarkerCount": 7,
+  "reviewIssueCount": 70,
+  "reviewIssueCounts": {
+    "line_over_120_characters": 39,
+    "possible_joined_words": 1,
+    "repeat_marker_count_mismatch": 30
+  },
+  "sourceFile": "lyricly - TELUGU.csv",
+  "normalizedFile": "catalog/source/songs.normalized.csv"
+}

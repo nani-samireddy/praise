@@ -11,7 +11,7 @@ class SeedService {
 
   static const _assetPath = 'assets/data/songs.json';
   static const _seedVersionKey = 'bundled_song_catalogue_version';
-  static const _seedVersion = '2';
+  static const _seedVersion = '3';
 
   final AppDatabase _database;
   final AssetBundle _assetBundle;
@@ -30,9 +30,16 @@ class SeedService {
 
     final now = DateTime.now().toUtc();
     await _database.transaction(() async {
-      await (_database.delete(
-        _database.songs,
-      )..where((row) => row.source.equals('server'))).go();
+      final customRows =
+          await (_database.selectOnly(_database.songs)
+                ..addColumns([_database.songs.id])
+                ..where(_database.songs.source.equals('custom')))
+              .get();
+      final customIds = customRows
+          .map((row) => row.read(_database.songs.id))
+          .whereType<String>()
+          .toSet();
+      final songs = <SongsCompanion>[];
 
       for (final value in decoded) {
         if (value is! Map<String, Object?>) {
@@ -40,26 +47,29 @@ class SeedService {
         }
 
         final id = _requiredString(value, 'id');
+        if (customIds.contains(id)) continue;
         final title = _requiredString(value, 'title');
         final body = _requiredString(value, 'body');
 
-        await _database
-            .into(_database.songs)
-            .insert(
-              SongsCompanion.insert(
-                id: id,
-                title: title,
-                englishTitle: Value(_optionalString(value, 'englishTitle')),
-                body: body,
-                englishBody: Value(_optionalString(value, 'englishBody')),
-                author: Value(_optionalString(value, 'author')),
-                source: const Value('server'),
-                createdAt: now,
-                updatedAt: now,
-              ),
-              mode: InsertMode.insertOrIgnore,
-            );
+        songs.add(
+          SongsCompanion.insert(
+            id: id,
+            title: title,
+            englishTitle: Value(_optionalString(value, 'englishTitle')),
+            body: body,
+            englishBody: Value(_optionalString(value, 'englishBody')),
+            author: Value(_optionalString(value, 'author')),
+            source: const Value('server'),
+            createdAt: now,
+            updatedAt: now,
+            isDeleted: const Value(false),
+          ),
+        );
       }
+
+      await _database.batch(
+        (batch) => batch.insertAllOnConflictUpdate(_database.songs, songs),
+      );
 
       await _database
           .into(_database.appMetadata)

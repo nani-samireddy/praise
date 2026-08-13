@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/config/app_config.dart';
+import '../../catalogue_sync/presentation/catalogue_sync_feedback.dart';
+import '../../catalogue_sync/presentation/catalogue_sync_providers.dart';
 import '../data/settings_repository.dart';
 import 'settings_providers.dart';
 
@@ -14,6 +17,23 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   double? _draftFontSize;
 
+  Future<void> _refreshCatalogue() async {
+    try {
+      final result = await ref
+          .read(catalogueSyncControllerProvider.notifier)
+          .sync();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(catalogueSyncSuccessMessage(result))),
+      );
+    } on Object catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(catalogueSyncErrorMessage(error))));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeMode =
@@ -23,6 +43,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final displayMode =
         ref.watch(lyricsDisplayModeProvider).valueOrNull ??
         LyricsDisplayMode.both;
+    final syncState = ref.watch(catalogueSyncControllerProvider);
+    final catalogueStatus = ref.watch(catalogueStatusProvider).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -151,12 +173,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 20),
           const _SectionTitle('Catalogue'),
-          const Card(
-            child: ListTile(
-              leading: Icon(Icons.cloud_off_outlined),
-              title: Text('Offline catalogue'),
-              subtitle: Text(
-                'Manual server refresh will be added in the sync phase.',
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(Icons.cloud_download_outlined),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Offline catalogue',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _catalogueStatusText(
+                            catalogueStatus?.catalogueVersion,
+                            catalogueStatus?.lastSuccessfulSync,
+                          ),
+                        ),
+                        if (!AppConfig.isCatalogueSyncConfigured) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Remote refresh is not configured in this build.',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (syncState.isLoading)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox.square(
+                        dimension: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      ),
+                    )
+                  else
+                    IconButton.filledTonal(
+                      onPressed: AppConfig.isCatalogueSyncConfigured
+                          ? _refreshCatalogue
+                          : null,
+                      tooltip: 'Refresh catalogue',
+                      icon: const Icon(Icons.refresh),
+                    ),
+                ],
               ),
             ),
           ),
@@ -173,6 +240,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
   }
+}
+
+String _catalogueStatusText(int? version, DateTime? lastSync) {
+  if (lastSync == null) return 'Bundled songs are available offline.';
+  final local = lastSync.toLocal();
+  final date =
+      '${local.year.toString().padLeft(4, '0')}-'
+      '${local.month.toString().padLeft(2, '0')}-'
+      '${local.day.toString().padLeft(2, '0')}';
+  final time =
+      '${local.hour.toString().padLeft(2, '0')}:'
+      '${local.minute.toString().padLeft(2, '0')}';
+  final versionText = version == null ? '' : 'Version $version • ';
+  return '$versionText last refreshed $date at $time';
 }
 
 class _SectionTitle extends StatelessWidget {

@@ -151,13 +151,14 @@ Settings.
 
 The refresh workflow shall:
 
-1. Read the last successful catalogue sync timestamp.
-2. Request song changes after that timestamp.
-3. Validate the entire response.
-4. Apply server-song upserts and deletions in a database transaction.
-5. Preserve custom songs and locally managed relationships.
-6. Record the server-provided timestamp only after a successful transaction.
-7. Let database streams update visible screens.
+1. Read the locally stored catalogue version.
+2. Download the static catalogue manifest.
+3. Download the complete snapshot only when its version is newer.
+4. Validate the checksum, count, identifiers, and complete response.
+5. Apply server-song upserts and soft deletions in a database transaction.
+6. Preserve custom songs and locally managed relationships.
+7. Record the version and successful refresh time only after success.
+8. Let database streams update visible screens.
 
 During refresh, cached data shall remain visible. Failure shall produce a
 non-blocking, understandable message and shall not change the last-successful
@@ -282,10 +283,10 @@ avoid choices that make them unnecessarily difficult later.
 - [x] Favourite state survives an application restart.
 - [x] A custom song can be created, edited, deleted, favourited, and listed.
 - [x] Lists can be created, renamed, deleted, populated, and reordered.
-- [ ] Refresh inserts and updates server songs.
-- [ ] Refresh hides or removes deleted server songs.
-- [ ] Refresh never modifies custom songs.
-- [ ] Failed refresh preserves cached data and the previous sync timestamp.
+- [x] Refresh inserts and updates server songs.
+- [x] Refresh hides server songs absent from the snapshot.
+- [x] Refresh never modifies custom songs.
+- [x] Failed refresh preserves cached data and the previous sync timestamp.
 - [x] Lyrics font size and theme preferences persist.
 - [x] Analyzer, automated tests, and an Android debug build pass.
 

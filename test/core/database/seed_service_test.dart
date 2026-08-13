@@ -50,7 +50,7 @@ void main() {
     expect(songs.map((song) => song.id), containsAll(['one', 'two']));
   });
 
-  test('app catalogue imports 20 songs and preserves custom songs', () async {
+  test('app catalogue imports 20 songs and preserves existing data', () async {
     final now = DateTime.utc(2026, 8, 13);
     await database.batch((batch) {
       batch.insertAll(database.songs, [
@@ -81,9 +81,9 @@ void main() {
     final songs = await database.select(database.songs).get();
     final serverSongs = songs.where((song) => song.source == 'server');
 
-    expect(serverSongs, hasLength(20));
+    expect(serverSongs, hasLength(21));
     expect(songs.map((song) => song.id), contains('custom-song'));
-    expect(songs.map((song) => song.id), isNot(contains('old-server-song')));
+    expect(songs.map((song) => song.id), contains('old-server-song'));
   });
 }
 

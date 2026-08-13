@@ -12,10 +12,13 @@ record.
 The repository contains the foundation, offline catalogue, local search,
 favorites, custom-song CRUD, automatic My Songs membership, complete local list
 management, persistent themes and reading preferences, and a bilingual reader
-with saved pinch scaling. Remote catalogue sync remains pending.
+with saved pinch scaling. Static catalogue generation, strict snapshot sync,
+pull-to-refresh, refresh status, and GitHub Pages deployment are implemented.
+Publishing requires the final GitHub Pages URL and review of generated lyrics
+warnings.
 
-The directory is not currently initialized as a Git repository. Initialize Git
-before substantive implementation if version history is desired.
+The directory is initialized as a Git repository. Preserve unrelated working
+tree changes when preparing catalogue or application commits.
 
 ## 3. Delivery strategy
 
@@ -46,7 +49,7 @@ tests alongside the behavior they protect.
 - Create the feature-first directory structure.
 - Add Material 3 light and dark themes.
 - Configure the four-branch navigation shell.
-- Add `AppConfig` with `API_BASE_URL` from `String.fromEnvironment`.
+- Add `AppConfig` with `CATALOG_MANIFEST_URL` from `String.fromEnvironment`.
 - Replace the default widget test with an application-level smoke test.
 
 ### Exit criteria
@@ -145,8 +148,8 @@ list sizes are small enough for a straightforward update.
 
 ### Work
 
-- Configure one Dio client with base URL, connect timeout, and receive timeout.
-- Create strict remote DTOs and JSON serialization.
+- Configure one Dio client with connect and receive timeouts.
+- Create strict manifest and snapshot parsers with SHA-256 validation.
 - Implement a remote catalogue data source.
 - Implement `SyncService` with a single-flight guard.
 - Apply validated changes in one Drift transaction.
@@ -161,14 +164,14 @@ list sizes are small enough for a straightforward update.
 | --- | --- |
 | New server song | Inserted and emitted by local stream |
 | Existing server song | Updated from server values |
-| Deleted server ID | Removed or hidden |
+| Server song absent from snapshot | Soft-deleted |
 | Deleted ID matching custom song | Custom song unchanged |
 | Server song ID matching custom row | Custom song unchanged; conflict reported or skipped |
 | Malformed response | No database changes |
 | Network failure | Cached content remains usable |
 | Transaction failure | All catalogue changes rolled back |
 | Any failed sync | Last sync timestamp unchanged |
-| Successful empty delta | Server time recorded |
+| Matching catalogue version | Snapshot skipped; successful check recorded |
 
 ### Exit criteria
 
@@ -253,7 +256,7 @@ dart run build_runner watch --delete-conflicting-outputs
 Run against a local API from an Android emulator:
 
 ```powershell
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000
+flutter run --dart-define=CATALOG_MANIFEST_URL=https://USERNAME.github.io/REPOSITORY/catalog/manifest.json
 ```
 
 Do not commit secrets through `--dart-define`; it is configuration, not secure

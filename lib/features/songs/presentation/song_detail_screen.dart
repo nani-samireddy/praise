@@ -7,6 +7,7 @@ import '../../collections/presentation/add_to_list_sheet.dart';
 import '../../favorites/presentation/favorite_button.dart';
 import '../../settings/data/settings_repository.dart';
 import '../../settings/presentation/settings_providers.dart';
+import 'formatted_lyrics.dart';
 import 'song_providers.dart';
 
 class SongDetailScreen extends ConsumerWidget {
@@ -129,6 +130,7 @@ class _SongReaderState extends ConsumerState<_SongReader> {
   var _fontSize = 19.0;
   var _scaleStartFontSize = 19.0;
   var _loadedFontSize = false;
+  var _expandCounts = false;
 
   @override
   Widget build(BuildContext context) {
@@ -178,10 +180,22 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                   color: colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 7),
-                Text(
-                  'Pinch to resize lyrics',
-                  style: Theme.of(context).textTheme.labelMedium
-                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                Expanded(
+                  child: Text(
+                    'Pinch to resize lyrics',
+                    style: Theme.of(context).textTheme.labelMedium
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => setState(() {
+                    _expandCounts = !_expandCounts;
+                  }),
+                  icon: Icon(
+                    _expandCounts ? Icons.unfold_less : Icons.unfold_more,
+                    size: 18,
+                  ),
+                  label: Text(_expandCounts ? 'Compact' : 'Expand ×N'),
                 ),
               ],
             ),
@@ -226,6 +240,7 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                 label: showEnglish ? 'Primary lyrics' : 'Lyrics',
                 body: widget.song.body,
                 fontSize: _fontSize,
+                expandCounts: _expandCounts,
               ),
             if (showEnglish) ...[
               const SizedBox(height: 32),
@@ -235,6 +250,7 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                 label: 'English lyrics',
                 body: englishBody,
                 fontSize: _fontSize,
+                expandCounts: _expandCounts,
               ),
             ],
           ],
@@ -249,11 +265,13 @@ class _LyricsSection extends StatelessWidget {
     required this.label,
     required this.body,
     required this.fontSize,
+    required this.expandCounts,
   });
 
   final String label;
   final String body;
   final double fontSize;
+  final bool expandCounts;
 
   @override
   Widget build(BuildContext context) {
@@ -269,10 +287,10 @@ class _LyricsSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        Text(
-          body,
-          style: Theme.of(context).textTheme.bodyLarge
-              ?.copyWith(fontSize: fontSize, height: 1.7),
+        FormattedLyrics(
+          body: body,
+          fontSize: fontSize,
+          expandCounts: expandCounts,
         ),
       ],
     );

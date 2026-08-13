@@ -228,46 +228,23 @@ Database stream providers should be the only source used to render persistent
 data. A successful command does not need to manually patch a song list if the
 underlying Drift stream will emit the new state.
 
-## 8. Catalogue API
+## 8. Static catalogue
 
-The base URL is supplied with:
+V1 uses GitHub Pages as immutable static storage rather than an application
+server. The manifest URL is supplied with:
 
 ```text
---dart-define=API_BASE_URL=http://10.0.2.2:3000
+--dart-define=CATALOG_MANIFEST_URL=https://USERNAME.github.io/REPOSITORY/catalog/manifest.json
 ```
 
-Expected request:
+`manifest.json` contains the schema version, monotonically increasing catalogue
+version, generation timestamp, song count, SHA-256 checksum, and a relative URL
+to `songs.json`. The application downloads the large snapshot only when the
+remote version exceeds the locally stored version.
 
-```http
-GET /songs?updated_after=<ISO-8601 timestamp>
-```
-
-An initial request may omit `updated_after` when no prior sync exists.
-
-Expected response:
-
-```json
-{
-  "songs": [
-    {
-      "id": "song-123",
-      "title": "ప్రధాన శీర్షిక",
-      "english_title": "English title",
-      "body": "చరణం 1\n...",
-      "english_body": "Verse 1\n...",
-      "author": "Author name",
-      "created_at": "2026-08-01T10:00:00Z",
-      "updated_at": "2026-08-13T10:00:00Z"
-    }
-  ],
-  "deleted_ids": ["song-456"],
-  "server_time": "2026-08-13T10:00:00Z"
-}
-```
-
-DTO parsing shall reject missing required fields, invalid timestamps, invalid
-types, and blank identifiers. Response validation should complete before the
-database transaction begins.
+The complete snapshot is decoded as UTF-8, checksum-verified, shape-validated,
+counted, and checked for duplicate IDs before a database transaction begins.
+No API key, user account, server process, or remote database exists in V1.
 
 ## 9. Synchronization algorithm
 
@@ -276,19 +253,23 @@ sequenceDiagram
     actor User
     participant UI as Songs / Settings UI
     participant Sync as SyncService
-    participant API as Catalogue API
+    participant Pages as GitHub Pages
     participant DB as Drift database
 
     User->>UI: Refresh
     UI->>Sync: syncSongs()
-    Sync->>DB: Read last_song_sync
-    Sync->>API: GET song changes
-    API-->>Sync: Songs, deleted IDs, server time
-    Sync->>Sync: Parse and validate full response
+    Sync->>DB: Read local catalogue version
+    Sync->>Pages: GET manifest.json
+    Pages-->>Sync: Version, count, checksum, snapshot URL
+    alt Remote version is newer
+        Sync->>Pages: GET songs.json
+        Pages-->>Sync: Complete song snapshot
+        Sync->>Sync: Verify checksum and validate all songs
+    end
     Sync->>DB: Begin transaction
     Sync->>DB: Upsert source=server songs
-    Sync->>DB: Delete/hide source=server deleted IDs
-    Sync->>DB: Store server_time
+    Sync->>DB: Soft-delete absent source=server songs
+    Sync->>DB: Store version, checksum, and successful refresh time
     Sync->>DB: Commit
     DB-->>UI: Reactive query emits
     UI-->>User: Updated local content
@@ -297,9 +278,9 @@ sequenceDiagram
 Required invariants:
 
 1. Custom rows are never targets of server upsert or deletion.
-2. `last_song_sync` changes in the same successful transaction as catalogue
-   data, or immediately afterward only if failure cannot leave inconsistent
-   state. Prefer the same transaction.
+2. Catalogue metadata changes in the same successful transaction as catalogue
+   data. An already-current manifest records a successful check without a
+   snapshot download.
 3. An invalid response produces zero database changes.
 4. Only one catalogue synchronization runs at a time.
 5. UI content remains backed by local streams during network activity.
@@ -310,6 +291,10 @@ Required invariants:
 At startup, a bootstrap service checks a durable seed marker in
 `sync_metadata`. If absent, it parses the bundled JSON and inserts the songs and
 marker in one transaction.
+
+Bundled imports upsert only their known server songs. They never delete other
+server songs and skip IDs already owned by custom songs, protecting data after
+application upgrades or remote synchronization.
 
 The marker is preferable to checking whether `songs` is empty because a user
 could legitimately reach an empty active catalogue later. Seed parsing failure

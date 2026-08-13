@@ -9,6 +9,7 @@ technical boundaries, and the proposed delivery sequence are documented here:
 - [Product requirements](docs/PRD.md)
 - [Technical architecture](docs/ARCHITECTURE.md)
 - [Implementation notes](docs/IMPLEMENTATION_NOTES.md)
+- [Canonical lyrics format](docs/LYRICS_FORMAT.md)
 
 ## Planned stack
 
@@ -21,10 +22,11 @@ technical boundaries, and the proposed delivery sequence are documented here:
 
 ## Current state
 
-The offline library now seeds 20 songs and supports local search, favorites,
-custom-song CRUD, automatic My Songs membership, user-defined list management,
-song ordering, persistent themes and reading preferences, and pinch-to-resize
-lyrics. Manual server synchronization remains the main planned V1 phase.
+The offline library seeds 20 normalized songs and supports local search,
+favorites, custom-song CRUD, automatic My Songs membership, user-defined list
+management, song ordering, persistent reading preferences, formatted repeat
+cues, and pinch-to-resize lyrics. A versioned GitHub Pages catalogue provides
+manual snapshot synchronization without a maintained application server.
 
 ## Baseline commands
 
@@ -34,3 +36,12 @@ flutter analyze
 flutter test
 flutter run
 ```
+
+Configure a published catalogue when running or building:
+
+```powershell
+flutter run --dart-define=CATALOG_MANIFEST_URL=https://USERNAME.github.io/REPOSITORY/catalog/manifest.json
+```
+
+Without this value the complete offline application remains usable and the
+remote refresh action is disabled.
