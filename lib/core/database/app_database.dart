@@ -23,6 +23,39 @@ class Songs extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+class Favorites extends Table {
+  TextColumn get songId =>
+      text().references(Songs, #id, onDelete: KeyAction.cascade)();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {songId};
+}
+
+@DataClassName('SongCollection')
+class Collections extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  BoolColumn get isSystem => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+class CollectionSongs extends Table {
+  TextColumn get collectionId =>
+      text().references(Collections, #id, onDelete: KeyAction.cascade)();
+  TextColumn get songId =>
+      text().references(Songs, #id, onDelete: KeyAction.cascade)();
+  IntColumn get sortOrder => integer()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {collectionId, songId};
+}
+
 class AppMetadata extends Table {
   TextColumn get key => text()();
   TextColumn get value => text()();
@@ -32,13 +65,15 @@ class AppMetadata extends Table {
   Set<Column<Object>> get primaryKey => {key};
 }
 
-@DriftDatabase(tables: [Songs, AppMetadata])
+@DriftDatabase(
+  tables: [Songs, Favorites, Collections, CollectionSongs, AppMetadata],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'praise'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   Stream<List<Song>> watchSongs({String search = ''}) {
     final query = select(songs)
@@ -68,6 +103,15 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await migrator.createTable(favorites);
+      }
+      if (from < 3) {
+        await migrator.createTable(collections);
+        await migrator.createTable(collectionSongs);
+      }
+    },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },

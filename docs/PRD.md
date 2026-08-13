@@ -276,18 +276,18 @@ avoid choices that make them unnecessarily difficult later.
 
 ## 11. V1 acceptance checklist
 
-- [ ] Fresh install seeds the bundled catalogue exactly once.
-- [ ] Songs can be browsed and opened in airplane mode.
-- [ ] Primary title, English title, and author search use only local data.
-- [ ] Favourite state survives an application restart.
-- [ ] A custom song can be created, edited, deleted, favourited, and listed.
-- [ ] Lists can be created, renamed, deleted, populated, and reordered.
+- [x] Fresh install seeds the bundled catalogue exactly once.
+- [x] Songs can be browsed and opened in airplane mode.
+- [x] Primary title, English title, and author search use only local data.
+- [x] Favourite state survives an application restart.
+- [x] A custom song can be created, edited, deleted, favourited, and listed.
+- [x] Lists can be created, renamed, deleted, populated, and reordered.
 - [ ] Refresh inserts and updates server songs.
 - [ ] Refresh hides or removes deleted server songs.
 - [ ] Refresh never modifies custom songs.
 - [ ] Failed refresh preserves cached data and the previous sync timestamp.
-- [ ] Lyrics font size and theme preferences persist.
-- [ ] Analyzer, automated tests, and an Android debug build pass.
+- [x] Lyrics font size and theme preferences persist.
+- [x] Analyzer, automated tests, and an Android debug build pass.
 
 ## 12. Open product decisions
 

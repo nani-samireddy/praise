@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
+import 'song_list_card.dart';
 import 'song_providers.dart';
 
 class SongsScreen extends ConsumerStatefulWidget {
@@ -37,6 +38,11 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
           'Praise',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/custom-song/new'),
+        icon: const Icon(Icons.add),
+        label: const Text('New song'),
       ),
       body: SafeArea(
         top: false,
@@ -97,76 +103,7 @@ class _SongList extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       itemCount: items.length,
       separatorBuilder: (context, index) => const SizedBox(height: 10),
-      itemBuilder: (context, index) => _SongCard(song: items[index]),
-    );
-  }
-}
-
-class _SongCard extends StatelessWidget {
-  const _SongCard({required this.song});
-
-  final Song song;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final englishTitle = song.englishTitle;
-    final author = song.author;
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.push('/songs/${song.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: colorScheme.primaryContainer,
-                foregroundColor: colorScheme.onPrimaryContainer,
-                child: const Icon(Icons.music_note),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      song.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    if (englishTitle != null) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        englishTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(color: colorScheme.onSurfaceVariant),
-                      ),
-                    ],
-                    if (author != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        author,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(color: colorScheme.primary),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right),
-            ],
-          ),
-        ),
-      ),
+      itemBuilder: (context, index) => SongListCard(song: items[index]),
     );
   }
 }

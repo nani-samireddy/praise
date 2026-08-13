@@ -9,10 +9,10 @@ record.
 
 ## 2. Current repository state
 
-The repository now contains the Phase 1 application foundation and the first
-Phase 2 vertical slice: Drift persistence, a versioned 20-song seed catalogue,
-local title/author search, the Songs screen, and the bilingual song reader.
-Favorites, custom-song editing, lists, settings, and remote sync remain pending.
+The repository contains the foundation, offline catalogue, local search,
+favorites, custom-song CRUD, automatic My Songs membership, complete local list
+management, persistent themes and reading preferences, and a bilingual reader
+with saved pinch scaling. Remote catalogue sync remains pending.
 
 The directory is not currently initialized as a Git repository. Initialize Git
 before substantive implementation if version history is desired.

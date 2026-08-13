@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:praise/core/database/app_database.dart';
@@ -60,5 +60,67 @@ void main() {
 
     expect(songs.map((song) => song.id), isNot(contains('grace')));
     expect(songs.map((song) => song.id), contains('holy'));
+  });
+
+  test('creates, updates, and deletes a custom song', () async {
+    final id = await repository.createCustomSong(
+      const SongInput(
+        title: '  నా పాట  ',
+        englishTitle: '  My Song  ',
+        body: '  నా గీతము  ',
+        englishBody: '  My lyrics  ',
+        author: '  Local Author  ',
+      ),
+    );
+
+    var song = await repository.watchSong(id).first;
+    expect(song?.source, 'custom');
+    expect(song?.title, 'నా పాట');
+    expect(song?.author, 'Local Author');
+    final mySongs = await database.select(database.collections).get();
+    final membership = await database.select(database.collectionSongs).get();
+    expect(mySongs.single.name, 'My Songs');
+    expect(mySongs.single.isSystem, isTrue);
+    expect(membership.single.songId, id);
+
+    await repository.updateCustomSong(
+      id,
+      const SongInput(title: 'Updated', body: 'Updated body'),
+    );
+    song = await repository.watchSong(id).first;
+    expect(song?.title, 'Updated');
+    expect(song?.englishTitle, isNull);
+
+    await repository.deleteCustomSong(id);
+    expect(await repository.watchSong(id).first, isNull);
+    expect(await database.select(database.collectionSongs).get(), isEmpty);
+  });
+
+  test('reuses My Songs and appends each new custom song', () async {
+    final firstId = await repository.createCustomSong(
+      const SongInput(title: 'First custom', body: 'First body'),
+    );
+    final secondId = await repository.createCustomSong(
+      const SongInput(title: 'Second custom', body: 'Second body'),
+    );
+
+    final collections = await database.select(database.collections).get();
+    final membership = await (database.select(
+      database.collectionSongs,
+    )..orderBy([(row) => OrderingTerm.asc(row.sortOrder)])).get();
+
+    expect(collections, hasLength(1));
+    expect(membership.map((row) => row.songId), [firstId, secondId]);
+    expect(membership.map((row) => row.sortOrder), [0, 1]);
+  });
+
+  test('does not allow server songs to be edited as custom songs', () async {
+    expect(
+      () => repository.updateCustomSong(
+        'grace',
+        const SongInput(title: 'Changed', body: 'Changed body'),
+      ),
+      throwsStateError,
+    );
   });
 }

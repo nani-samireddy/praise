@@ -2,8 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:praise/app/app.dart';
 import 'package:praise/core/database/app_database.dart';
+import 'package:praise/features/favorites/data/favorites_repository.dart';
+import 'package:praise/features/favorites/presentation/favorite_providers.dart';
 import 'package:praise/features/songs/data/song_repository.dart';
 import 'package:praise/features/songs/presentation/song_providers.dart';
+import 'package:praise/features/settings/data/settings_repository.dart';
+import 'package:praise/features/settings/presentation/settings_providers.dart';
 
 void main() {
   testWidgets('opens a locally sourced song and displays both bodies', (
@@ -27,6 +31,12 @@ void main() {
       ProviderScope(
         overrides: [
           songRepositoryProvider.overrideWithValue(_FakeSongRepository(song)),
+          favoritesRepositoryProvider.overrideWithValue(
+            const _FakeFavoritesRepository(),
+          ),
+          settingsRepositoryProvider.overrideWithValue(
+            const _FakeSettingsRepository(),
+          ),
         ],
         child: const PraiseApp(),
       ),
@@ -56,6 +66,53 @@ class _FakeSongRepository implements SongRepository {
 
   @override
   Stream<List<Song>> watchSongs({String search = ''}) => Stream.value([song]);
+
+  @override
+  Future<String> createCustomSong(SongInput input) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> deleteCustomSong(String id) => throw UnimplementedError();
+
+  @override
+  Future<void> updateCustomSong(String id, SongInput input) =>
+      throw UnimplementedError();
+}
+
+class _FakeFavoritesRepository implements FavoritesRepository {
+  const _FakeFavoritesRepository();
+
+  @override
+  Future<void> setFavorite(String songId, {required bool isFavorite}) async {}
+
+  @override
+  Stream<List<Song>> watchFavorites() => Stream.value(const []);
+
+  @override
+  Stream<bool> watchIsFavorite(String songId) => Stream.value(false);
+}
+
+class _FakeSettingsRepository implements SettingsRepository {
+  const _FakeSettingsRepository();
+
+  @override
+  Future<void> setLyricsDisplayMode(LyricsDisplayMode value) async {}
+
+  @override
+  Future<void> setLyricsFontSize(double value) async {}
+
+  @override
+  Future<void> setThemeMode(String value) async {}
+
+  @override
+  Stream<LyricsDisplayMode> watchLyricsDisplayMode() =>
+      Stream.value(LyricsDisplayMode.both);
+
+  @override
+  Stream<double> watchLyricsFontSize() => Stream.value(19);
+
+  @override
+  Stream<String?> watchThemeMode() => Stream.value(null);
 }
 
 Future<void> _pumpFrames(WidgetTester tester) async {

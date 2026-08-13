@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'router.dart';
 import 'theme/app_theme.dart';
+import '../features/settings/presentation/settings_providers.dart';
 
 class PraiseApp extends ConsumerWidget {
   const PraiseApp({super.key});
@@ -14,7 +15,7 @@ class PraiseApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: ref.watch(themeModeProvider).valueOrNull ?? ThemeMode.system,
       routerConfig: ref.watch(routerProvider),
     );
   }

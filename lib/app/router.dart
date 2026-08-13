@@ -1,11 +1,15 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/custom_songs/presentation/custom_song_editor_screen.dart';
+import '../features/collections/presentation/collection_detail_screen.dart';
+import '../features/collections/presentation/collections_screen.dart';
+import '../features/collections/presentation/add_songs_screen.dart';
+import '../features/favorites/presentation/favorites_screen.dart';
 import '../features/songs/presentation/song_detail_screen.dart';
 import '../features/songs/presentation/songs_screen.dart';
+import '../features/settings/presentation/settings_screen.dart';
 import '../shared/presentation/app_shell.dart';
-import '../shared/presentation/coming_soon_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -38,11 +42,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/favorites',
-                builder: (context, state) => const ComingSoonScreen(
-                  title: 'Favorites',
-                  icon: Icons.favorite_outline,
-                  message: 'Your favorite songs will live here.',
-                ),
+                builder: (context, state) => const FavoritesScreen(),
               ),
             ],
           ),
@@ -50,11 +50,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/lists',
-                builder: (context, state) => const ComingSoonScreen(
-                  title: 'Lists',
-                  icon: Icons.queue_music,
-                  message: 'Create worship and meeting lists here soon.',
-                ),
+                builder: (context, state) => const CollectionsScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) => CollectionDetailScreen(
+                      collectionId: state.pathParameters['id']!,
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'add',
+                        builder: (context, state) => AddSongsScreen(
+                          collectionId: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -62,15 +74,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/settings',
-                builder: (context, state) => const ComingSoonScreen(
-                  title: 'Settings',
-                  icon: Icons.settings_outlined,
-                  message: 'Reading and sync preferences are coming next.',
-                ),
+                builder: (context, state) => const SettingsScreen(),
               ),
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/custom-song/new',
+        builder: (context, state) => const CustomSongEditorScreen(),
+      ),
+      GoRoute(
+        path: '/custom-song/:id/edit',
+        builder: (context, state) =>
+            CustomSongEditorScreen(songId: state.pathParameters['id']!),
       ),
     ],
   );

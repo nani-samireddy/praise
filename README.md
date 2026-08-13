@@ -21,10 +21,10 @@ technical boundaries, and the proposed delivery sequence are documented here:
 
 ## Current state
 
-The first offline vertical slice is implemented: the app seeds 20 songs from a
-local JSON catalogue, stores them with Drift/SQLite, supports local title and
-author search, and provides a bilingual song reader. Favorites, custom songs,
-lists, settings, and server synchronization remain planned work.
+The offline library now seeds 20 songs and supports local search, favorites,
+custom-song CRUD, automatic My Songs membership, user-defined list management,
+song ordering, persistent themes and reading preferences, and pinch-to-resize
+lyrics. Manual server synchronization remains the main planned V1 phase.
 
 ## Baseline commands
 

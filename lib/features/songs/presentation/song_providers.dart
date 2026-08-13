@@ -14,6 +14,13 @@ final songsProvider = StreamProvider<List<Song>>((ref) {
   return ref.watch(songRepositoryProvider).watchSongs(search: search);
 });
 
+final songsForSearchProvider = StreamProvider.family<List<Song>, String>((
+  ref,
+  search,
+) {
+  return ref.watch(songRepositoryProvider).watchSongs(search: search);
+});
+
 final songProvider = StreamProvider.family<Song?, String>((ref, id) {
   return ref.watch(songRepositoryProvider).watchSong(id);
 });
