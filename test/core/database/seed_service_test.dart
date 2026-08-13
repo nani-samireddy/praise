@@ -1,0 +1,100 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:praise/core/database/app_database.dart';
+import 'package:praise/core/database/seed_service.dart';
+
+void main() {
+  late AppDatabase database;
+
+  setUp(() {
+    database = AppDatabase(NativeDatabase.memory());
+  });
+
+  tearDown(() async {
+    await database.close();
+  });
+
+  test('bundled catalogue is seeded exactly once', () async {
+    final bundle = _StringAssetBundle('''
+      [
+        {
+          "id": "one",
+          "title": "మొదటి పాట",
+          "englishTitle": "First Song",
+          "body": "మొదటి గీతము",
+          "englishBody": "First body",
+          "author": "Author One"
+        },
+        {
+          "id": "two",
+          "title": "రెండవ పాట",
+          "body": "రెండవ గీతము"
+        }
+      ]
+    ''');
+    final seedService = SeedService(database, assetBundle: bundle);
+
+    await seedService.seedIfNeeded();
+    await seedService.seedIfNeeded();
+
+    final songs = await database.select(database.songs).get();
+    final metadata = await database.select(database.appMetadata).get();
+
+    expect(songs, hasLength(2));
+    expect(metadata, hasLength(1));
+    expect(songs.map((song) => song.id), containsAll(['one', 'two']));
+  });
+
+  test('app catalogue imports 20 songs and preserves custom songs', () async {
+    final now = DateTime.utc(2026, 8, 13);
+    await database.batch((batch) {
+      batch.insertAll(database.songs, [
+        SongsCompanion.insert(
+          id: 'old-server-song',
+          title: 'Old server song',
+          body: 'Old body',
+          createdAt: now,
+          updatedAt: now,
+        ),
+        SongsCompanion.insert(
+          id: 'custom-song',
+          title: 'Custom song',
+          body: 'Custom body',
+          source: const Value('custom'),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ]);
+    });
+    final json = await File('assets/data/songs.json').readAsString();
+
+    await SeedService(
+      database,
+      assetBundle: _StringAssetBundle(json),
+    ).seedIfNeeded();
+
+    final songs = await database.select(database.songs).get();
+    final serverSongs = songs.where((song) => song.source == 'server');
+
+    expect(serverSongs, hasLength(20));
+    expect(songs.map((song) => song.id), contains('custom-song'));
+    expect(songs.map((song) => song.id), isNot(contains('old-server-song')));
+  });
+}
+
+class _StringAssetBundle extends CachingAssetBundle {
+  _StringAssetBundle(this.value);
+
+  final String value;
+
+  @override
+  Future<ByteData> load(String key) async {
+    final bytes = Uint8List.fromList(utf8.encode(value));
+    return ByteData.sublistView(bytes);
+  }
+}

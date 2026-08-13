@@ -1,30 +1,65 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:praise/main.dart';
+import 'package:praise/app/app.dart';
+import 'package:praise/core/database/app_database.dart';
+import 'package:praise/features/songs/data/song_repository.dart';
+import 'package:praise/features/songs/presentation/song_providers.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('opens a locally sourced song and displays both bodies', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 8, 13);
+    final song = Song(
+      id: 'test-song',
+      title: 'ప్రార్థన గీతం',
+      englishTitle: 'Prayer Song',
+      body: 'ప్రధాన గీతము',
+      englishBody: 'Primary English lyrics',
+      author: 'Test Author',
+      source: 'server',
+      createdAt: now,
+      updatedAt: now,
+      isDeleted: false,
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          songRepositoryProvider.overrideWithValue(_FakeSongRepository(song)),
+        ],
+        child: const PraiseApp(),
+      ),
+    );
+    await _pumpFrames(tester);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(find.text('ప్రార్థన గీతం'), findsOneWidget);
+    expect(find.text('Prayer Song'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.tap(find.text('ప్రార్థన గీతం'));
+    await _pumpFrames(tester);
+
+    expect(find.text('ప్రధాన గీతము'), findsOneWidget);
+    expect(find.text('Primary English lyrics'), findsOneWidget);
+    expect(find.text('Test Author'), findsOneWidget);
   });
+}
+
+class _FakeSongRepository implements SongRepository {
+  const _FakeSongRepository(this.song);
+
+  final Song song;
+
+  @override
+  Stream<Song?> watchSong(String id) =>
+      Stream.value(id == song.id ? song : null);
+
+  @override
+  Stream<List<Song>> watchSongs({String search = ''}) => Stream.value([song]);
+}
+
+Future<void> _pumpFrames(WidgetTester tester) async {
+  for (var index = 0; index < 6; index++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }

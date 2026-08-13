@@ -1,17 +1,36 @@
-# praise
+# Praise
 
-A new Flutter project.
+Praise is an Android-first, offline-first Flutter application for browsing,
+reading, and organizing Christian song lyrics.
 
-## Getting Started
+The project is currently in the planning and foundation stage. Product scope,
+technical boundaries, and the proposed delivery sequence are documented here:
 
-This project is a starting point for a Flutter application.
+- [Product requirements](docs/PRD.md)
+- [Technical architecture](docs/ARCHITECTURE.md)
+- [Implementation notes](docs/IMPLEMENTATION_NOTES.md)
 
-A few resources to get you started if this is your first Flutter project:
+## Planned stack
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Flutter and Material 3
+- Riverpod
+- Drift and SQLite
+- Dio
+- GoRouter
+- Freezed and json_serializable
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Current state
+
+The first offline vertical slice is implemented: the app seeds 20 songs from a
+local JSON catalogue, stores them with Drift/SQLite, supports local title and
+author search, and provides a bilingual song reader. Favorites, custom songs,
+lists, settings, and server synchronization remain planned work.
+
+## Baseline commands
+
+```powershell
+flutter pub get
+flutter analyze
+flutter test
+flutter run
+```
