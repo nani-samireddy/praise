@@ -22,6 +22,9 @@ URL and review of generated lyrics warnings.
 The directory is initialized as a Git repository. Preserve unrelated working
 tree changes when preparing catalogue or application commits.
 
+The final mobile application identifier is `com.nanisamireddy.praise`, and the
+user-facing application name is `Praise`.
+
 ## 3. Delivery strategy
 
 Build vertical slices that remain runnable. Each phase should finish with
