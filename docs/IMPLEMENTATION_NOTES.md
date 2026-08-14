@@ -321,7 +321,13 @@ teardown. Avoid depending on test execution order or real network access.
 
 ## 14. Deferred implementation notes
 
-Do not build V1 placeholders for authentication, cloud sync, sharing, chords,
-audio, or presentation integration. When those features are approved, start
-with explicit ownership and conflict-resolution requirements rather than
-extending the catalogue sync path implicitly.
+Do not build V1 placeholders for authentication, cloud sync, shareable lists,
+chords, audio, or presentation integration. V2 shareable lists use a versioned
+offline export/import package and the platform share sheet; they do not require
+authentication or extend the catalogue sync path. Define package limits,
+validation, duplicate handling, transactional import, and the custom-song
+lyrics policy before implementation.
+
+If cloud collaboration is approved later, start with explicit ownership and
+conflict-resolution requirements rather than evolving the offline package into
+an implicit synchronization protocol.

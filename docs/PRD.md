@@ -269,7 +269,7 @@ spinner.
 
 - Authentication and user accounts
 - Cloud backup or synchronization of user data
-- Sharing lists or songs
+- Importable or shareable lists
 - QR import or export
 - Community submissions and moderation
 - Transliteration
@@ -283,7 +283,32 @@ spinner.
 These features should not be implemented speculatively, but the V1 design must
 avoid choices that make them unnecessarily difficult later.
 
-## 11. V1 acceptance checklist
+## 11. V2 committed scope
+
+### Shareable lists
+
+V2 shall let a user share a complete song list without requiring an account or
+a maintained application server.
+
+- A list can be exported as a versioned Praise list package.
+- The package can be sent through the platform share sheet.
+- Another Praise installation can open, preview, and import the package.
+- Catalogue songs are matched using stable song identifiers rather than titles.
+- Import creates local identifiers and never overwrites an existing list or
+  custom song silently.
+- Duplicate and missing songs are summarized before the user confirms import.
+- Invalid or unsupported package versions fail safely with a readable message.
+- A readable plain-text list can also be shared with recipients who do not use
+  Praise.
+
+The first V2 implementation remains asynchronous and offline-first. Live list
+collaboration, accounts, public list hosting, and cloud conflict resolution are
+not included unless separately approved.
+
+The package policy for custom-song lyrics, including explicit user consent and
+rights messaging, must be decided before implementation.
+
+## 12. V1 acceptance checklist
 
 - [x] Fresh install seeds the bundled catalogue exactly once.
 - [x] Songs can be browsed and opened in airplane mode.
@@ -298,7 +323,7 @@ avoid choices that make them unnecessarily difficult later.
 - [x] Lyrics font size and theme preferences persist.
 - [x] Analyzer, automated tests, and an Android debug build pass.
 
-## 12. Open product decisions
+## 13. Open product decisions
 
 The following can be decided during implementation without blocking the initial
 architecture:

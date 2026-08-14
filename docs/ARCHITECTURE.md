@@ -389,3 +389,24 @@ Create lightweight ADRs if the team changes any of these decisions:
 - settings persistence mechanism;
 - normalized search columns or full-text search; and
 - user data cloud-sync strategy.
+
+## 17. V2 shareable-list boundary
+
+Shareable lists should extend the local collections feature through explicit
+export and import services. They must not reuse the read-only catalogue update
+channel or introduce a writable GitHub repository.
+
+The transport is a versioned, size-limited Praise list package passed through
+the operating-system share and file-opening mechanisms. The package contains
+list metadata and stable catalogue song identifiers. Import always creates new
+local identifiers, validates the complete package before writing, and performs
+the accepted import in one database transaction.
+
+Custom-song payloads require a product decision before the schema is finalized.
+If included, their lyrics must be clearly disclosed in the preview and require
+explicit confirmation before sharing. Unknown fields may be ignored for forward
+compatibility, while unsupported major schema versions must be rejected.
+
+This boundary provides asynchronous device-to-device sharing with no account,
+backend, or cloud ownership model. Live collaborative editing and synchronized
+shared lists require a separate architecture decision.
