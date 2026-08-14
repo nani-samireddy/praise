@@ -12,6 +12,7 @@ technical boundaries, and the proposed delivery sequence are documented here:
 - [Canonical lyrics format](docs/LYRICS_FORMAT.md)
 - [Bundled font licenses](docs/FONT_LICENSES.md)
 - [Separate catalogue server setup](docs/CATALOG_SERVER_SETUP.md)
+- [Release process and cycles](docs/RELEASE_PROCESS.md)
 
 ## Planned stack
 

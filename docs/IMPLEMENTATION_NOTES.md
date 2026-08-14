@@ -25,6 +25,10 @@ tree changes when preparing catalogue or application commits.
 The final mobile application identifier is `com.nanisamireddy.praise`, and the
 user-facing application name is `Praise`.
 
+Application and catalogue releases follow `docs/RELEASE_PROCESS.md`. The
+catalogue and application have independent version numbers and release cycles;
+production binary publication remains manually approved for V1.
+
 ## 3. Delivery strategy
 
 Build vertical slices that remain runnable. Each phase should finish with
