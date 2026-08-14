@@ -11,6 +11,7 @@ technical boundaries, and the proposed delivery sequence are documented here:
 - [Implementation notes](docs/IMPLEMENTATION_NOTES.md)
 - [Canonical lyrics format](docs/LYRICS_FORMAT.md)
 - [Bundled font licenses](docs/FONT_LICENSES.md)
+- [Separate catalogue server setup](docs/CATALOG_SERVER_SETUP.md)
 
 ## Planned stack
 
@@ -48,3 +49,8 @@ flutter run --dart-define=CATALOG_MANIFEST_URL=https://USERNAME.github.io/REPOSI
 
 Without this value the complete offline application remains usable and the
 remote refresh action is disabled.
+
+Catalogue publishing is intentionally separated from the application
+repository. After the one-time GitHub configuration, every push to `main`
+validates and synchronizes the static catalogue to its dedicated GitHub Pages
+repository. See [Separate catalogue server setup](docs/CATALOG_SERVER_SETUP.md).

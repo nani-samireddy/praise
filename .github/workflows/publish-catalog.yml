@@ -1,0 +1,68 @@
+name: Publish catalogue to server repository
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-catalog
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      CATALOG_REPOSITORY: ${{ vars.CATALOG_REPOSITORY }}
+    steps:
+      - name: Check out app repository
+        uses: actions/checkout@v6
+
+      - name: Check publishing configuration
+        shell: bash
+        env:
+          CATALOG_DEPLOY_KEY: ${{ secrets.CATALOG_DEPLOY_KEY }}
+        run: |
+          if [[ -z "$CATALOG_REPOSITORY" ]]; then
+            echo "Set the CATALOG_REPOSITORY Actions variable to OWNER/REPOSITORY."
+            exit 1
+          fi
+          if [[ -z "$CATALOG_DEPLOY_KEY" ]]; then
+            echo "Add the server repository deploy key as the CATALOG_DEPLOY_KEY Actions secret."
+            exit 1
+          fi
+
+      - name: Validate catalogue
+        run: python tool/validate_catalog.py
+
+      - name: Check out catalogue server repository
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ vars.CATALOG_REPOSITORY }}
+          ref: main
+          ssh-key: ${{ secrets.CATALOG_DEPLOY_KEY }}
+          path: catalog-server
+
+      - name: Synchronize published files
+        shell: bash
+        run: |
+          mkdir -p catalog-server/catalog
+          rsync --archive --delete docs/catalog/ catalog-server/catalog/
+          touch catalog-server/.nojekyll
+
+      - name: Publish changed catalogue
+        working-directory: catalog-server
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .nojekyll catalog
+          if git diff --cached --quiet; then
+            echo "The catalogue server is already current."
+            exit 0
+          fi
+          git commit -m "Publish catalogue from ${GITHUB_REPOSITORY}@${GITHUB_SHA::7}"
+          git push origin HEAD:main

@@ -233,7 +233,11 @@ underlying Drift stream will emit the new state.
 ## 8. Static catalogue
 
 V1 uses GitHub Pages as immutable static storage rather than an application
-server. The manifest URL is supplied with:
+server. The static files are hosted in a repository separate from the Flutter
+application. A workflow in the application repository validates the catalogue
+and pushes `docs/catalog/` to the server repository whenever `main` is updated.
+The server repository publishes its `main` branch root through GitHub Pages.
+The manifest URL is supplied with:
 
 ```text
 --dart-define=CATALOG_MANIFEST_URL=https://USERNAME.github.io/REPOSITORY/catalog/manifest.json
@@ -247,6 +251,9 @@ remote version exceeds the locally stored version.
 The complete snapshot is decoded as UTF-8, checksum-verified, shape-validated,
 counted, and checked for duplicate IDs before a database transaction begins.
 No API key, user account, server process, or remote database exists in V1.
+Cross-repository publishing uses a write-enabled deploy key scoped only to the
+catalogue server repository. The private key is stored as an Actions secret in
+the application repository and is never included in an app build.
 
 ## 9. Synchronization algorithm
 

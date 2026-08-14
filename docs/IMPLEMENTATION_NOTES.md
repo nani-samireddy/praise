@@ -266,6 +266,12 @@ flutter run --dart-define=CATALOG_MANIFEST_URL=https://USERNAME.github.io/REPOSI
 Do not commit secrets through `--dart-define`; it is configuration, not secure
 secret storage.
 
+Catalogue publishing uses `.github/workflows/publish-catalog.yml`. Configure
+the `CATALOG_REPOSITORY` Actions variable and `CATALOG_DEPLOY_KEY` Actions
+secret as described in `docs/CATALOG_SERVER_SETUP.md`. A push to the app
+repository's `main` branch then validates and updates the separate GitHub Pages
+repository automatically.
+
 ## 12. Test organization
 
 Suggested structure:
