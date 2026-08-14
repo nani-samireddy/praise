@@ -13,6 +13,7 @@ technical boundaries, and the proposed delivery sequence are documented here:
 - [Bundled font licenses](docs/FONT_LICENSES.md)
 - [Separate catalogue server setup](docs/CATALOG_SERVER_SETUP.md)
 - [Release process and cycles](docs/RELEASE_PROCESS.md)
+- [Android release signing setup](docs/RELEASE_SIGNING_SETUP.md)
 
 ## Planned stack
 

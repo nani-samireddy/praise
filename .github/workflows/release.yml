@@ -1,0 +1,145 @@
+name: Build signed release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      ANDROID_RELEASE_KEYSTORE_BASE64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}
+      ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+      ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+      ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.0"
+          channel: stable
+          cache: true
+
+      - name: Verify release tag and version
+        run: python tool/verify_release_version.py --tag "$GITHUB_REF_NAME"
+
+      - name: Check signing secrets
+        shell: bash
+        run: |
+          for name in \
+            ANDROID_RELEASE_KEYSTORE_BASE64 \
+            ANDROID_RELEASE_STORE_PASSWORD \
+            ANDROID_RELEASE_KEY_ALIAS \
+            ANDROID_RELEASE_KEY_PASSWORD
+          do
+            if [[ -z "${!name}" ]]; then
+              echo "Missing required Actions secret: $name"
+              exit 1
+            fi
+          done
+
+      - name: Configure release signing
+        shell: bash
+        run: |
+          printf '%s' "$ANDROID_RELEASE_KEYSTORE_BASE64" \
+            | base64 --decode > android/release-keystore.jks
+          cat > android/key.properties <<EOF
+          storeFile=release-keystore.jks
+          storePassword=$ANDROID_RELEASE_STORE_PASSWORD
+          keyAlias=$ANDROID_RELEASE_KEY_ALIAS
+          keyPassword=$ANDROID_RELEASE_KEY_PASSWORD
+          EOF
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Test release tooling
+        run: python -m unittest discover -s test/tool -p "test_*.py"
+
+      - name: Validate catalogue
+        run: python tool/validate_catalog.py
+
+      - name: Build signed Android artifacts
+        run: |
+          flutter build apk --release
+          cd android
+          ./gradlew :app:bundleRelease
+
+      - name: Verify native release payloads
+        run: |
+          python tool/verify_android_artifacts.py \
+            --apk build/app/outputs/flutter-apk/app-release.apk \
+            --aab build/app/outputs/bundle/release/app-release.aab
+
+      - name: Prepare release artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk \
+            "dist/Praise-${GITHUB_REF_NAME}.apk"
+          cp build/app/outputs/bundle/release/app-release.aab \
+            "dist/Praise-${GITHUB_REF_NAME}.aab"
+          cd dist
+          sha256sum "Praise-${GITHUB_REF_NAME}.apk" \
+            "Praise-${GITHUB_REF_NAME}.aab" > SHA256SUMS.txt
+
+      - name: Store Play artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Praise-${{ github.ref_name }}-play
+          path: |
+            dist/Praise-${{ github.ref_name }}.aab
+            dist/SHA256SUMS.txt
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Create draft GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" \
+              "dist/Praise-${GITHUB_REF_NAME}.apk" \
+              dist/SHA256SUMS.txt --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              "dist/Praise-${GITHUB_REF_NAME}.apk" \
+              dist/SHA256SUMS.txt \
+              --verify-tag \
+              --draft \
+              --generate-notes \
+              --title "Praise ${GITHUB_REF_NAME#v}"
+          fi
+
+      - name: Remove signing files
+        if: always()
+        shell: bash
+        run: rm -f android/release-keystore.jks android/key.properties

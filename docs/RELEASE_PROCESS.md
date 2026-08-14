@@ -131,8 +131,13 @@ dart format --output=none --set-exit-if-changed lib test
 flutter analyze
 flutter test
 python tool/validate_catalog.py
-flutter build appbundle --release
 flutter build apk --release
+Push-Location android
+.\gradlew.bat :app:bundleRelease
+Pop-Location
+python tool/verify_android_artifacts.py `
+  --apk build\app\outputs\flutter-apk\app-release.apk `
+  --aab build\app\outputs\bundle\release\app-release.aab
 ```
 
 Run the physical-device gate on the Pixel:
@@ -234,25 +239,17 @@ reused for application release signing.
 
 - `publish-catalog.yml` validates and synchronizes the static catalogue from
   app `main` to `praise-catalog`.
+- `ci.yml` validates formatting, analysis, tests, catalogue integrity, and an
+  Android debug build for pull requests and `main`.
+- `release.yml` validates version tags, builds signed APK/AAB artifacts, stores
+  the AAB as a protected Actions artifact, and creates a draft GitHub release
+  containing the APK and checksums.
 
-### Add before the first public binary release
+### Release workflow configuration
 
-`ci.yml`, triggered by pull requests and pushes to `main`:
-
-- dependency resolution;
-- formatting verification;
-- Flutter analysis and tests;
-- catalogue validation; and
-- Android debug build artifact.
-
-`release.yml`, triggered by a version tag after signing is configured:
-
-- confirm the tag matches `pubspec.yaml`;
-- run the complete automated gate;
-- build the signed AAB and APK;
-- calculate checksums;
-- upload protected build artifacts; and
-- create a draft GitHub release for human approval.
+Configure the four signing secrets documented in
+`docs/RELEASE_SIGNING_SETUP.md` before pushing a version tag. Create a GitHub
+Actions environment named `production` for the release job.
 
 Production Play submission remains manually approved for V1. Fully automatic
 production rollout is intentionally deferred until multiple releases prove the
@@ -266,8 +263,8 @@ The first public release cannot proceed until all are complete:
 - [x] Separate public GitHub Pages catalogue with automatic publication.
 - [x] Production catalogue URL configured in the application.
 - [ ] Final launcher icon and launch branding.
-- [ ] Android upload keystore generated, backed up, and configured.
-- [ ] Release AAB and APK signed and verified.
+- [ ] Android signing keystore generated, backed up, and configured.
+- [x] Release AAB and APK signed and verified.
 - [ ] Thirty repeat-marker review items resolved or explicitly accepted.
 - [ ] Lyrics publication rights and attribution decision recorded.
 - [ ] Full Pixel release-candidate checklist passed.

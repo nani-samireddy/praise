@@ -1,7 +1,24 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+val releaseBuildRequested = gradle.startParameter.taskNames.any {
+    it.contains("Release", ignoreCase = true)
+}
+
+if (keystorePropertiesFile.exists()) {
+    FileInputStream(keystorePropertiesFile).use(keystoreProperties::load)
+} else if (releaseBuildRequested) {
+    throw GradleException(
+        "Release signing is not configured. Create android/key.properties.",
+    )
 }
 
 android {
@@ -28,11 +45,25 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                val storeFilePath = keystoreProperties.getProperty("storeFile")
+                    ?: throw GradleException("Missing storeFile in android/key.properties")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                    ?: throw GradleException("Missing keyAlias in android/key.properties")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                    ?: throw GradleException("Missing keyPassword in android/key.properties")
+                storePassword = keystoreProperties.getProperty("storePassword")
+                    ?: throw GradleException("Missing storePassword in android/key.properties")
+                storeFile = rootProject.file(storeFilePath)
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 }
