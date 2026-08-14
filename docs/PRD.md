@@ -301,6 +301,27 @@ a maintained application server.
 - A readable plain-text list can also be shared with recipients who do not use
   Praise.
 
+### Share formats
+
+V2 shall expand sharing for both individual songs and complete lists:
+
+| Content | Text | Image | PDF | Importable Praise package |
+| --- | --- | --- | --- | --- |
+| Song | Yes | Yes | Yes | No |
+| List | Yes | Yes | Yes | Yes |
+
+- Text remains optimized for copying, messaging, and recipients without Praise.
+- Image export creates a readable share card or long image using the selected
+  language content and display typography.
+- PDF export preserves titles, authors, song order, lyric structure, page
+  breaks, and Telugu font rendering.
+- The user previews the output and chooses Telugu, English, or bilingual content
+  before sharing when translations are available.
+- Generation happens on the device and uses the platform share sheet; no
+  upload service is required.
+- Oversized image output offers PDF instead of generating an unreadable or
+  unstable image.
+
 The first V2 implementation remains asynchronous and offline-first. Live list
 collaboration, accounts, public list hosting, and cloud conflict resolution are
 not included unless separately approved.

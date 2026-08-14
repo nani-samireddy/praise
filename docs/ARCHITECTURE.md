@@ -410,3 +410,21 @@ compatibility, while unsupported major schema versions must be rejected.
 This boundary provides asynchronous device-to-device sharing with no account,
 backend, or cloud ownership model. Live collaborative editing and synchronized
 shared lists require a separate architecture decision.
+
+### On-device share rendering
+
+Song and list sharing should build one neutral export document model and pass it
+to format-specific renderers for plain text, image, and PDF. This keeps song
+ordering, titles, authors, language selection, lyric structure, and repeat cues
+consistent across formats.
+
+Renderers operate entirely on the device and write only temporary files in the
+application cache for the platform share sheet. Temporary exports must be
+replaceable and safe to clean up; they are not part of the user's local song
+library. Image rendering enforces practical pixel and memory limits and directs
+oversized content to PDF. PDF generation must embed a Telugu-capable font so the
+output does not depend on fonts installed on the recipient's device.
+
+The importable Praise list package remains a data-transfer format rather than a
+presentation renderer. Images and PDFs are readable exports and are not
+imported back into Praise.

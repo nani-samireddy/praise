@@ -328,6 +328,18 @@ authentication or extend the catalogue sync path. Define package limits,
 validation, duplicate handling, transactional import, and the custom-song
 lyrics policy before implementation.
 
+Implement sharing in separable V2 increments:
+
+1. Introduce the common song/list export document model and plain-text output.
+2. Add the versioned Praise list package with preview and transactional import.
+3. Add image rendering with size and memory limits.
+4. Add paginated PDF rendering with embedded Telugu fonts.
+5. Add golden tests for image output and text-extraction/rendering checks for
+   representative Telugu, English, and bilingual PDFs.
+
+All generated presentation files are temporary cache artifacts. Do not store
+them as catalogue data or require a network request to create them.
+
 If cloud collaboration is approved later, start with explicit ownership and
 conflict-resolution requirements rather than evolving the offline package into
 an implicit synchronization protocol.
