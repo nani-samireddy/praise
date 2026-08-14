@@ -43,6 +43,7 @@ dependencies:
   freezed_annotation: ^3.1.0
   json_annotation: ^4.12.0
   uuid: ^4.6.0
+  share_plus: ^13.3.0
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +74,21 @@ flutter:
 
   assets:
     - assets/data/songs.json
+    - assets/fonts/licenses/
+
+  fonts:
+    - family: NotoSansTelugu
+      fonts:
+        - asset: assets/fonts/NotoSansTelugu-Variable.ttf
+    - family: NotoSerifTelugu
+      fonts:
+        - asset: assets/fonts/NotoSerifTelugu-Variable.ttf
+    - family: Mandali
+      fonts:
+        - asset: assets/fonts/Mandali-Regular.ttf
+    - family: Ramabhadra
+      fonts:
+        - asset: assets/fonts/Ramabhadra-Regular.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

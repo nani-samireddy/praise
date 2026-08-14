@@ -45,4 +45,35 @@ void main() {
     expect(find.text('3/3'), findsNothing);
     expect(find.byType(InkWell), findsNothing);
   });
+
+  testWidgets('adds a full gap after labels and applies the Telugu font', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: FormattedLyrics(
+            body: '''[Chorus]
+మొదటి పంక్తి
+
+[Repeat: ఆరాధన]
+రెండవ పంక్తి''',
+            fontSize: 20,
+            fontFamily: 'Mandali',
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.widget<Text>(find.text('మొదటి పంక్తి')).style?.fontFamily,
+      'Mandali',
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is SizedBox && widget.height == 30,
+      ),
+      findsNWidgets(2),
+    );
+  });
 }

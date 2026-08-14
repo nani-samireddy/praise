@@ -50,14 +50,61 @@ void main() {
     expect(songs.map((song) => song.id), containsAll(['one', 'two']));
   });
 
-  test('app catalogue imports 20 songs and preserves existing data', () async {
+  test(
+    'app catalogue imports every bundled song and preserves existing data',
+    () async {
+      final now = DateTime.utc(2026, 8, 13);
+      await database.batch((batch) {
+        batch.insertAll(database.songs, [
+          SongsCompanion.insert(
+            id: 'old-server-song',
+            title: 'Old server song',
+            body: 'Old body',
+            createdAt: now,
+            updatedAt: now,
+          ),
+          SongsCompanion.insert(
+            id: 'custom-song',
+            title: 'Custom song',
+            body: 'Custom body',
+            source: const Value('custom'),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ]);
+      });
+      final json = await File('assets/data/songs.json').readAsString();
+      final bundledSongs = jsonDecode(json) as List<Object?>;
+
+      expect(bundledSongs, hasLength(1374));
+
+      await SeedService(
+        database,
+        assetBundle: _StringAssetBundle(json),
+      ).seedIfNeeded();
+
+      final songs = await database.select(database.songs).get();
+      final serverSongs = songs.where((song) => song.source == 'server');
+
+      expect(serverSongs, hasLength(bundledSongs.length + 1));
+      expect(songs.map((song) => song.id), contains('custom-song'));
+      expect(songs.map((song) => song.id), contains('old-server-song'));
+    },
+  );
+
+  test('new seed version upgrades an existing installation safely', () async {
     final now = DateTime.utc(2026, 8, 13);
+    final json = await File('assets/data/songs.json').readAsString();
+    final bundledSongs = jsonDecode(json) as List<Object?>;
+    final firstSong = bundledSongs.first as Map<String, Object?>;
+    final firstSongId = firstSong['id']! as String;
+
     await database.batch((batch) {
       batch.insertAll(database.songs, [
         SongsCompanion.insert(
-          id: 'old-server-song',
-          title: 'Old server song',
-          body: 'Old body',
+          id: firstSongId,
+          title: 'Outdated bundled title',
+          body: 'Outdated bundled body',
           createdAt: now,
           updatedAt: now,
         ),
@@ -70,8 +117,15 @@ void main() {
           updatedAt: now,
         ),
       ]);
+      batch.insert(
+        database.appMetadata,
+        AppMetadataCompanion.insert(
+          key: 'bundled_song_catalogue_version',
+          value: '3',
+          updatedAt: now,
+        ),
+      );
     });
-    final json = await File('assets/data/songs.json').readAsString();
 
     await SeedService(
       database,
@@ -79,11 +133,23 @@ void main() {
     ).seedIfNeeded();
 
     final songs = await database.select(database.songs).get();
-    final serverSongs = songs.where((song) => song.source == 'server');
+    final marker =
+        await (database.select(
+              database.appMetadata,
+            )..where((row) => row.key.equals('bundled_song_catalogue_version')))
+            .getSingle();
+    final upgradedSong = await (database.select(
+      database.songs,
+    )..where((row) => row.id.equals(firstSongId))).getSingle();
 
-    expect(serverSongs, hasLength(21));
+    expect(
+      songs.where((song) => song.source == 'server'),
+      hasLength(bundledSongs.length),
+    );
+    expect(marker.value, '4');
+    expect(upgradedSong.title, firstSong['title']);
+    expect(upgradedSong.body, firstSong['body']);
     expect(songs.map((song) => song.id), contains('custom-song'));
-    expect(songs.map((song) => song.id), contains('old-server-song'));
   });
 }
 

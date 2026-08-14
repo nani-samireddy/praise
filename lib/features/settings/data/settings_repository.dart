@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import 'telugu_font.dart';
 
 enum LyricsDisplayMode { primary, english, both }
 
@@ -11,11 +12,15 @@ abstract interface class SettingsRepository {
 
   Stream<LyricsDisplayMode> watchLyricsDisplayMode();
 
+  Stream<TeluguFont> watchTeluguFont();
+
   Future<void> setThemeMode(String value);
 
   Future<void> setLyricsFontSize(double value);
 
   Future<void> setLyricsDisplayMode(LyricsDisplayMode value);
+
+  Future<void> setTeluguFont(TeluguFont value);
 }
 
 class DriftSettingsRepository implements SettingsRepository {
@@ -24,6 +29,7 @@ class DriftSettingsRepository implements SettingsRepository {
   static const _themeModeKey = 'setting_theme_mode';
   static const _lyricsFontSizeKey = 'setting_lyrics_font_size';
   static const _lyricsDisplayModeKey = 'setting_lyrics_display_mode';
+  static const _teluguFontKey = 'setting_telugu_font';
 
   final AppDatabase _database;
 
@@ -69,6 +75,16 @@ class DriftSettingsRepository implements SettingsRepository {
   }
 
   @override
+  Stream<TeluguFont> watchTeluguFont() {
+    return _watchValue(_teluguFontKey).map(
+      (value) => TeluguFont.values.firstWhere(
+        (font) => font.name == value,
+        orElse: () => TeluguFont.system,
+      ),
+    );
+  }
+
+  @override
   Future<void> setThemeMode(String value) => _setValue(_themeModeKey, value);
 
   @override
@@ -80,5 +96,10 @@ class DriftSettingsRepository implements SettingsRepository {
   @override
   Future<void> setLyricsDisplayMode(LyricsDisplayMode value) {
     return _setValue(_lyricsDisplayModeKey, value.name);
+  }
+
+  @override
+  Future<void> setTeluguFont(TeluguFont value) {
+    return _setValue(_teluguFontKey, value.name);
   }
 }

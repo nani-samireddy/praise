@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../data/settings_repository.dart';
+import '../data/telugu_font.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return DriftSettingsRepository(ref.watch(databaseProvider));
@@ -27,4 +28,8 @@ final lyricsFontSizeProvider = StreamProvider<double>((ref) {
 
 final lyricsDisplayModeProvider = StreamProvider<LyricsDisplayMode>((ref) {
   return ref.watch(settingsRepositoryProvider).watchLyricsDisplayMode();
+});
+
+final teluguFontProvider = StreamProvider<TeluguFont>((ref) {
+  return ref.watch(settingsRepositoryProvider).watchTeluguFont();
 });

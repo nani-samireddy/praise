@@ -11,7 +11,7 @@ class SeedService {
 
   static const _assetPath = 'assets/data/songs.json';
   static const _seedVersionKey = 'bundled_song_catalogue_version';
-  static const _seedVersion = '3';
+  static const _seedVersion = '4';
 
   final AppDatabase _database;
   final AssetBundle _assetBundle;

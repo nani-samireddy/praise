@@ -46,6 +46,11 @@ def parse_args() -> argparse.Namespace:
         default=20,
         help="Number of leading songs to include in the Flutter bundle",
     )
+    parser.add_argument(
+        "--bundle-all",
+        action="store_true",
+        help="Include the complete catalogue in the Flutter bundle",
+    )
     return parser.parse_args()
 
 
@@ -197,9 +202,10 @@ def main() -> None:
     if args.bundle_output:
         if args.bundle_count < 1:
             raise ValueError("--bundle-count must be at least 1")
+        bundled_songs = songs if args.bundle_all else songs[: args.bundle_count]
         write_atomic(
             args.bundle_output,
-            json_bytes(songs[: args.bundle_count], pretty=True),
+            json_bytes(bundled_songs, pretty=True),
         )
     print(
         f"Built catalogue v{args.version}: {len(songs)} songs, "

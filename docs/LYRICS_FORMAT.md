@@ -39,9 +39,16 @@ are normalized to `[Repeat: Agni]`.
 - Section labels receive 24 logical pixels before them and use the theme accent.
 - Repeat cues receive 18 logical pixels before them and render as a small,
   lightly highlighted cue without an added label.
+- A section label or repeat cue receives 30 logical pixels after it before the
+  next lyric line. This is the visual equivalent of one additional blank line.
+- The outer primary/English lyrics heading receives 28 logical pixels before
+  its first content block.
 - Primary and English language blocks remain separate, with 32 logical pixels
   around the language divider.
 - Pinch scaling changes lyric text size while structural labels remain stable.
+- The selected Telugu typeface applies to the primary title, primary lyrics,
+  structural labels, repeat cues, and repeat counts. English lyrics continue to
+  use the app's default typeface.
 - A trailing repeat count from `×2` through `×12` renders as compact, lightly
   highlighted text. One song-level `Expand ×N` action expands every annotated
   line into plain repeated lines in both languages; `Compact` restores the
@@ -53,7 +60,7 @@ silently discards syntax it does not understand.
 ## Normalization workflow
 
 The original supplied CSV is never overwritten. Generate the maintained copy,
-review report, static catalogue, and bundled sample with:
+review report, static catalogue, and complete bundled catalogue with:
 
 ```powershell
 python tool/normalize_lyrics.py `
@@ -63,7 +70,7 @@ python tool/build_catalog.py `
   --input catalog/source/songs.normalized.csv `
   --version 3 `
   --bundle-output assets/data/songs.json `
-  --bundle-count 20
+  --bundle-all
 
 python tool/validate_catalog.py
 ```

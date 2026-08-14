@@ -102,8 +102,13 @@ The song reader shall:
 - preserve stanza and line breaks;
 - allow the song to be favourited;
 - allow the song to be added to a custom list;
+- allow the complete bilingual song to be copied as readable plain text;
+- allow the complete bilingual song to be shared through the platform share
+  sheet;
 - allow custom songs to be edited or deleted;
-- use the configured lyrics font size; and
+- use the configured lyrics font size and Telugu typeface;
+- visually separate structural labels and repeat cues from the lyric line that
+  follows them; and
 - remain readable in light and dark themes.
 
 ### 6.3 Favourites
@@ -167,15 +172,18 @@ sync timestamp.
 ### 6.7 Initial catalogue
 
 The application shall bundle a JSON catalogue at
-`assets/data/songs.json`. On first launch, it shall import the bundle into an
-empty database and record that initialization has completed. It shall not
-re-import the bundle on subsequent launches.
+`assets/data/songs.json` containing the complete release catalogue. On first
+launch, it shall import the bundle and record its seed version. When an app
+release raises that seed version, it shall safely upsert the newer bundle.
+Bundled imports shall never overwrite custom songs or user-managed lists.
 
 ### 6.8 Settings
 
 V1 settings shall include:
 
 - lyrics font size;
+- Telugu typeface: system, Noto Sans Telugu, Noto Serif Telugu, Mandali, or
+  Ramabhadra;
 - theme preference: system, light, or dark;
 - latest successful catalogue sync time; and
 - a manual catalogue refresh action.
@@ -296,6 +304,6 @@ The following can be decided during implementation without blocking the initial
 architecture:
 
 - Whether server-deleted songs are soft-deleted or physically removed.
-- The initial bundled catalogue size and content ownership process.
+- The content ownership and publication approval process.
 - Minimum and maximum lyrics font sizes.
 - Whether search ignores punctuation and diacritics in V1.

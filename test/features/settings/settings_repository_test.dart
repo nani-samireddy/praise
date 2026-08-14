@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:praise/core/database/app_database.dart';
 import 'package:praise/features/settings/data/settings_repository.dart';
+import 'package:praise/features/settings/data/telugu_font.dart';
 
 void main() {
   late AppDatabase database;
@@ -23,10 +24,12 @@ void main() {
       await repository.watchLyricsDisplayMode().first,
       LyricsDisplayMode.both,
     );
+    expect(await repository.watchTeluguFont().first, TeluguFont.system);
 
     await repository.setThemeMode('dark');
     await repository.setLyricsFontSize(27.5);
     await repository.setLyricsDisplayMode(LyricsDisplayMode.english);
+    await repository.setTeluguFont(TeluguFont.notoSerifTelugu);
 
     final reopenedRepository = DriftSettingsRepository(database);
     expect(await reopenedRepository.watchThemeMode().first, 'dark');
@@ -34,6 +37,10 @@ void main() {
     expect(
       await reopenedRepository.watchLyricsDisplayMode().first,
       LyricsDisplayMode.english,
+    );
+    expect(
+      await reopenedRepository.watchTeluguFont().first,
+      TeluguFont.notoSerifTelugu,
     );
   });
 

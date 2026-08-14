@@ -12,10 +12,12 @@ record.
 The repository contains the foundation, offline catalogue, local search,
 favorites, custom-song CRUD, automatic My Songs membership, complete local list
 management, persistent themes and reading preferences, and a bilingual reader
-with saved pinch scaling. Static catalogue generation, strict snapshot sync,
-pull-to-refresh, refresh status, and GitHub Pages deployment are implemented.
-Publishing requires the final GitHub Pages URL and review of generated lyrics
-warnings.
+with saved pinch scaling, persistent Telugu typeface selection, and deliberate
+spacing after structural labels. Four Telugu families are bundled locally from
+Google Fonts, so changing fonts never requires network access. Static catalogue
+generation, strict snapshot sync, pull-to-refresh, refresh status, and GitHub
+Pages deployment are implemented. Publishing requires the final GitHub Pages
+URL and review of generated lyrics warnings.
 
 The directory is initialized as a Git repository. Preserve unrelated working
 tree changes when preparing catalogue or application commits.
@@ -186,6 +188,8 @@ list sizes are small enough for a straightforward update.
 
 - Persist system/light/dark theme mode.
 - Persist and apply lyrics font size.
+- Bundle licensed Telugu typefaces and persist the selected family.
+- Apply additional vertical separation after structural labels and repeat cues.
 - Verify layouts with large text scale and narrow Android devices.
 - Add semantic labels and tooltips to icon actions.
 - Review empty states and error messages.

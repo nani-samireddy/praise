@@ -10,6 +10,7 @@ technical boundaries, and the proposed delivery sequence are documented here:
 - [Technical architecture](docs/ARCHITECTURE.md)
 - [Implementation notes](docs/IMPLEMENTATION_NOTES.md)
 - [Canonical lyrics format](docs/LYRICS_FORMAT.md)
+- [Bundled font licenses](docs/FONT_LICENSES.md)
 
 ## Planned stack
 
@@ -22,11 +23,13 @@ technical boundaries, and the proposed delivery sequence are documented here:
 
 ## Current state
 
-The offline library seeds 20 normalized songs and supports local search,
+The offline library seeds all 1,374 normalized songs and supports local search,
 favorites, custom-song CRUD, automatic My Songs membership, user-defined list
 management, song ordering, persistent reading preferences, formatted repeat
-cues, and pinch-to-resize lyrics. A versioned GitHub Pages catalogue provides
-manual snapshot synchronization without a maintained application server.
+cues, copy/share actions, pinch-to-resize lyrics, and five persistent Telugu
+typeface choices (system plus four bundled Google Fonts families). A versioned
+GitHub Pages catalogue provides manual snapshot synchronization without a
+maintained application server.
 
 ## Baseline commands
 

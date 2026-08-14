@@ -94,7 +94,7 @@ interfaces or mapping layers solely to mirror a theoretical architecture.
 | Favourites | Local user | No, except orphan cleanup |
 | Lists | Local user | No |
 | List membership and order | Local user | No, except orphan cleanup |
-| Theme and font size | Local user | No |
+| Theme, font size, and Telugu typeface | Local user | No |
 | Last catalogue sync time | Sync service | Only after successful sync |
 
 The `source` field on a song is the critical ownership boundary. Sync queries
@@ -158,7 +158,8 @@ membership.
 #### `settings`
 
 A small key/value table is sufficient for V1 preferences if a dedicated
-settings store is not used. It should support theme mode and lyrics font size.
+settings store is not used. It supports theme mode, lyrics font size, and the
+selected Telugu typeface family.
 
 ### 5.2 Indexing
 
@@ -208,7 +209,8 @@ Suggested responsibilities:
 ### `SettingsRepository`
 
 - watch and set theme mode;
-- watch and set lyrics font size; and
+- watch and set lyrics font size;
+- watch and set the Telugu typeface; and
 - expose the last successful sync timestamp.
 
 Repository interfaces are useful where tests or alternate implementations need

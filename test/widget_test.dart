@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:praise/app/app.dart';
@@ -5,8 +6,10 @@ import 'package:praise/core/database/app_database.dart';
 import 'package:praise/features/favorites/data/favorites_repository.dart';
 import 'package:praise/features/favorites/presentation/favorite_providers.dart';
 import 'package:praise/features/songs/data/song_repository.dart';
+import 'package:praise/features/songs/data/song_sharing_service.dart';
 import 'package:praise/features/songs/presentation/song_providers.dart';
 import 'package:praise/features/settings/data/settings_repository.dart';
+import 'package:praise/features/settings/data/telugu_font.dart';
 import 'package:praise/features/settings/presentation/settings_providers.dart';
 
 void main() {
@@ -26,11 +29,13 @@ void main() {
       updatedAt: now,
       isDeleted: false,
     );
+    final sharingService = _FakeSongSharingService();
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           songRepositoryProvider.overrideWithValue(_FakeSongRepository(song)),
+          songSharingServiceProvider.overrideWithValue(sharingService),
           favoritesRepositoryProvider.overrideWithValue(
             const _FakeFavoritesRepository(),
           ),
@@ -52,7 +57,37 @@ void main() {
     expect(find.text('ప్రధాన గీతము'), findsOneWidget);
     expect(find.text('Primary English lyrics'), findsOneWidget);
     expect(find.text('Test Author'), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.text(song.body)).style?.fontFamily,
+      TeluguFont.notoSansTelugu.fontFamily,
+    );
+
+    await tester.tap(find.byTooltip('Copy or share song'));
+    await _pumpFrames(tester);
+    await tester.tap(find.text('Copy song'));
+    await _pumpFrames(tester);
+    expect(sharingService.copiedSong, song);
+    expect(find.text('Song copied.'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Copy or share song'));
+    await _pumpFrames(tester);
+    await tester.tap(find.text('Share song'));
+    await _pumpFrames(tester);
+    expect(sharingService.sharedSong, song);
   });
+}
+
+class _FakeSongSharingService implements SongSharingService {
+  Song? copiedSong;
+  Song? sharedSong;
+
+  @override
+  Future<void> copySong(Song song) async => copiedSong = song;
+
+  @override
+  Future<void> shareSong(Song song, {Rect? sharePositionOrigin}) async {
+    sharedSong = song;
+  }
 }
 
 class _FakeSongRepository implements SongRepository {
@@ -105,8 +140,15 @@ class _FakeSettingsRepository implements SettingsRepository {
   Future<void> setThemeMode(String value) async {}
 
   @override
+  Future<void> setTeluguFont(TeluguFont value) async {}
+
+  @override
   Stream<LyricsDisplayMode> watchLyricsDisplayMode() =>
       Stream.value(LyricsDisplayMode.both);
+
+  @override
+  Stream<TeluguFont> watchTeluguFont() =>
+      Stream.value(TeluguFont.notoSansTelugu);
 
   @override
   Stream<double> watchLyricsFontSize() => Stream.value(19);

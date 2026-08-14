@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../favorites/presentation/favorite_button.dart';
+import '../../settings/data/telugu_font.dart';
+import '../../settings/presentation/settings_providers.dart';
 
 class SongListCard extends ConsumerWidget {
   const SongListCard({super.key, required this.song});
@@ -15,6 +17,8 @@ class SongListCard extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final englishTitle = song.englishTitle;
     final author = song.author;
+    final teluguFont =
+        ref.watch(teluguFontProvider).valueOrNull ?? TeluguFont.system;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -42,7 +46,10 @@ class SongListCard extends ConsumerWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700),
+                                ?.copyWith(
+                                  fontFamily: teluguFont.fontFamily,
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                         ),
                         if (song.source == 'custom') ...[

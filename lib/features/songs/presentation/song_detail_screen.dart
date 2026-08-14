@@ -6,9 +6,13 @@ import '../../../core/database/app_database.dart';
 import '../../collections/presentation/add_to_list_sheet.dart';
 import '../../favorites/presentation/favorite_button.dart';
 import '../../settings/data/settings_repository.dart';
+import '../../settings/data/telugu_font.dart';
 import '../../settings/presentation/settings_providers.dart';
+import '../data/song_sharing_service.dart';
 import 'formatted_lyrics.dart';
 import 'song_providers.dart';
+
+enum _SongAction { copy, share, edit, delete }
 
 class SongDetailScreen extends ConsumerWidget {
   const SongDetailScreen({super.key, required this.songId});
@@ -39,19 +43,51 @@ class SongDetailScreen extends ConsumerWidget {
                 tooltip: 'Add to list',
                 icon: const Icon(Icons.playlist_add),
               ),
-              if (value.source == 'custom') ...[
-                IconButton(
-                  onPressed: () =>
-                      context.push('/custom-song/${value.id}/edit'),
-                  tooltip: 'Edit song',
-                  icon: const Icon(Icons.edit_outlined),
+              Builder(
+                builder: (actionContext) => PopupMenuButton<_SongAction>(
+                  tooltip: 'Copy or share song',
+                  icon: const Icon(Icons.ios_share_outlined),
+                  onSelected: (action) =>
+                      _handleSongAction(actionContext, ref, value, action),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: _SongAction.copy,
+                      child: ListTile(
+                        leading: Icon(Icons.copy_outlined),
+                        title: Text('Copy song'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: _SongAction.share,
+                      child: ListTile(
+                        leading: Icon(Icons.share_outlined),
+                        title: Text('Share song'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    if (value.source == 'custom') ...[
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: _SongAction.edit,
+                        child: ListTile(
+                          leading: Icon(Icons.edit_outlined),
+                          title: Text('Edit song'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: _SongAction.delete,
+                        child: ListTile(
+                          leading: Icon(Icons.delete_outline),
+                          title: Text('Delete song'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                IconButton(
-                  onPressed: () => _deleteSong(context, ref, value),
-                  tooltip: 'Delete song',
-                  icon: const Icon(Icons.delete_outline),
-                ),
-              ],
+              ),
             ],
           ),
           body: _SongReader(song: value),
@@ -66,6 +102,51 @@ class SongDetailScreen extends ConsumerWidget {
         body: _DetailError(onRetry: () => ref.invalidate(songProvider(songId))),
       ),
     );
+  }
+
+  Future<void> _handleSongAction(
+    BuildContext context,
+    WidgetRef ref,
+    Song song,
+    _SongAction action,
+  ) async {
+    switch (action) {
+      case _SongAction.copy:
+        try {
+          await ref.read(songSharingServiceProvider).copySong(song);
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('Song copied.')));
+        } catch (_) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not copy the song.')),
+          );
+        }
+        return;
+      case _SongAction.share:
+        try {
+          final renderBox = context.findRenderObject() as RenderBox?;
+          final origin = renderBox == null
+              ? null
+              : renderBox.localToGlobal(Offset.zero) & renderBox.size;
+          await ref
+              .read(songSharingServiceProvider)
+              .shareSong(song, sharePositionOrigin: origin);
+        } catch (_) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not share the song.')),
+          );
+        }
+        return;
+      case _SongAction.edit:
+        await context.push('/custom-song/${song.id}/edit');
+        return;
+      case _SongAction.delete:
+        await _deleteSong(context, ref, song);
+        return;
+    }
   }
 
   Future<void> _deleteSong(
@@ -142,6 +223,8 @@ class _SongReaderState extends ConsumerState<_SongReader> {
     final displayMode =
         ref.watch(lyricsDisplayModeProvider).valueOrNull ??
         LyricsDisplayMode.both;
+    final teluguFont =
+        ref.watch(teluguFontProvider).valueOrNull ?? TeluguFont.system;
     if (!_loadedFontSize) {
       _fontSize = storedFontSize;
       _scaleStartFontSize = storedFontSize;
@@ -203,8 +286,11 @@ class _SongReaderState extends ConsumerState<_SongReader> {
             if (showPrimaryTitle)
               Text(
                 widget.song.title,
-                style: Theme.of(context).textTheme.headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.w800, height: 1.25),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontFamily: teluguFont.fontFamily,
+                  fontWeight: FontWeight.w800,
+                  height: 1.25,
+                ),
               ),
             if (showEnglishTitle) ...[
               const SizedBox(height: 8),
@@ -240,6 +326,7 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                 label: showEnglish ? 'Primary lyrics' : 'Lyrics',
                 body: widget.song.body,
                 fontSize: _fontSize,
+                fontFamily: teluguFont.fontFamily,
                 expandCounts: _expandCounts,
               ),
             if (showEnglish) ...[
@@ -250,6 +337,7 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                 label: 'English lyrics',
                 body: englishBody,
                 fontSize: _fontSize,
+                fontFamily: null,
                 expandCounts: _expandCounts,
               ),
             ],
@@ -265,12 +353,14 @@ class _LyricsSection extends StatelessWidget {
     required this.label,
     required this.body,
     required this.fontSize,
+    required this.fontFamily,
     required this.expandCounts,
   });
 
   final String label;
   final String body;
   final double fontSize;
+  final String? fontFamily;
   final bool expandCounts;
 
   @override
@@ -286,10 +376,11 @@ class _LyricsSection extends StatelessWidget {
             letterSpacing: 1.1,
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 28),
         FormattedLyrics(
           body: body,
           fontSize: fontSize,
+          fontFamily: fontFamily,
           expandCounts: expandCounts,
         ),
       ],

@@ -5,6 +5,7 @@ import '../../../core/config/app_config.dart';
 import '../../catalogue_sync/presentation/catalogue_sync_feedback.dart';
 import '../../catalogue_sync/presentation/catalogue_sync_providers.dart';
 import '../data/settings_repository.dart';
+import '../data/telugu_font.dart';
 import 'settings_providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -43,6 +44,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final displayMode =
         ref.watch(lyricsDisplayModeProvider).valueOrNull ??
         LyricsDisplayMode.both;
+    final teluguFont =
+        ref.watch(teluguFontProvider).valueOrNull ?? TeluguFont.system;
     final syncState = ref.watch(catalogueSyncControllerProvider);
     final catalogueStatus = ref.watch(catalogueStatusProvider).valueOrNull;
 
@@ -139,6 +142,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       child: const Text('Reset'),
                     ),
                   ),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Telugu typeface',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<TeluguFont>(
+                    key: ValueKey(teluguFont),
+                    initialValue: teluguFont,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.font_download_outlined),
+                    ),
+                    items: [
+                      for (final font in TeluguFont.values)
+                        DropdownMenuItem(
+                          value: font,
+                          child: Text(
+                            '${font.label}  •  తెలుగు',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontFamily: font.fontFamily),
+                          ),
+                        ),
+                    ],
+                    onChanged: (font) {
+                      if (font == null) return;
+                      ref.read(settingsRepositoryProvider).setTeluguFont(font);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(
+                      'ఆరాధన • యేసు నామం • స్తోత్ర గీతం',
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontFamily: teluguFont.fontFamily),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   const Divider(),
                   const SizedBox(height: 12),
                   const Text(

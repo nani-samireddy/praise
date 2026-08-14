@@ -7,11 +7,13 @@ class FormattedLyrics extends StatelessWidget {
     super.key,
     required this.body,
     required this.fontSize,
+    this.fontFamily,
     this.expandCounts = false,
   });
 
   final String body;
   final double fontSize;
+  final String? fontFamily;
   final bool expandCounts;
 
   @override
@@ -21,10 +23,12 @@ class FormattedLyrics extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (var index = 0; index < blocks.length; index++) ...[
-          if (index > 0) SizedBox(height: _spacingBefore(blocks[index])),
+          if (index > 0)
+            SizedBox(height: _spacingBetween(blocks[index - 1], blocks[index])),
           _LyricsBlockView(
             block: blocks[index],
             fontSize: fontSize,
+            fontFamily: fontFamily,
             expandCounts: expandCounts,
           ),
         ],
@@ -32,8 +36,12 @@ class FormattedLyrics extends StatelessWidget {
     );
   }
 
-  double _spacingBefore(LyricsBlock block) {
-    return switch (block.type) {
+  double _spacingBetween(LyricsBlock previous, LyricsBlock current) {
+    if (previous.type != LyricsBlockType.lyrics &&
+        current.type == LyricsBlockType.lyrics) {
+      return 30;
+    }
+    return switch (current.type) {
       LyricsBlockType.section => 24,
       LyricsBlockType.repeat => 18,
       LyricsBlockType.lyrics => 20,
@@ -45,11 +53,13 @@ class _LyricsBlockView extends StatelessWidget {
   const _LyricsBlockView({
     required this.block,
     required this.fontSize,
+    required this.fontFamily,
     required this.expandCounts,
   });
 
   final LyricsBlock block;
   final double fontSize;
+  final String? fontFamily;
   final bool expandCounts;
 
   @override
@@ -60,11 +70,13 @@ class _LyricsBlockView extends StatelessWidget {
       LyricsBlockType.lyrics => _LyricsLines(
         text: block.text,
         fontSize: fontSize,
+        fontFamily: fontFamily,
         expandCounts: expandCounts,
       ),
       LyricsBlockType.section => Text(
         block.text.toUpperCase(),
         style: theme.textTheme.labelLarge?.copyWith(
+          fontFamily: fontFamily,
           color: colors.primary,
           fontWeight: FontWeight.w800,
           letterSpacing: 1,
@@ -80,6 +92,7 @@ class _LyricsBlockView extends StatelessWidget {
           child: Text(
             block.text,
             style: theme.textTheme.labelMedium?.copyWith(
+              fontFamily: fontFamily,
               color: colors.onSecondaryContainer,
               fontWeight: FontWeight.w700,
             ),
@@ -94,11 +107,13 @@ class _LyricsLines extends StatelessWidget {
   const _LyricsLines({
     required this.text,
     required this.fontSize,
+    required this.fontFamily,
     required this.expandCounts,
   });
 
   final String text;
   final double fontSize;
+  final String? fontFamily;
   final bool expandCounts;
 
   @override
@@ -110,6 +125,7 @@ class _LyricsLines extends StatelessWidget {
           _LyricsLine(
             line: line,
             fontSize: fontSize,
+            fontFamily: fontFamily,
             expandCount: expandCounts,
           ),
       ],
@@ -121,18 +137,20 @@ class _LyricsLine extends StatelessWidget {
   const _LyricsLine({
     required this.line,
     required this.fontSize,
+    required this.fontFamily,
     required this.expandCount,
   });
 
   final String line;
   final double fontSize;
+  final String? fontFamily;
   final bool expandCount;
 
   @override
   Widget build(BuildContext context) {
     final repeatable = parseRepeatableLyricsLine(line);
     final style = Theme.of(context).textTheme.bodyLarge
-        ?.copyWith(fontSize: fontSize, height: 1.5);
+        ?.copyWith(fontSize: fontSize, fontFamily: fontFamily, height: 1.5);
     if (repeatable == null) return Text(line, style: style);
 
     final countLabel = DecoratedBox(
@@ -146,6 +164,7 @@ class _LyricsLine extends StatelessWidget {
         child: Text(
           '×${repeatable.repeatCount}',
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontFamily: fontFamily,
             color: Theme.of(context).colorScheme.onPrimaryContainer,
             fontWeight: FontWeight.w800,
           ),
