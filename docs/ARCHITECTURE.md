@@ -240,8 +240,12 @@ The server repository publishes its `main` branch root through GitHub Pages.
 The manifest URL is supplied with:
 
 ```text
---dart-define=CATALOG_MANIFEST_URL=https://USERNAME.github.io/REPOSITORY/catalog/manifest.json
+https://nani-samireddy.github.io/praise-catalog/catalog/manifest.json
 ```
+
+This production URL is the default application configuration. A
+`CATALOG_MANIFEST_URL` compile-time definition may override it for development
+or staging builds.
 
 `manifest.json` contains the schema version, monotonically increasing catalogue
 version, generation timestamp, song count, SHA-256 checksum, and a relative URL

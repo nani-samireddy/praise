@@ -1,0 +1,12 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:praise/core/config/app_config.dart';
+
+void main() {
+  test('uses the production catalogue by default', () {
+    expect(
+      AppConfig.catalogueManifestUrl,
+      'https://nani-samireddy.github.io/praise-catalog/catalog/manifest.json',
+    );
+    expect(AppConfig.isCatalogueSyncConfigured, isTrue);
+  });
+}

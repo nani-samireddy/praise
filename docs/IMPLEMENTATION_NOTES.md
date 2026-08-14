@@ -260,8 +260,13 @@ dart run build_runner watch --delete-conflicting-outputs
 Run against a local API from an Android emulator:
 
 ```powershell
-flutter run --dart-define=CATALOG_MANIFEST_URL=https://USERNAME.github.io/REPOSITORY/catalog/manifest.json
+flutter run
 ```
+
+Production builds default to
+`https://nani-samireddy.github.io/praise-catalog/catalog/manifest.json`. Use
+`--dart-define=CATALOG_MANIFEST_URL=...` only to target a development or staging
+catalogue.
 
 Do not commit secrets through `--dart-define`; it is configuration, not secure
 secret storage.

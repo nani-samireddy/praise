@@ -43,14 +43,17 @@ runtime, database, billing account, or scheduled maintenance.
 The published manifest URL is:
 
 ```text
-https://OWNER.github.io/REPOSITORY/catalog/manifest.json
+https://nani-samireddy.github.io/praise-catalog/catalog/manifest.json
 ```
 
 Use that URL for application builds:
 
 ```powershell
-flutter build apk --dart-define=CATALOG_MANIFEST_URL=https://OWNER.github.io/REPOSITORY/catalog/manifest.json
+flutter build apk
 ```
+
+The production URL is the app default. A `CATALOG_MANIFEST_URL` dart-define is
+needed only when intentionally overriding it for development or staging.
 
 ## Publishing behavior
 

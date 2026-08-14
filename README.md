@@ -41,14 +41,17 @@ flutter test
 flutter run
 ```
 
-Configure a published catalogue when running or building:
+Normal builds use the production catalogue automatically:
 
 ```powershell
-flutter run --dart-define=CATALOG_MANIFEST_URL=https://USERNAME.github.io/REPOSITORY/catalog/manifest.json
+flutter run
 ```
 
-Without this value the complete offline application remains usable and the
-remote refresh action is disabled.
+Override the catalogue only for development or staging:
+
+```powershell
+flutter run --dart-define=CATALOG_MANIFEST_URL=https://example.test/catalog/manifest.json
+```
 
 Catalogue publishing is intentionally separated from the application
 repository. After the one-time GitHub configuration, every push to `main`
