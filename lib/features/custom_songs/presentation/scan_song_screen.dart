@@ -170,7 +170,7 @@ class _ScanInstructions extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Photograph printed or handwritten lyrics',
+              'Photograph printed lyrics or clear screen text',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium,
             ),
