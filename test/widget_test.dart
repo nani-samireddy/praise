@@ -71,15 +71,29 @@ void main() {
 
     await tester.tap(find.byTooltip('Copy or share song'));
     await _pumpFrames(tester);
-    await tester.tap(find.text('Share song'));
+    await tester.tap(find.text('Share as text'));
     await _pumpFrames(tester);
     expect(sharingService.sharedSong, song);
+
+    await tester.tap(find.byTooltip('Copy or share song'));
+    await _pumpFrames(tester);
+    await tester.tap(find.text('Share as image'));
+    await _pumpFrames(tester);
+    expect(sharingService.sharedImageSong, song);
+
+    await tester.tap(find.byTooltip('Copy or share song'));
+    await _pumpFrames(tester);
+    await tester.tap(find.text('Share as PDF'));
+    await _pumpFrames(tester);
+    expect(sharingService.sharedPdfSong, song);
   });
 }
 
 class _FakeSongSharingService implements SongSharingService {
   Song? copiedSong;
   Song? sharedSong;
+  Song? sharedImageSong;
+  Song? sharedPdfSong;
 
   @override
   Future<void> copySong(Song song) async => copiedSong = song;
@@ -87,6 +101,16 @@ class _FakeSongSharingService implements SongSharingService {
   @override
   Future<void> shareSong(Song song, {Rect? sharePositionOrigin}) async {
     sharedSong = song;
+  }
+
+  @override
+  Future<void> shareSongImage(Song song, {Rect? sharePositionOrigin}) async {
+    sharedImageSong = song;
+  }
+
+  @override
+  Future<void> shareSongPdf(Song song, {Rect? sharePositionOrigin}) async {
+    sharedPdfSong = song;
   }
 }
 

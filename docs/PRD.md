@@ -103,8 +103,8 @@ The song reader shall:
 - allow the song to be favourited;
 - allow the song to be added to a custom list;
 - allow the complete bilingual song to be copied as readable plain text;
-- allow the complete bilingual song to be shared through the platform share
-  sheet;
+- allow the complete bilingual song to be shared as text, image, or paginated
+  PDF through the platform share sheet;
 - allow custom songs to be edited or deleted;
 - use the configured lyrics font size and Telugu typeface;
 - visually separate structural labels and repeat cues from the lyric line that
@@ -148,7 +148,9 @@ Users shall be able to:
 - copy an ordered list as readable text;
 - share an ordered list as text or a generated image through the platform share
   sheet; and
-- share an ordered list as a paginated PDF with embedded Telugu font support.
+- share an ordered list as a paginated PDF with embedded Telugu font support;
+- let the user choose whether list images and PDFs contain only the song index
+  or every song's complete lyrics.
 
 Example list names include Sunday Worship, Youth Meeting, Christmas, and Prayer
 Meeting.
@@ -306,12 +308,12 @@ a maintained application server.
 
 ### Share formats roadmap
 
-V1 supports text, image, and PDF exports for complete lists. V2 expands those
-formats to individual songs and adds an importable list package:
+V1 supports text, image, and PDF exports for individual songs and complete
+lists. V2 adds an importable list package:
 
 | Content | Text | Image | PDF | Importable Praise package |
 | --- | --- | --- | --- | --- |
-| Song | V1 | V2 | V2 | No |
+| Song | V1 | V1 | V1 | No |
 | List | V1 | V1 | V1 | V2 |
 
 - Text remains optimized for copying, messaging, and recipients without Praise.
@@ -319,8 +321,9 @@ formats to individual songs and adds an importable list package:
   language content and display typography.
 - PDF export preserves titles, authors, song order, lyric structure, page
   breaks, and Telugu font rendering.
-- The user previews the output and chooses Telugu, English, or bilingual content
-  before sharing when translations are available.
+- Song exports include Telugu and English content when both are available.
+- List image and PDF export offers a compact song index or complete lyrics for
+  every song in list order.
 - Generation happens on the device and uses the platform share sheet; no
   upload service is required.
 - Oversized image output offers PDF instead of generating an unreadable or
@@ -343,6 +346,8 @@ rights messaging, must be decided before implementation.
 - [x] Lists can be created, renamed, deleted, populated, and reordered.
 - [x] Lists can be copied and shared as readable ordered text.
 - [x] Lists can be shared as an on-device PNG or paginated PDF.
+- [x] Songs can be shared as an on-device PNG or paginated PDF.
+- [x] List PNG/PDF export can include every song's full lyrics.
 - [x] Refresh inserts and updates server songs.
 - [x] Refresh hides server songs absent from the snapshot.
 - [x] Refresh never modifies custom songs.

@@ -392,12 +392,13 @@ Create lightweight ADRs if the team changes any of these decisions:
 
 ## 17. List-sharing boundary
 
-V1 formats the current local list and its ordered song query as plain text, PNG,
-or PDF, then passes the result to the clipboard or operating-system share sheet.
-PNG rendering is height-bounded and redirects oversized lists to PDF. PDF
-rendering is paginated and embeds the bundled Noto Sans Telugu font. This path
-is read-only, creates no persistent export record, and requires no network
-access.
+V1 formats the current local song or ordered list query as plain text, PNG, or
+PDF, then passes the result to the clipboard or operating-system share sheet.
+List presentation exports can contain an index of titles and authors or the
+complete bilingual lyrics for each song. PNG rendering is height-bounded and
+redirects oversized content to PDF. PDF rendering is paginated and embeds the
+bundled Noto Sans Telugu font. This path is read-only, creates no persistent
+export record, and requires no network access.
 
 ### V2 importable lists
 
@@ -422,7 +423,7 @@ shared lists require a separate architecture decision.
 
 ### On-device share rendering
 
-Song and list sharing should build one neutral export document model and pass it
+Song and list sharing build one neutral export document model and pass it
 to format-specific renderers for plain text, image, and PDF. This keeps song
 ordering, titles, authors, language selection, lyric structure, and repeat cues
 consistent across formats.

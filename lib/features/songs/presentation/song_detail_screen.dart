@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/export/export_document_renderer.dart';
 import '../../collections/presentation/add_to_list_sheet.dart';
 import '../../favorites/presentation/favorite_button.dart';
 import '../../settings/data/settings_repository.dart';
@@ -12,7 +13,7 @@ import '../data/song_sharing_service.dart';
 import 'formatted_lyrics.dart';
 import 'song_providers.dart';
 
-enum _SongAction { copy, share, edit, delete }
+enum _SongAction { copy, shareText, shareImage, sharePdf, edit, delete }
 
 class SongDetailScreen extends ConsumerWidget {
   const SongDetailScreen({super.key, required this.songId});
@@ -59,10 +60,26 @@ class SongDetailScreen extends ConsumerWidget {
                       ),
                     ),
                     const PopupMenuItem(
-                      value: _SongAction.share,
+                      value: _SongAction.shareText,
                       child: ListTile(
                         leading: Icon(Icons.share_outlined),
-                        title: Text('Share song'),
+                        title: Text('Share as text'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: _SongAction.shareImage,
+                      child: ListTile(
+                        leading: Icon(Icons.image_outlined),
+                        title: Text('Share as image'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: _SongAction.sharePdf,
+                      child: ListTile(
+                        leading: Icon(Icons.picture_as_pdf_outlined),
+                        title: Text('Share as PDF'),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
@@ -124,19 +141,46 @@ class SongDetailScreen extends ConsumerWidget {
           );
         }
         return;
-      case _SongAction.share:
+      case _SongAction.shareText:
         try {
-          final renderBox = context.findRenderObject() as RenderBox?;
-          final origin = renderBox == null
-              ? null
-              : renderBox.localToGlobal(Offset.zero) & renderBox.size;
           await ref
               .read(songSharingServiceProvider)
-              .shareSong(song, sharePositionOrigin: origin);
+              .shareSong(song, sharePositionOrigin: _shareOrigin(context));
         } catch (_) {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Could not share the song.')),
+          );
+        }
+        return;
+      case _SongAction.shareImage:
+        try {
+          await ref
+              .read(songSharingServiceProvider)
+              .shareSongImage(song, sharePositionOrigin: _shareOrigin(context));
+        } on ExportImageTooLargeException {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('This song is too long for an image. Use PDF.'),
+            ),
+          );
+        } catch (_) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not share the song image.')),
+          );
+        }
+        return;
+      case _SongAction.sharePdf:
+        try {
+          await ref
+              .read(songSharingServiceProvider)
+              .shareSongPdf(song, sharePositionOrigin: _shareOrigin(context));
+        } catch (_) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not share the song PDF.')),
           );
         }
         return;
@@ -147,6 +191,13 @@ class SongDetailScreen extends ConsumerWidget {
         await _deleteSong(context, ref, song);
         return;
     }
+  }
+
+  Rect? _shareOrigin(BuildContext context) {
+    final renderBox = context.findRenderObject() as RenderBox?;
+    return renderBox == null
+        ? null
+        : renderBox.localToGlobal(Offset.zero) & renderBox.size;
   }
 
   Future<void> _deleteSong(

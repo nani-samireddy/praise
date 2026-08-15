@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/export/export_document_renderer.dart';
 import '../../favorites/presentation/favorite_button.dart';
 import '../../songs/presentation/song_list_card.dart';
-import '../data/collection_export_renderer.dart';
 import '../data/collection_sharing_service.dart';
 import 'collection_dialogs.dart';
 import 'collection_providers.dart';
@@ -204,14 +204,17 @@ class CollectionDetailScreen extends ConsumerWidget {
         return;
       case _CollectionAction.shareImage:
         try {
+          final includeSongs = await _chooseExportContent(context, 'image');
+          if (includeSongs == null || !context.mounted) return;
           await ref
               .read(collectionSharingServiceProvider)
               .shareCollectionImage(
                 collection,
                 songs,
+                includeSongs: includeSongs,
                 sharePositionOrigin: _shareOrigin(context),
               );
-        } on CollectionImageTooLargeException {
+        } on ExportImageTooLargeException {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -224,11 +227,14 @@ class CollectionDetailScreen extends ConsumerWidget {
         return;
       case _CollectionAction.sharePdf:
         try {
+          final includeSongs = await _chooseExportContent(context, 'PDF');
+          if (includeSongs == null || !context.mounted) return;
           await ref
               .read(collectionSharingServiceProvider)
               .shareCollectionPdf(
                 collection,
                 songs,
+                includeSongs: includeSongs,
                 sharePositionOrigin: _shareOrigin(context),
               );
         } catch (_) {
@@ -242,6 +248,45 @@ class CollectionDetailScreen extends ConsumerWidget {
         await _delete(context, ref, collection);
         return;
     }
+  }
+
+  Future<bool?> _chooseExportContent(BuildContext context, String format) {
+    return showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 12),
+                child: Text(
+                  'Export $format',
+                  style: Theme.of(sheetContext).textTheme.titleLarge,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.format_list_numbered),
+                title: const Text('Song list only'),
+                subtitle: const Text('Titles, English titles, and authors'),
+                onTap: () => Navigator.pop(sheetContext, false),
+              ),
+              ListTile(
+                leading: const Icon(Icons.library_music_outlined),
+                title: const Text('Full songs'),
+                subtitle: const Text(
+                  'Include Telugu and English lyrics for every song',
+                ),
+                onTap: () => Navigator.pop(sheetContext, true),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Rect? _shareOrigin(BuildContext context) {

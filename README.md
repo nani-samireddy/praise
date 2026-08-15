@@ -29,10 +29,10 @@ technical boundaries, and the proposed delivery sequence are documented here:
 The offline library seeds all 1,374 normalized songs and supports local search,
 favorites, custom-song CRUD, automatic My Songs membership, user-defined list
 management, song ordering, persistent reading preferences, formatted repeat
-cues, copy/share actions, pinch-to-resize lyrics, and five persistent Telugu
-typeface choices (system plus four bundled Google Fonts families). A versioned
-GitHub Pages catalogue provides manual snapshot synchronization without a
-maintained application server.
+cues, text/image/PDF sharing for songs and lists, full-lyrics list exports,
+pinch-to-resize lyrics, and five persistent Telugu typeface choices (system plus
+four bundled Google Fonts families). A versioned GitHub Pages catalogue provides
+manual snapshot synchronization without a maintained application server.
 
 ## Baseline commands
 

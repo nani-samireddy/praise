@@ -17,12 +17,14 @@ abstract interface class CollectionSharingService {
   Future<void> shareCollectionImage(
     SongCollection collection,
     List<Song> songs, {
+    bool includeSongs = false,
     Rect? sharePositionOrigin,
   });
 
   Future<void> shareCollectionPdf(
     SongCollection collection,
     List<Song> songs, {
+    bool includeSongs = false,
     Rect? sharePositionOrigin,
   });
 }
@@ -57,14 +59,20 @@ class PlatformCollectionSharingService implements CollectionSharingService {
   Future<void> shareCollectionImage(
     SongCollection collection,
     List<Song> songs, {
+    bool includeSongs = false,
     Rect? sharePositionOrigin,
   }) async {
-    final bytes = await buildCollectionImageBytes(collection, songs);
+    final bytes = await buildCollectionImageBytes(
+      collection,
+      songs,
+      includeSongs: includeSongs,
+    );
     await _shareFile(
       collection: collection,
       bytes: bytes,
       extension: 'png',
       mimeType: 'image/png',
+      includeSongs: includeSongs,
       sharePositionOrigin: sharePositionOrigin,
     );
   }
@@ -73,14 +81,20 @@ class PlatformCollectionSharingService implements CollectionSharingService {
   Future<void> shareCollectionPdf(
     SongCollection collection,
     List<Song> songs, {
+    bool includeSongs = false,
     Rect? sharePositionOrigin,
   }) async {
-    final bytes = await buildCollectionPdfBytes(collection, songs);
+    final bytes = await buildCollectionPdfBytes(
+      collection,
+      songs,
+      includeSongs: includeSongs,
+    );
     await _shareFile(
       collection: collection,
       bytes: bytes,
       extension: 'pdf',
       mimeType: 'application/pdf',
+      includeSongs: includeSongs,
       sharePositionOrigin: sharePositionOrigin,
     );
   }
@@ -90,9 +104,14 @@ class PlatformCollectionSharingService implements CollectionSharingService {
     required Uint8List bytes,
     required String extension,
     required String mimeType,
+    required bool includeSongs,
     Rect? sharePositionOrigin,
   }) async {
-    final fileName = collectionExportFileName(collection.name, extension);
+    final fileName = collectionExportFileName(
+      collection.name,
+      extension,
+      includeSongs: includeSongs,
+    );
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile.fromData(bytes, mimeType: mimeType)],

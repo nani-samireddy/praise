@@ -28,13 +28,42 @@ void main() {
           updatedAt: now,
           isDeleted: false,
         ),
+        Song(
+          id: 'two',
+          title: 'రెండవ పాట',
+          englishTitle: 'Second Song',
+          body: 'రెండవ పాట సాహిత్యం',
+          englishBody: 'Second song lyrics',
+          author: null,
+          source: 'local',
+          createdAt: now,
+          updatedAt: now,
+          isDeleted: false,
+        ),
       ];
 
-      final png = await buildCollectionImageBytes(collection, songs);
-      final pdf = await buildCollectionPdfBytes(collection, songs);
+      final png = await buildCollectionImageBytes(
+        collection,
+        songs,
+        includeSongs: true,
+      );
+      final pdf = await buildCollectionPdfBytes(
+        collection,
+        songs,
+        includeSongs: true,
+      );
 
       expect(png.take(8), [137, 80, 78, 71, 13, 10, 26, 10]);
       expect(String.fromCharCodes(pdf.take(4)), '%PDF');
+      final document = buildCollectionExportDocument(
+        collection,
+        songs,
+        includeSongs: true,
+      );
+      expect(document.subtitle, contains('Full lyrics'));
+      expect(document.sections, hasLength(2));
+      expect(document.sections.first.body, contains('Lyrics'));
+      expect(document.sections.last.pageBreakBefore, isTrue);
     });
   });
 
@@ -44,5 +73,9 @@ void main() {
       'Sunday- Worship - Songs-.pdf',
     );
     expect(collectionExportFileName('   ', 'png'), 'Praise list.png');
+    expect(
+      collectionExportFileName('Worship', 'pdf', includeSongs: true),
+      'Worship - full songs.pdf',
+    );
   });
 }
