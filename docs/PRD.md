@@ -135,6 +135,10 @@ Users shall be able to:
 - optionally use supported Android on-device AI to separate recognized text
   into title, English title, body, English body, and author fields without
   uploading the photo or OCR text;
+- format AI-organized lyrics as ordered lines and stanzas separated by a single
+  blank line, and normalize recognizable repetition counts to `×N`;
+- retain the complete OCR result when AI output fails content-preservation
+  validation;
 - review and correct recognized text in the custom-song form before saving;
 - edit and delete their own songs;
 - favourite custom songs; and

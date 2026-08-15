@@ -112,6 +112,10 @@ tests alongside the behavior they protect.
 - Add camera/gallery selection and offline Telugu-English OCR.
 - Detect Gemini Nano availability and offer optional on-device structured song
   extraction after OCR, with ordinary OCR parsing as the mandatory fallback.
+- Request ordered stanza/line arrays rather than a free-form body, render one
+  blank line between stanzas, and normalize OCR repetition cues to `×N`.
+- Reject AI formatting when content-coverage checks indicate that a substantial
+  portion of the OCR text was omitted or invented.
 - Pre-fill the custom-song form with normalized OCR text and require review
   before saving.
 - Generate a readable Latin-script title locally whenever a custom song is

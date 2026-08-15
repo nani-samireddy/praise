@@ -450,15 +450,23 @@ The recognized string crosses back into Flutter, where line endings and excess
 blank space are normalized. On Android devices with a supported AICore/Gemini
 Nano model, the scan screen offers a user-controlled second stage. ML Kit's
 Prompt API receives only the OCR text and uses a Kotlin Structured Output schema
-to extract title, English title, body, English body, and author. Model download,
-status checks, and inference remain on-device. This integration raises the
-Android minimum SDK to API 26.
+to extract title, English title, ordered primary/English stanza lists, and
+author. Native formatting joins lines inside each stanza and inserts exactly one
+blank line between stanzas. Common OCR repetition suffixes (`x2`, `*2`, and
+standalone `×2`) are normalized to a trailing `×2` cue that the song-level
+compact/expand control understands. Model download, status checks, and inference
+remain on-device. This integration raises the Android minimum SDK to API 26.
 
 If Gemini Nano or Structured Output is unavailable, still downloading, over
 quota, or returns invalid fields, Flutter immediately falls back to the simple
 parser: the first non-empty line becomes the suggested title and the complete
 recognized text remains the primary lyrics body. The review screen identifies
 whether AI organization succeeded or the OCR fallback was used.
+
+Before accepting AI output, Flutter compares its normalized content coverage
+with the original OCR string. A substantially shortened or invented result is
+discarded and the complete OCR text is used instead. The fallback normalizer
+still cleans repetition suffixes and excessive blank lines.
 
 The user must review the ordinary custom-song form before saving. Saving uses
 the existing custom-song repository transaction, including automatic My Songs

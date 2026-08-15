@@ -18,15 +18,28 @@ data class ExtractedSong(
     )
     val englishTitleFound: Boolean,
     @Guide(
-        description = "All original-language lyric lines with stanza line breaks preserved. Keep a title line here too when it is also part of the lyrics.",
+        description = "All original-language lyric stanzas in their original order. Never omit a lyric line.",
+        minItems = 1,
+        maxItems = 30,
     )
-    val body: String,
+    val stanzas: List<ExtractedStanza>,
     @Guide(
-        description = "English lyrics only when they are explicitly present in the OCR input. Otherwise return an empty string; do not translate.",
+        description = "English lyric stanzas only when separate English lyrics explicitly appear in the OCR input. Otherwise return an empty list; never translate.",
+        maxItems = 30,
     )
-    val englishBody: String,
+    val englishStanzas: List<ExtractedStanza>,
     @Guide(
         description = "The author only when explicitly identified in the OCR input. Otherwise return an empty string.",
     )
     val author: String,
+)
+
+@Generable("One ordered stanza or explicitly labelled section of song lyrics")
+data class ExtractedStanza(
+    @Guide(
+        description = "Every lyric line in this stanza, in order. Keep an explicit label such as [Chorus] as its own first line, but never invent labels.",
+        minItems = 1,
+        maxItems = 12,
+    )
+    val lines: List<String>,
 )
