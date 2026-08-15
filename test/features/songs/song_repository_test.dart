@@ -89,12 +89,29 @@ void main() {
     );
     song = await repository.watchSong(id).first;
     expect(song?.title, 'Updated');
-    expect(song?.englishTitle, isNull);
+    expect(song?.englishTitle, 'Updated');
 
     await repository.deleteCustomSong(id);
     expect(await repository.watchSong(id).first, isNull);
     expect(await database.select(database.collectionSongs).get(), isEmpty);
   });
+
+  test(
+    'generates an English title when a custom song leaves it blank',
+    () async {
+      final id = await repository.createCustomSong(
+        const SongInput(
+          title: 'పదే పదే నేను పాడుకోనా',
+          englishTitle: '   ',
+          body: 'ప్రతి చోట నీ మాట',
+        ),
+      );
+
+      final song = await repository.watchSong(id).first;
+
+      expect(song?.englishTitle, 'Pade Pade Nenu Paadukonaa');
+    },
+  );
 
   test('reuses My Songs and appends each new custom song', () async {
     final firstId = await repository.createCustomSong(

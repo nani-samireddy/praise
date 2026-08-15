@@ -3,6 +3,7 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
+    id("com.google.devtools.ksp")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -35,7 +36,7 @@ android {
         applicationId = "com.nanisamireddy.praise"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
         // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
@@ -80,4 +81,8 @@ flutter {
 
 dependencies {
     implementation("cz.adaptech.tesseract4android:tesseract4android:4.9.0")
+    implementation("com.google.mlkit:genai-prompt:1.0.0-beta4")
+    implementation("com.google.mlkit:genai-schema:1.0.0-alpha1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    ksp("com.google.mlkit:genai-schema-compiler:1.0.0-alpha1")
 }

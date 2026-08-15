@@ -447,12 +447,25 @@ Tesseract4Android on a background executor. Bundled `tel` and `eng` fast models
 provide Telugu and English recognition without uploading the selected image.
 
 The recognized string crosses back into Flutter, where line endings and excess
-blank space are normalized. The first non-empty line is suggested as the title,
-while the complete recognized text is retained as the primary lyrics body. The
-user must review the ordinary custom-song form before saving. Saving uses the
-existing custom-song repository transaction, including automatic My Songs
-membership; the source photo is temporary and is never stored in the database.
+blank space are normalized. On Android devices with a supported AICore/Gemini
+Nano model, the scan screen offers a user-controlled second stage. ML Kit's
+Prompt API receives only the OCR text and uses a Kotlin Structured Output schema
+to extract title, English title, body, English body, and author. Model download,
+status checks, and inference remain on-device. This integration raises the
+Android minimum SDK to API 26.
 
-OCR is assistance rather than an authoritative import. Errors return to the
+If Gemini Nano or Structured Output is unavailable, still downloading, over
+quota, or returns invalid fields, Flutter immediately falls back to the simple
+parser: the first non-empty line becomes the suggested title and the complete
+recognized text remains the primary lyrics body. The review screen identifies
+whether AI organization succeeded or the OCR fallback was used.
+
+The user must review the ordinary custom-song form before saving. Saving uses
+the existing custom-song repository transaction, including automatic My Songs
+membership; the source photo is temporary and is never stored in the database.
+At repository save time, a blank English title is filled by the deterministic
+Telugu-to-Latin transliterator. A user-provided English title is never replaced.
+
+OCR and on-device AI are assistance rather than an authoritative import. Errors return to the
 scan screen with retry guidance, empty recognition cannot proceed, and no text
 is saved until the user explicitly confirms the editable form.

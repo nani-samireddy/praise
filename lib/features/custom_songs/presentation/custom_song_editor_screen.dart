@@ -36,7 +36,10 @@ class _CustomSongEditorScreenState
     final draft = widget.scannedDraft;
     if (widget.songId == null && draft != null) {
       _titleController.text = draft.title;
+      _englishTitleController.text = draft.englishTitle ?? '';
       _bodyController.text = draft.body;
+      _englishBodyController.text = draft.englishBody ?? '';
+      _authorController.text = draft.author ?? '';
       _initialized = true;
     }
   }
@@ -126,12 +129,9 @@ class _CustomSongEditorScreenState
             if (widget.scannedDraft != null) ...[
               Card(
                 color: Theme.of(context).colorScheme.secondaryContainer,
-                child: const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'OCR can make mistakes. Check the title, line breaks, and '
-                    'lyrics before saving to My Songs.',
-                  ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(_scanReviewMessage(widget.scannedDraft!)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -210,6 +210,19 @@ class _CustomSongEditorScreenState
 
   static String? _requiredValidator(String? value) {
     return value == null || value.trim().isEmpty ? 'Required' : null;
+  }
+
+  static String _scanReviewMessage(ScannedSongDraft draft) {
+    if (draft.aiEnhanced) {
+      return 'On-device AI organized the OCR result. Check every field and '
+          'line break before saving to My Songs.';
+    }
+    if (draft.aiFallback) {
+      return 'On-device AI could not organize this scan, so the original OCR '
+          'result is shown. Check the title, line breaks, and lyrics.';
+    }
+    return 'OCR can make mistakes. Check the title, line breaks, and lyrics '
+        'before saving to My Songs.';
   }
 }
 

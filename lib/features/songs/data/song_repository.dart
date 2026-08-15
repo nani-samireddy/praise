@@ -1,4 +1,5 @@
 import '../../../core/database/app_database.dart';
+import '../../../core/text/telugu_transliterator.dart';
 
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
@@ -52,14 +53,16 @@ class DriftSongRepository implements SongRepository {
   Future<String> createCustomSong(SongInput input) async {
     final now = DateTime.now().toUtc();
     final id = 'custom-${_uuid.v4()}';
+    final title = _required(input.title, 'Title');
+    final englishTitle = _englishTitle(input.englishTitle, title);
     await _database.transaction(() async {
       await _database
           .into(_database.songs)
           .insert(
             SongsCompanion.insert(
               id: id,
-              title: _required(input.title, 'Title'),
-              englishTitle: Value(_optional(input.englishTitle)),
+              title: title,
+              englishTitle: Value(englishTitle),
               body: _required(input.body, 'Body'),
               englishBody: Value(_optional(input.englishBody)),
               author: Value(_optional(input.author)),
@@ -105,13 +108,14 @@ class DriftSongRepository implements SongRepository {
 
   @override
   Future<void> updateCustomSong(String id, SongInput input) async {
+    final title = _required(input.title, 'Title');
     final affected =
         await (_database.update(_database.songs)
               ..where((row) => row.id.equals(id) & row.source.equals('custom')))
             .write(
               SongsCompanion(
-                title: Value(_required(input.title, 'Title')),
-                englishTitle: Value(_optional(input.englishTitle)),
+                title: Value(title),
+                englishTitle: Value(_englishTitle(input.englishTitle, title)),
                 body: Value(_required(input.body, 'Body')),
                 englishBody: Value(_optional(input.englishBody)),
                 author: Value(_optional(input.author)),
@@ -142,5 +146,9 @@ class DriftSongRepository implements SongRepository {
   static String? _optional(String? value) {
     final trimmed = value?.trim();
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
+  }
+
+  static String _englishTitle(String? value, String title) {
+    return _optional(value) ?? transliterateTeluguTitle(title);
   }
 }

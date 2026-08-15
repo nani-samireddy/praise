@@ -128,9 +128,13 @@ by the database relationship or cleanup transaction.
 Users shall be able to:
 
 - create a song with title, optional English title, body, optional English
-  body, and optional author;
+  body, and optional author; when the English title is blank, the app shall
+  save a readable offline transliteration of the primary title;
 - take or choose a photo and recognize Telugu and English lyrics entirely on
   the Android device;
+- optionally use supported Android on-device AI to separate recognized text
+  into title, English title, body, English body, and author fields without
+  uploading the photo or OCR text;
 - review and correct recognized text in the custom-song form before saving;
 - edit and delete their own songs;
 - favourite custom songs; and

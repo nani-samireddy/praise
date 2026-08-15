@@ -9,6 +9,9 @@ void main() {
     const draft = ScannedSongDraft(
       title: 'పదే పదే నేను పాడుకోనా',
       body: 'పదే పదే నేను పాడుకోనా\nప్రతి చోట నీ మాట',
+      englishTitle: 'Pade Pade Nenu Paadukonaa',
+      author: 'Test Author',
+      aiEnhanced: true,
     );
 
     await tester.pumpWidget(
@@ -18,8 +21,15 @@ void main() {
     );
 
     expect(find.text('Review scanned song'), findsOneWidget);
-    expect(find.textContaining('OCR can make mistakes'), findsOneWidget);
+    expect(find.textContaining('On-device AI organized'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, draft.title), findsOneWidget);
     expect(find.widgetWithText(TextFormField, draft.body), findsOneWidget);
+    expect(
+      find.widgetWithText(TextFormField, 'Pade Pade Nenu Paadukonaa'),
+      findsOneWidget,
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -900));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextFormField, 'Test Author'), findsOneWidget);
   });
 }

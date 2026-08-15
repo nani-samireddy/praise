@@ -17,4 +17,41 @@ void main() {
     expect(draft.title, 'Scanned song');
     expect(draft.body, isEmpty);
   });
+
+  test('creates a complete draft from structured on-device AI fields', () {
+    final draft = createAiScannedSongDraft({
+      'title': '  పదే పదే  ',
+      'englishTitle': '  Pade Pade  ',
+      'body': 'పదే పదే  \n\n\nప్రతి చోట',
+      'englishBody': '',
+      'author': '  Test Author ',
+    }, recognizedText: 'పదే పదే\nPade Pade\nTest Author');
+
+    expect(draft.title, 'పదే పదే');
+    expect(draft.englishTitle, 'Pade Pade');
+    expect(draft.body, 'పదే పదే\n\nప్రతి చోట');
+    expect(draft.englishBody, isNull);
+    expect(draft.author, 'Test Author');
+    expect(draft.aiEnhanced, isTrue);
+  });
+
+  test('rejects incomplete structured AI output', () {
+    expect(
+      () => createAiScannedSongDraft({
+        'title': '',
+        'body': 'Lyrics',
+      }, recognizedText: 'Lyrics'),
+      throwsFormatException,
+    );
+  });
+
+  test('transliterates an AI title when no English heading was found', () {
+    final draft = createAiScannedSongDraft({
+      'title': 'పదే పదే నేను పాడుకోనా',
+      'englishTitle': 'Sing Again and Again',
+      'body': 'పదే పదే నేను పాడుకోనా x2',
+    }, recognizedText: 'పదే పదే నేను పాడుకోనా x2');
+
+    expect(draft.englishTitle, 'Pade Pade Nenu Paadukonaa');
+  });
 }

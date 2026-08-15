@@ -110,8 +110,12 @@ tests alongside the behavior they protect.
 - Build a reusable custom-song form with validation.
 - Implement custom song create, edit, and delete operations.
 - Add camera/gallery selection and offline Telugu-English OCR.
+- Detect Gemini Nano availability and offer optional on-device structured song
+  extraction after OCR, with ordinary OCR parsing as the mandatory fallback.
 - Pre-fill the custom-song form with normalized OCR text and require review
   before saving.
+- Generate a readable Latin-script title locally whenever a custom song is
+  saved without an English title. Never replace a non-empty user value.
 - Restrict custom-song mutations to `source = custom` records.
 - Add confirmation before destructive deletion.
 - Add persistence and CRUD tests.
@@ -119,7 +123,8 @@ tests alongside the behavior they protect.
 ### Suggested form validation
 
 - Title: required after trimming.
-- English title: optional.
+- English title: optional in the form; generated from the primary title at
+  repository save time when blank.
 - Body: required after trimming.
 - English body: optional.
 - Author: optional.

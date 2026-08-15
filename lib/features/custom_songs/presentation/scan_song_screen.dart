@@ -19,12 +19,27 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
   final _picker = ImagePicker();
   XFile? _image;
   bool _recognizing = false;
+  bool _checkingAi = true;
+  bool _useAi = false;
+  OnDeviceAiStatus _aiStatus = OnDeviceAiStatus.unavailable;
+  String _progressMessage = 'Reading Telugu and English text…';
   String? _error;
 
   @override
   void initState() {
     super.initState();
     _recoverLostImage();
+    _checkAiStatus();
+  }
+
+  Future<void> _checkAiStatus() async {
+    final status = await ref.read(songScanServiceProvider).getAiStatus();
+    if (!mounted) return;
+    setState(() {
+      _aiStatus = status;
+      _checkingAi = false;
+      _useAi = status != OnDeviceAiStatus.unavailable;
+    });
   }
 
   Future<void> _recoverLostImage() async {
@@ -53,6 +68,7 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
     setState(() {
       _image = image;
       _recognizing = true;
+      _progressMessage = 'Reading Telugu and English text…';
       _error = null;
     });
     try {
@@ -67,10 +83,19 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
         });
         return;
       }
-      context.pushReplacement(
-        '/custom-song/new',
-        extra: createScannedSongDraft(text),
-      );
+      var draft = createScannedSongDraft(text);
+      if (_useAi && _aiStatus != OnDeviceAiStatus.unavailable) {
+        setState(
+          () => _progressMessage = 'Organizing the song on this device…',
+        );
+        try {
+          draft = await ref.read(songScanServiceProvider).structure(text);
+        } catch (_) {
+          draft = createScannedSongDraft(text, aiFallback: true);
+        }
+      }
+      if (!mounted) return;
+      context.pushReplacement('/custom-song/new', extra: draft);
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -98,13 +123,19 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
               ),
             ),
           const SizedBox(height: 24),
+          _AiOrganizationOption(
+            checking: _checkingAi,
+            status: _aiStatus,
+            enabled: _useAi,
+            onChanged: _recognizing || _checkingAi
+                ? null
+                : (value) => setState(() => _useAi = value),
+          ),
+          const SizedBox(height: 20),
           if (_recognizing) ...[
             const Center(child: CircularProgressIndicator.adaptive()),
             const SizedBox(height: 14),
-            const Text(
-              'Reading Telugu and English text…',
-              textAlign: TextAlign.center,
-            ),
+            Text(_progressMessage, textAlign: TextAlign.center),
           ] else ...[
             FilledButton.icon(
               onPressed: () => _pick(ImageSource.camera),
@@ -148,6 +179,43 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AiOrganizationOption extends StatelessWidget {
+  const _AiOrganizationOption({
+    required this.checking,
+    required this.status,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final bool checking;
+  final OnDeviceAiStatus status;
+  final bool enabled;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final unavailable = !checking && status == OnDeviceAiStatus.unavailable;
+    final subtitle = switch (status) {
+      OnDeviceAiStatus.available => 'Gemini Nano will separate the title, lyrics, English text, and author.',
+      OnDeviceAiStatus.downloadable =>
+        'A one-time on-device model download is needed before the first scan.',
+      OnDeviceAiStatus.downloading =>
+        'The on-device model is currently downloading.',
+      OnDeviceAiStatus.unavailable =>
+        checking ? 'Checking whether Gemini Nano is available…' : 'Unavailable on this device. Regular offline OCR will still work.',
+    };
+    return Card(
+      child: SwitchListTile.adaptive(
+        value: unavailable ? false : enabled,
+        onChanged: unavailable ? null : onChanged,
+        secondary: const Icon(Icons.auto_awesome_outlined),
+        title: const Text('Organize with on-device AI'),
+        subtitle: Text(subtitle),
       ),
     );
   }

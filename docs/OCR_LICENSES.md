@@ -20,3 +20,12 @@ Praise performs Android OCR on-device with the following open-source assets:
 
 These files came from the `main` branch of the official Tesseract
 `tessdata_fast` repository on 2026-08-15.
+
+## Optional on-device AI organization
+
+On supported Android devices, Praise can pass OCR text to ML Kit GenAI Prompt
+`1.0.0-beta4` with the Structured Output schema API `1.0.0-alpha1`. Inference
+runs through Android AICore/Gemini Nano; Praise does not bundle that model and
+does not send OCR text to an application server. This optional integration is
+subject to the [ML Kit GenAI API terms](https://developers.google.com/ml-kit/terms/genai).
+Ordinary Tesseract OCR remains available when this feature cannot run.
