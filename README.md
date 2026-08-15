@@ -11,6 +11,7 @@ technical boundaries, and the proposed delivery sequence are documented here:
 - [Implementation notes](docs/IMPLEMENTATION_NOTES.md)
 - [Canonical lyrics format](docs/LYRICS_FORMAT.md)
 - [Bundled font licenses](docs/FONT_LICENSES.md)
+- [OCR components and model provenance](docs/OCR_LICENSES.md)
 - [Separate catalogue server setup](docs/CATALOG_SERVER_SETUP.md)
 - [Release process and cycles](docs/RELEASE_PROCESS.md)
 - [Android release signing setup](docs/RELEASE_SIGNING_SETUP.md)
@@ -30,9 +31,10 @@ The offline library seeds all 1,374 normalized songs and supports local search,
 favorites, custom-song CRUD, automatic My Songs membership, user-defined list
 management, song ordering, persistent reading preferences, formatted repeat
 cues, text/image/PDF sharing for songs and lists, full-lyrics list exports,
-pinch-to-resize lyrics, and five persistent Telugu typeface choices (system plus
-four bundled Google Fonts families). A versioned GitHub Pages catalogue provides
-manual snapshot synchronization without a maintained application server.
+offline Telugu-English photo scanning into My Songs, pinch-to-resize lyrics, and
+five persistent Telugu typeface choices (system plus four bundled Google Fonts
+families). A versioned GitHub Pages catalogue provides manual snapshot
+synchronization without a maintained application server.
 
 ## Baseline commands
 

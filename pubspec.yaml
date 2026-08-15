@@ -46,6 +46,7 @@ dependencies:
   share_plus: ^13.3.0
   cross_file: ^0.3.5+4
   pdf: ^3.13.0
+  image_picker: ^1.2.3
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +78,8 @@ flutter:
   assets:
     - assets/data/songs.json
     - assets/fonts/licenses/
+    - assets/tessdata_config.json
+    - assets/tessdata/
 
   fonts:
     - family: NotoSansTelugu

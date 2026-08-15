@@ -29,6 +29,44 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
     ref.read(songSearchProvider.notifier).state = '';
   }
 
+  Future<void> _showAddSongOptions() async {
+    final route = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 12),
+                child: Text(
+                  'Add song',
+                  style: Theme.of(sheetContext).textTheme.titleLarge,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_note_outlined),
+                title: const Text('Enter manually'),
+                subtitle: const Text('Type or paste the song details'),
+                onTap: () => Navigator.pop(sheetContext, '/custom-song/new'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.document_scanner_outlined),
+                title: const Text('Scan photo'),
+                subtitle: const Text('Recognize Telugu and English offline'),
+                onTap: () => Navigator.pop(sheetContext, '/custom-song/scan'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (route != null && mounted) context.push(route);
+  }
+
   Future<void> _refreshCatalogue() async {
     try {
       final result = await ref
@@ -59,9 +97,9 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/custom-song/new'),
+        onPressed: _showAddSongOptions,
         icon: const Icon(Icons.add),
-        label: const Text('New song'),
+        label: const Text('Add song'),
       ),
       body: SafeArea(
         top: false,

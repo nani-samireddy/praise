@@ -438,3 +438,21 @@ output does not depend on fonts installed on the recipient's device.
 The importable Praise list package remains a data-transfer format rather than a
 presentation renderer. Images and PDFs are readable exports and are not
 imported back into Praise.
+
+## 18. On-device song scanning
+
+V1 song scanning is Android-first and has no server dependency. `image_picker`
+opens the camera or Android photo picker, then a small platform channel invokes
+Tesseract4Android on a background executor. Bundled `tel` and `eng` fast models
+provide Telugu and English recognition without uploading the selected image.
+
+The recognized string crosses back into Flutter, where line endings and excess
+blank space are normalized. The first non-empty line is suggested as the title,
+while the complete recognized text is retained as the primary lyrics body. The
+user must review the ordinary custom-song form before saving. Saving uses the
+existing custom-song repository transaction, including automatic My Songs
+membership; the source photo is temporary and is never stored in the database.
+
+OCR is assistance rather than an authoritative import. Errors return to the
+scan screen with retry guidance, empty recognition cannot proceed, and no text
+is saved until the user explicitly confirms the editable form.

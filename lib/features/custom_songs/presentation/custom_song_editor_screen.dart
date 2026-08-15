@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../songs/data/song_repository.dart';
 import '../../songs/presentation/song_providers.dart';
+import '../data/scanned_song_draft.dart';
 
 class CustomSongEditorScreen extends ConsumerStatefulWidget {
-  const CustomSongEditorScreen({super.key, this.songId});
+  const CustomSongEditorScreen({super.key, this.songId, this.scannedDraft});
 
   final String? songId;
+  final ScannedSongDraft? scannedDraft;
 
   @override
   ConsumerState<CustomSongEditorScreen> createState() =>
@@ -27,6 +29,17 @@ class _CustomSongEditorScreenState
   var _saving = false;
 
   bool get _isEditing => widget.songId != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final draft = widget.scannedDraft;
+    if (widget.songId == null && draft != null) {
+      _titleController.text = draft.title;
+      _bodyController.text = draft.body;
+      _initialized = true;
+    }
+  }
 
   @override
   void dispose() {
@@ -96,12 +109,33 @@ class _CustomSongEditorScreenState
 
   Widget _buildEditor() {
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Edit song' : 'New song')),
+      appBar: AppBar(
+        title: Text(
+          _isEditing
+              ? 'Edit song'
+              : widget.scannedDraft == null
+              ? 'New song'
+              : 'Review scanned song',
+        ),
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
           children: [
+            if (widget.scannedDraft != null) ...[
+              Card(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                child: const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'OCR can make mistakes. Check the title, line breaks, and '
+                    'lyrics before saving to My Songs.',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             TextFormField(
               controller: _titleController,
               decoration: const InputDecoration(

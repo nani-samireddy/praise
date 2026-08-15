@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/custom_songs/presentation/custom_song_editor_screen.dart';
+import '../features/custom_songs/data/scanned_song_draft.dart';
+import '../features/custom_songs/presentation/scan_song_screen.dart';
 import '../features/collections/presentation/collection_detail_screen.dart';
 import '../features/collections/presentation/collections_screen.dart';
 import '../features/collections/presentation/add_songs_screen.dart';
@@ -82,7 +84,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/custom-song/new',
-        builder: (context, state) => const CustomSongEditorScreen(),
+        builder: (context, state) => CustomSongEditorScreen(
+          scannedDraft: state.extra is ScannedSongDraft
+              ? state.extra! as ScannedSongDraft
+              : null,
+        ),
+      ),
+      GoRoute(
+        path: '/custom-song/scan',
+        builder: (context, state) => const ScanSongScreen(),
       ),
       GoRoute(
         path: '/custom-song/:id/edit',

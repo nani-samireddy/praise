@@ -109,6 +109,9 @@ tests alongside the behavior they protect.
 - Build the Favourites screen and its empty state.
 - Build a reusable custom-song form with validation.
 - Implement custom song create, edit, and delete operations.
+- Add camera/gallery selection and offline Telugu-English OCR.
+- Pre-fill the custom-song form with normalized OCR text and require review
+  before saving.
 - Restrict custom-song mutations to `source = custom` records.
 - Add confirmation before destructive deletion.
 - Add persistence and CRUD tests.
@@ -129,6 +132,8 @@ after a recoverable failure.
 - Favourite state is consistent on Songs, Detail, and Favourites screens.
 - A custom song survives restart and all repository sync tests.
 - Server songs cannot enter the custom edit flow.
+- Scanned songs use the normal custom-song repository path and automatically
+  enter My Songs.
 
 ## 7. Phase 4 — Lists
 

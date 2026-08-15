@@ -129,6 +129,9 @@ Users shall be able to:
 
 - create a song with title, optional English title, body, optional English
   body, and optional author;
+- take or choose a photo and recognize Telugu and English lyrics entirely on
+  the Android device;
+- review and correct recognized text in the custom-song form before saving;
 - edit and delete their own songs;
 - favourite custom songs; and
 - add custom songs to lists.
@@ -213,6 +216,7 @@ Expected routes:
 | `/lists` | Custom lists |
 | `/lists/:id` | Songs in a list |
 | `/custom-song/new` | Create a custom song |
+| `/custom-song/scan` | Scan Telugu or English lyrics from a photo |
 | `/custom-song/:id/edit` | Edit a custom song |
 | `/settings` | Local preferences and sync status |
 
@@ -343,6 +347,7 @@ rights messaging, must be decided before implementation.
 - [x] Primary title, English title, and author search use only local data.
 - [x] Favourite state survives an application restart.
 - [x] A custom song can be created, edited, deleted, favourited, and listed.
+- [x] A photo can be scanned offline, reviewed, and saved into My Songs.
 - [x] Lists can be created, renamed, deleted, populated, and reordered.
 - [x] Lists can be copied and shared as readable ordered text.
 - [x] Lists can be shared as an on-device PNG or paginated PDF.
