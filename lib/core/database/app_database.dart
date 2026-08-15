@@ -11,6 +11,7 @@ class Songs extends Table {
   TextColumn get body => text()();
   TextColumn get englishBody => text().nullable()();
   TextColumn get author => text().nullable()();
+  TextColumn get imagePath => text().nullable()();
 
   // Internal ownership and synchronization fields are not part of the song
   // editing form, but protect user-created songs during catalogue refreshes.
@@ -73,7 +74,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'praise'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   Stream<List<Song>> watchSongs({String search = ''}) {
     final query = select(songs)
@@ -110,6 +111,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 3) {
         await migrator.createTable(collections);
         await migrator.createTable(collectionSongs);
+      }
+      if (from < 4) {
+        await migrator.addColumn(songs, songs.imagePath);
       }
     },
     beforeOpen: (details) async {

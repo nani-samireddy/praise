@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -67,11 +69,15 @@ class SongDetailScreen extends ConsumerWidget {
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: _SongAction.shareImage,
                       child: ListTile(
-                        leading: Icon(Icons.image_outlined),
-                        title: Text('Share as image'),
+                        leading: const Icon(Icons.image_outlined),
+                        title: Text(
+                          value.imagePath == null
+                              ? 'Share as image'
+                              : 'Share original photo',
+                        ),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
@@ -270,6 +276,8 @@ class _SongReaderState extends ConsumerState<_SongReader> {
     final englishTitle = widget.song.englishTitle;
     final englishBody = widget.song.englishBody;
     final author = widget.song.author;
+    final imagePath = widget.song.imagePath;
+    final hasPrimaryLyrics = widget.song.body.trim().isNotEmpty;
     final storedFontSize = ref.watch(lyricsFontSizeProvider).valueOrNull ?? 19;
     final displayMode =
         ref.watch(lyricsDisplayModeProvider).valueOrNull ??
@@ -306,33 +314,34 @@ class _SongReaderState extends ConsumerState<_SongReader> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.pinch_outlined,
-                  size: 18,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Text(
-                    'Pinch to resize lyrics',
-                    style: Theme.of(context).textTheme.labelMedium
-                        ?.copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () => setState(() {
-                    _expandCounts = !_expandCounts;
-                  }),
-                  icon: Icon(
-                    _expandCounts ? Icons.unfold_less : Icons.unfold_more,
+            if (hasPrimaryLyrics || englishBody != null)
+              Row(
+                children: [
+                  Icon(
+                    Icons.pinch_outlined,
                     size: 18,
+                    color: colorScheme.onSurfaceVariant,
                   ),
-                  label: Text(_expandCounts ? 'Compact' : 'Expand ×N'),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      'Pinch to resize lyrics',
+                      style: Theme.of(context).textTheme.labelMedium
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => setState(() {
+                      _expandCounts = !_expandCounts;
+                    }),
+                    icon: Icon(
+                      _expandCounts ? Icons.unfold_less : Icons.unfold_more,
+                      size: 18,
+                    ),
+                    label: Text(_expandCounts ? 'Compact' : 'Expand ×N'),
+                  ),
+                ],
+              ),
             const SizedBox(height: 18),
             if (showPrimaryTitle)
               Text(
@@ -372,7 +381,11 @@ class _SongReaderState extends ConsumerState<_SongReader> {
               ),
             ],
             const SizedBox(height: 28),
-            if (showPrimary)
+            if (imagePath != null) ...[
+              _SongPhoto(imagePath: imagePath),
+              if (hasPrimaryLyrics || showEnglish) const SizedBox(height: 32),
+            ],
+            if (showPrimary && hasPrimaryLyrics)
               _LyricsSection(
                 label: showEnglish ? 'Primary lyrics' : 'Lyrics',
                 body: widget.song.body,
@@ -382,7 +395,8 @@ class _SongReaderState extends ConsumerState<_SongReader> {
               ),
             if (showEnglish) ...[
               const SizedBox(height: 32),
-              if (showPrimary) Divider(color: colorScheme.outlineVariant),
+              if (showPrimary && hasPrimaryLyrics)
+                Divider(color: colorScheme.outlineVariant),
               const SizedBox(height: 24),
               _LyricsSection(
                 label: 'English lyrics',
@@ -395,6 +409,57 @@ class _SongReaderState extends ConsumerState<_SongReader> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SongPhoto extends StatelessWidget {
+  const _SongPhoto({required this.imagePath});
+
+  final String imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ORIGINAL PHOTO',
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: colorScheme.primary,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.1,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: ColoredBox(
+            color: colorScheme.surfaceContainerHighest,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: double.infinity,
+                maxHeight: 640,
+              ),
+              child: Image.file(
+                File(imagePath),
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 64, horizontal: 24),
+                  child: Column(
+                    children: [
+                      Icon(Icons.broken_image_outlined, size: 48),
+                      SizedBox(height: 12),
+                      Text('The saved song photo could not be opened.'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

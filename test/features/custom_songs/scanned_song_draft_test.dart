@@ -18,6 +18,15 @@ void main() {
     expect(draft.body, isEmpty);
   });
 
+  test('creates an image-only draft without running OCR', () {
+    final draft = createPhotoSongDraft('/temporary/song-photo.jpg');
+
+    expect(draft.title, isEmpty);
+    expect(draft.body, isEmpty);
+    expect(draft.imagePath, '/temporary/song-photo.jpg');
+    expect(draft.aiEnhanced, isFalse);
+  });
+
   test('normalizes inline and standalone OCR repetition counts', () {
     expect(
       normalizeScannedLyrics('First line x2\nSecond line\n*3\nThird line ✕4'),

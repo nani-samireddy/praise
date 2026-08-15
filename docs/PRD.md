@@ -127,9 +127,10 @@ by the database relationship or cleanup transaction.
 
 Users shall be able to:
 
-- create a song with title, optional English title, body, optional English
-  body, and optional author; when the English title is blank, the app shall
-  save a readable offline transliteration of the primary title;
+- create a song with title, optional English title, either a lyrics body or an
+  original song photo, optional English body, and optional author; when the
+  English title is blank, the app shall save a readable offline
+  transliteration of the primary title;
 - take or choose a photo and recognize Telugu and English lyrics entirely on
   the Android device;
 - optionally use supported Android on-device AI to separate recognized text
@@ -139,6 +140,8 @@ Users shall be able to:
   blank line, and normalize recognizable repetition counts to `×N`;
 - retain the complete OCR result when AI output fails content-preservation
   validation;
+- choose **Keep photo** instead of OCR, review the selected photo, and save a
+  durable private copy inside the app for cases where recognition is unreliable;
 - review and correct recognized text in the custom-song form before saving;
 - edit and delete their own songs;
 - favourite custom songs; and

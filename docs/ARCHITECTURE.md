@@ -442,9 +442,10 @@ imported back into Praise.
 ## 18. On-device song scanning
 
 V1 song scanning is Android-first and has no server dependency. `image_picker`
-opens the camera or Android photo picker, then a small platform channel invokes
-Tesseract4Android on a background executor. Bundled `tel` and `eng` fast models
-provide Telugu and English recognition without uploading the selected image.
+opens the camera or Android photo picker. The user then chooses either Extract
+text or Keep photo. Extract text invokes Tesseract4Android on a background
+executor; bundled `tel` and `eng` fast models provide Telugu and English
+recognition without uploading the selected image.
 
 The recognized string crosses back into Flutter, where line endings and excess
 blank space are normalized. On Android devices with a supported AICore/Gemini
@@ -468,11 +469,20 @@ with the original OCR string. A substantially shortened or invented result is
 discarded and the complete OCR text is used instead. The fallback normalizer
 still cleans repetition suffixes and excessive blank lines.
 
-The user must review the ordinary custom-song form before saving. Saving uses
-the existing custom-song repository transaction, including automatic My Songs
-membership; the source photo is temporary and is never stored in the database.
-At repository save time, a blank English title is filled by the deterministic
-Telugu-to-Latin transliterator. A user-provided English title is never replaced.
+The user must review the ordinary custom-song form before saving. In Extract
+text mode, the picker source photo remains temporary. In Keep photo mode, the
+repository copies the selected file into the app-support directory and stores
+only that private path in the song row. Replacement or deletion cleans up the
+previous app-owned file; cleanup is constrained to the managed photo directory.
+An image-only custom song may have an empty body but still requires a title.
+Saving uses the existing custom-song transaction, including automatic My Songs
+membership. At repository save time, a blank English title is filled by the
+deterministic Telugu-to-Latin transliterator. A user-provided English title is
+never replaced.
+
+Song detail renders the saved photo at readable size. Image sharing uses the
+original file, while PDF sharing embeds it on a titled page. Text and list
+exports identify image-only lyrics instead of emitting an empty lyrics section.
 
 OCR and on-device AI are assistance rather than an authoritative import. Errors return to the
 scan screen with retry guidance, empty recognition cannot proceed, and no text

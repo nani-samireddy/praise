@@ -36,7 +36,9 @@ void main() {
       final database = AppDatabase(NativeDatabase.opened(sqlite));
       addTearDown(database.close);
 
-      expect(await database.select(database.songs).get(), hasLength(1));
+      final songs = await database.select(database.songs).get();
+      expect(songs, hasLength(1));
+      expect(songs.single.imagePath, isNull);
       expect(await database.select(database.favorites).get(), isEmpty);
       expect(await database.select(database.collections).get(), isEmpty);
       expect(await database.select(database.collectionSongs).get(), isEmpty);

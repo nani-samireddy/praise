@@ -66,6 +66,17 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _imagePathMeta = const VerificationMeta(
+    'imagePath',
+  );
+  @override
+  late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
+    'image_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _sourceMeta = const VerificationMeta('source');
   @override
   late final GeneratedColumn<String> source = GeneratedColumn<String>(
@@ -121,6 +132,7 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
     body,
     englishBody,
     author,
+    imagePath,
     source,
     createdAt,
     updatedAt,
@@ -181,6 +193,12 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
       context.handle(
         _authorMeta,
         author.isAcceptableOrUnknown(data['author']!, _authorMeta),
+      );
+    }
+    if (data.containsKey('image_path')) {
+      context.handle(
+        _imagePathMeta,
+        imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta),
       );
     }
     if (data.containsKey('source')) {
@@ -244,6 +262,10 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
         DriftSqlType.string,
         data['${effectivePrefix}author'],
       ),
+      imagePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_path'],
+      ),
       source: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}source'],
@@ -276,6 +298,7 @@ class Song extends DataClass implements Insertable<Song> {
   final String body;
   final String? englishBody;
   final String? author;
+  final String? imagePath;
   final String source;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -287,6 +310,7 @@ class Song extends DataClass implements Insertable<Song> {
     required this.body,
     this.englishBody,
     this.author,
+    this.imagePath,
     required this.source,
     required this.createdAt,
     required this.updatedAt,
@@ -306,6 +330,9 @@ class Song extends DataClass implements Insertable<Song> {
     }
     if (!nullToAbsent || author != null) {
       map['author'] = Variable<String>(author);
+    }
+    if (!nullToAbsent || imagePath != null) {
+      map['image_path'] = Variable<String>(imagePath);
     }
     map['source'] = Variable<String>(source);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -328,6 +355,9 @@ class Song extends DataClass implements Insertable<Song> {
       author: author == null && nullToAbsent
           ? const Value.absent()
           : Value(author),
+      imagePath: imagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imagePath),
       source: Value(source),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -347,6 +377,7 @@ class Song extends DataClass implements Insertable<Song> {
       body: serializer.fromJson<String>(json['body']),
       englishBody: serializer.fromJson<String?>(json['englishBody']),
       author: serializer.fromJson<String?>(json['author']),
+      imagePath: serializer.fromJson<String?>(json['imagePath']),
       source: serializer.fromJson<String>(json['source']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -363,6 +394,7 @@ class Song extends DataClass implements Insertable<Song> {
       'body': serializer.toJson<String>(body),
       'englishBody': serializer.toJson<String?>(englishBody),
       'author': serializer.toJson<String?>(author),
+      'imagePath': serializer.toJson<String?>(imagePath),
       'source': serializer.toJson<String>(source),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -377,6 +409,7 @@ class Song extends DataClass implements Insertable<Song> {
     String? body,
     Value<String?> englishBody = const Value.absent(),
     Value<String?> author = const Value.absent(),
+    Value<String?> imagePath = const Value.absent(),
     String? source,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -388,6 +421,7 @@ class Song extends DataClass implements Insertable<Song> {
     body: body ?? this.body,
     englishBody: englishBody.present ? englishBody.value : this.englishBody,
     author: author.present ? author.value : this.author,
+    imagePath: imagePath.present ? imagePath.value : this.imagePath,
     source: source ?? this.source,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -405,6 +439,7 @@ class Song extends DataClass implements Insertable<Song> {
           ? data.englishBody.value
           : this.englishBody,
       author: data.author.present ? data.author.value : this.author,
+      imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
       source: data.source.present ? data.source.value : this.source,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -421,6 +456,7 @@ class Song extends DataClass implements Insertable<Song> {
           ..write('body: $body, ')
           ..write('englishBody: $englishBody, ')
           ..write('author: $author, ')
+          ..write('imagePath: $imagePath, ')
           ..write('source: $source, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -437,6 +473,7 @@ class Song extends DataClass implements Insertable<Song> {
     body,
     englishBody,
     author,
+    imagePath,
     source,
     createdAt,
     updatedAt,
@@ -452,6 +489,7 @@ class Song extends DataClass implements Insertable<Song> {
           other.body == this.body &&
           other.englishBody == this.englishBody &&
           other.author == this.author &&
+          other.imagePath == this.imagePath &&
           other.source == this.source &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -465,6 +503,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
   final Value<String> body;
   final Value<String?> englishBody;
   final Value<String?> author;
+  final Value<String?> imagePath;
   final Value<String> source;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -477,6 +516,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
     this.body = const Value.absent(),
     this.englishBody = const Value.absent(),
     this.author = const Value.absent(),
+    this.imagePath = const Value.absent(),
     this.source = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -490,6 +530,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
     required String body,
     this.englishBody = const Value.absent(),
     this.author = const Value.absent(),
+    this.imagePath = const Value.absent(),
     this.source = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -507,6 +548,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
     Expression<String>? body,
     Expression<String>? englishBody,
     Expression<String>? author,
+    Expression<String>? imagePath,
     Expression<String>? source,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -520,6 +562,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
       if (body != null) 'body': body,
       if (englishBody != null) 'english_body': englishBody,
       if (author != null) 'author': author,
+      if (imagePath != null) 'image_path': imagePath,
       if (source != null) 'source': source,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -535,6 +578,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
     Value<String>? body,
     Value<String?>? englishBody,
     Value<String?>? author,
+    Value<String?>? imagePath,
     Value<String>? source,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -548,6 +592,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
       body: body ?? this.body,
       englishBody: englishBody ?? this.englishBody,
       author: author ?? this.author,
+      imagePath: imagePath ?? this.imagePath,
       source: source ?? this.source,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -577,6 +622,9 @@ class SongsCompanion extends UpdateCompanion<Song> {
     if (author.present) {
       map['author'] = Variable<String>(author.value);
     }
+    if (imagePath.present) {
+      map['image_path'] = Variable<String>(imagePath.value);
+    }
     if (source.present) {
       map['source'] = Variable<String>(source.value);
     }
@@ -604,6 +652,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
           ..write('body: $body, ')
           ..write('englishBody: $englishBody, ')
           ..write('author: $author, ')
+          ..write('imagePath: $imagePath, ')
           ..write('source: $source, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1838,6 +1887,7 @@ typedef $$SongsTableCreateCompanionBuilder = SongsCompanion Function({
   required String body,
   Value<String?> englishBody,
   Value<String?> author,
+  Value<String?> imagePath,
   Value<String> source,
   required DateTime createdAt,
   required DateTime updatedAt,
@@ -1851,6 +1901,7 @@ typedef $$SongsTableUpdateCompanionBuilder = SongsCompanion Function({
   Value<String> body,
   Value<String?> englishBody,
   Value<String?> author,
+  Value<String?> imagePath,
   Value<String> source,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -1936,6 +1987,11 @@ class $$SongsTableFilterComposer extends Composer<_$AppDatabase, $SongsTable> {
 
   ColumnFilters<String> get author => $composableBuilder(
     column: $table.author,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2049,6 +2105,11 @@ class $$SongsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get source => $composableBuilder(
     column: $table.source,
     builder: (column) => ColumnOrderings(column),
@@ -2100,6 +2161,9 @@ class $$SongsTableAnnotationComposer
 
   GeneratedColumn<String> get author =>
       $composableBuilder(column: $table.author, builder: (column) => column);
+
+  GeneratedColumn<String> get imagePath =>
+      $composableBuilder(column: $table.imagePath, builder: (column) => column);
 
   GeneratedColumn<String> get source =>
       $composableBuilder(column: $table.source, builder: (column) => column);
@@ -2198,6 +2262,7 @@ class $$SongsTableTableManager
                 Value<String> body = const Value.absent(),
                 Value<String?> englishBody = const Value.absent(),
                 Value<String?> author = const Value.absent(),
+                Value<String?> imagePath = const Value.absent(),
                 Value<String> source = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -2210,6 +2275,7 @@ class $$SongsTableTableManager
                 body: body,
                 englishBody: englishBody,
                 author: author,
+                imagePath: imagePath,
                 source: source,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -2224,6 +2290,7 @@ class $$SongsTableTableManager
                 required String body,
                 Value<String?> englishBody = const Value.absent(),
                 Value<String?> author = const Value.absent(),
+                Value<String?> imagePath = const Value.absent(),
                 Value<String> source = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -2236,6 +2303,7 @@ class $$SongsTableTableManager
                 body: body,
                 englishBody: englishBody,
                 author: author,
+                imagePath: imagePath,
                 source: source,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

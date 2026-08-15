@@ -1,10 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../custom_songs/data/custom_song_image_store.dart';
 import '../data/song_repository.dart';
 
 final songRepositoryProvider = Provider<SongRepository>((ref) {
-  return DriftSongRepository(ref.watch(databaseProvider));
+  return DriftSongRepository(
+    ref.watch(databaseProvider),
+    imageStore: LocalCustomSongImageStore(),
+  );
 });
 
 final songSearchProvider = StateProvider<String>((ref) => '');

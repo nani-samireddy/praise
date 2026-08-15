@@ -110,6 +110,9 @@ tests alongside the behavior they protect.
 - Build a reusable custom-song form with validation.
 - Implement custom song create, edit, and delete operations.
 - Add camera/gallery selection and offline Telugu-English OCR.
+- Add an Extract text / Keep photo choice. Persist kept photos in app-private
+  support storage, store their local paths on custom songs, and remove managed
+  files when a photo is replaced or its song is deleted.
 - Detect Gemini Nano availability and offer optional on-device structured song
   extraction after OCR, with ordinary OCR parsing as the mandatory fallback.
 - Request ordered stanza/line arrays rather than a free-form body, render one

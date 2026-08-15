@@ -7,6 +7,7 @@ class ScannedSongDraft {
     this.englishTitle,
     this.englishBody,
     this.author,
+    this.imagePath,
     this.aiEnhanced = false,
     this.aiFallback = false,
   });
@@ -16,8 +17,13 @@ class ScannedSongDraft {
   final String body;
   final String? englishBody;
   final String? author;
+  final String? imagePath;
   final bool aiEnhanced;
   final bool aiFallback;
+}
+
+ScannedSongDraft createPhotoSongDraft(String imagePath) {
+  return ScannedSongDraft(title: '', body: '', imagePath: imagePath);
 }
 
 ScannedSongDraft createScannedSongDraft(

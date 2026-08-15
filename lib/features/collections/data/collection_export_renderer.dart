@@ -85,8 +85,12 @@ ExportSection _fullSongSection(int index, Song song) {
     body.add('Author: $author');
   }
   body
-    ..add('LYRICS')
-    ..add(formatLyricsForSharing(song.body));
+    ..add(song.imagePath == null ? 'LYRICS' : 'PHOTO SONG')
+    ..add(
+      song.body.trim().isNotEmpty
+          ? formatLyricsForSharing(song.body)
+          : 'Original lyrics are stored as a photo in Praise.',
+    );
   if (_present(song.englishBody) case final englishBody?) {
     body
       ..add('ENGLISH LYRICS')

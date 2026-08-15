@@ -32,4 +32,29 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(TextFormField, 'Test Author'), findsOneWidget);
   });
+
+  testWidgets('reviews a kept photo without requiring OCR lyrics', (
+    tester,
+  ) async {
+    const draft = ScannedSongDraft(
+      title: '',
+      body: '',
+      imagePath: '/missing/test-photo.jpg',
+    );
+
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(home: CustomSongEditorScreen(scannedDraft: draft)),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('original photo will be kept'), findsOneWidget);
+    expect(find.text('Original song photo'), findsOneWidget);
+    expect(find.text('Lyrics text'), findsOneWidget);
+    expect(
+      find.text('Optional when the original photo is kept'),
+      findsOneWidget,
+    );
+  });
 }

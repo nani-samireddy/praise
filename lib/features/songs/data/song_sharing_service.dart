@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as path;
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/database/app_database.dart';
@@ -38,6 +41,22 @@ class PlatformSongSharingService implements SongSharingService {
 
   @override
   Future<void> shareSongImage(Song song, {Rect? sharePositionOrigin}) async {
+    if (song.imagePath case final imagePath?) {
+      final file = File(imagePath);
+      if (await file.exists()) {
+        final extension = _imageExtension(imagePath);
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(imagePath, mimeType: _imageMimeType(extension))],
+            fileNameOverrides: [songExportFileName(song.title, extension)],
+            title: song.title,
+            subject: song.title,
+            sharePositionOrigin: sharePositionOrigin,
+          ),
+        );
+        return;
+      }
+    }
     await _shareFile(
       song: song,
       bytes: await buildSongImageBytes(song),
@@ -45,6 +64,24 @@ class PlatformSongSharingService implements SongSharingService {
       mimeType: 'image/png',
       sharePositionOrigin: sharePositionOrigin,
     );
+  }
+
+  static String _imageExtension(String imagePath) {
+    final extension = path
+        .extension(imagePath)
+        .toLowerCase()
+        .replaceFirst('.', '');
+    return const {'jpg', 'jpeg', 'png', 'webp'}.contains(extension)
+        ? extension
+        : 'jpg';
+  }
+
+  static String _imageMimeType(String extension) {
+    return switch (extension) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      _ => 'image/jpeg',
+    };
   }
 
   @override
@@ -91,11 +128,15 @@ String buildSongShareText(Song song) {
     output.add('Author: $author');
   }
 
-  output
-    ..add('')
-    ..add('Lyrics')
-    ..add('')
-    ..add(formatLyricsForSharing(song.body));
+  output.add('');
+  if (song.body.trim().isEmpty && song.imagePath != null) {
+    output.add('Lyrics are saved as a photo in Praise.');
+  } else {
+    output
+      ..add('Lyrics')
+      ..add('')
+      ..add(formatLyricsForSharing(song.body));
+  }
 
   if (song.englishBody case final englishBody?) {
     output

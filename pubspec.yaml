@@ -47,6 +47,8 @@ dependencies:
   cross_file: ^0.3.5+4
   pdf: ^3.13.0
   image_picker: ^1.2.3
+  path: ^1.9.1
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:

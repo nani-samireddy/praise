@@ -34,4 +34,26 @@ English lyrics
 
 First line ×2''');
   });
+
+  test('describes an image-only song without an empty lyrics section', () {
+    final now = DateTime.utc(2026, 8, 15);
+    final song = Song(
+      id: 'photo-song',
+      title: 'Photo song',
+      englishTitle: null,
+      body: '',
+      englishBody: null,
+      author: null,
+      imagePath: '/app/photo.jpg',
+      source: 'custom',
+      createdAt: now,
+      updatedAt: now,
+      isDeleted: false,
+    );
+
+    expect(
+      buildSongShareText(song),
+      'Photo song\n\nLyrics are saved as a photo in Praise.',
+    );
+  });
 }

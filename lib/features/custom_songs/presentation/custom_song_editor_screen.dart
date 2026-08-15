@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,6 +29,9 @@ class _CustomSongEditorScreenState
   final _authorController = TextEditingController();
   var _initialized = false;
   var _saving = false;
+  String? _newImagePath;
+  String? _existingImagePath;
+  var _removeImage = false;
 
   bool get _isEditing => widget.songId != null;
 
@@ -40,6 +45,7 @@ class _CustomSongEditorScreenState
       _bodyController.text = draft.body;
       _englishBodyController.text = draft.englishBody ?? '';
       _authorController.text = draft.author ?? '';
+      _newImagePath = draft.imagePath;
       _initialized = true;
     }
   }
@@ -64,6 +70,8 @@ class _CustomSongEditorScreenState
       body: _bodyController.text,
       englishBody: _englishBodyController.text,
       author: _authorController.text,
+      newImagePath: _newImagePath,
+      removeImage: _removeImage,
     );
 
     try {
@@ -99,6 +107,7 @@ class _CustomSongEditorScreenState
           _bodyController.text = value.body;
           _englishBodyController.text = value.englishBody ?? '';
           _authorController.text = value.author ?? '';
+          _existingImagePath = value.imagePath;
           _initialized = true;
         }
         return _buildEditor();
@@ -155,17 +164,29 @@ class _CustomSongEditorScreenState
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 16),
+            if (_activeImagePath case final imagePath?) ...[
+              _SongPhotoEditorCard(
+                imagePath: imagePath,
+                onRemove: () => setState(() {
+                  _newImagePath = null;
+                  _removeImage = true;
+                }),
+              ),
+              const SizedBox(height: 16),
+            ],
             TextFormField(
               controller: _bodyController,
-              decoration: const InputDecoration(
-                labelText: 'Body',
-                hintText: 'Primary-language lyrics',
+              decoration: InputDecoration(
+                labelText: _activeImagePath == null ? 'Body' : 'Lyrics text',
+                hintText: _activeImagePath == null
+                    ? 'Primary-language lyrics'
+                    : 'Optional when the original photo is kept',
                 alignLabelWithHint: true,
               ),
               minLines: 8,
               maxLines: null,
               keyboardType: TextInputType.multiline,
-              validator: _requiredValidator,
+              validator: _activeImagePath == null ? _requiredValidator : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -213,6 +234,10 @@ class _CustomSongEditorScreenState
   }
 
   static String _scanReviewMessage(ScannedSongDraft draft) {
+    if (draft.imagePath != null) {
+      return 'The original photo will be kept instead of OCR text. Add a '
+          'title and confirm the photo before saving to My Songs.';
+    }
     if (draft.aiEnhanced) {
       return 'On-device AI organized the OCR result. Check every field and '
           'line break before saving to My Songs.';
@@ -223,6 +248,56 @@ class _CustomSongEditorScreenState
     }
     return 'OCR can make mistakes. Check the title, line breaks, and lyrics '
         'before saving to My Songs.';
+  }
+
+  String? get _activeImagePath {
+    if (_newImagePath != null) return _newImagePath;
+    return _removeImage ? null : _existingImagePath;
+  }
+}
+
+class _SongPhotoEditorCard extends StatelessWidget {
+  const _SongPhotoEditorCard({required this.imagePath, required this.onRemove});
+
+  final String imagePath;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 420),
+            child: Image.file(
+              File(imagePath),
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => const Padding(
+                padding: EdgeInsets.all(32),
+                child: Column(
+                  children: [
+                    Icon(Icons.broken_image_outlined, size: 42),
+                    SizedBox(height: 10),
+                    Text('This photo could not be opened.'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.image_outlined),
+            title: const Text('Original song photo'),
+            trailing: TextButton.icon(
+              onPressed: onRemove,
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Remove'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

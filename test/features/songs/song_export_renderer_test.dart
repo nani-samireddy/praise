@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:praise/core/database/app_database.dart';
 import 'package:praise/features/songs/data/song_export_renderer.dart';
@@ -37,5 +40,37 @@ void main() {
       songExportFileName('Praise / Worship?', 'png'),
       'Praise - Worship-.png',
     );
+  });
+
+  testWidgets('embeds a kept song photo in PDF export', (tester) async {
+    await tester.runAsync(() async {
+      final directory = await Directory.systemTemp.createTemp('praise-photo-');
+      addTearDown(() => directory.delete(recursive: true));
+      final image = File('${directory.path}/song.png');
+      await image.writeAsBytes(
+        base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        ),
+      );
+      final now = DateTime.utc(2026, 8, 15);
+      final song = Song(
+        id: 'photo',
+        title: 'Photo song',
+        englishTitle: 'Photo Song',
+        body: '',
+        englishBody: null,
+        author: null,
+        imagePath: image.path,
+        source: 'custom',
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      );
+
+      final pdf = await buildSongPdfBytes(song);
+
+      expect(String.fromCharCodes(pdf.take(4)), '%PDF');
+      expect(pdf.length, greaterThan(1000));
+    });
   });
 }

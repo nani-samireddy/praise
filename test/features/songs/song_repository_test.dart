@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:praise/core/database/app_database.dart';
+import 'package:praise/features/custom_songs/data/custom_song_image_store.dart';
 import 'package:praise/features/songs/data/song_repository.dart';
 
 void main() {
@@ -131,6 +132,50 @@ void main() {
     expect(membership.map((row) => row.sortOrder), [0, 1]);
   });
 
+  test('persists and cleans up an image-only custom song', () async {
+    final imageStore = _FakeCustomSongImageStore();
+    repository = DriftSongRepository(database, imageStore: imageStore);
+
+    final id = await repository.createCustomSong(
+      const SongInput(
+        title: 'Photo song',
+        body: '',
+        newImagePath: '/picker/cache/photo.jpg',
+      ),
+    );
+    var song = await repository.watchSong(id).first;
+
+    expect(imageStore.savedSources, ['/picker/cache/photo.jpg']);
+    expect(song?.body, isEmpty);
+    expect(song?.imagePath, '/app/photos/photo-1.jpg');
+
+    await repository.updateCustomSong(
+      id,
+      const SongInput(title: 'Typed song', body: 'Lyrics', removeImage: true),
+    );
+    song = await repository.watchSong(id).first;
+
+    expect(song?.imagePath, isNull);
+    expect(imageStore.deletedPaths, ['/app/photos/photo-1.jpg']);
+  });
+
+  test('deleting a photo song also deletes its stored image', () async {
+    final imageStore = _FakeCustomSongImageStore();
+    repository = DriftSongRepository(database, imageStore: imageStore);
+    final id = await repository.createCustomSong(
+      const SongInput(
+        title: 'Photo song',
+        body: '',
+        newImagePath: '/picker/cache/photo.jpg',
+      ),
+    );
+
+    await repository.deleteCustomSong(id);
+
+    expect(imageStore.deletedPaths, ['/app/photos/photo-1.jpg']);
+    expect(await repository.watchSong(id).first, isNull);
+  });
+
   test('does not allow server songs to be edited as custom songs', () async {
     expect(
       () => repository.updateCustomSong(
@@ -140,4 +185,20 @@ void main() {
       throwsStateError,
     );
   });
+}
+
+class _FakeCustomSongImageStore implements CustomSongImageStore {
+  final savedSources = <String>[];
+  final deletedPaths = <String>[];
+
+  @override
+  Future<String> save(String sourcePath) async {
+    savedSources.add(sourcePath);
+    return '/app/photos/photo-${savedSources.length}.jpg';
+  }
+
+  @override
+  Future<void> delete(String storedPath) async {
+    deletedPaths.add(storedPath);
+  }
 }

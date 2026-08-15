@@ -8,6 +8,8 @@ import 'package:image_picker/image_picker.dart';
 import '../data/scanned_song_draft.dart';
 import '../data/song_scan_service.dart';
 
+enum _ScanResultType { extractText, keepPhoto }
+
 class ScanSongScreen extends ConsumerStatefulWidget {
   const ScanSongScreen({super.key});
 
@@ -21,6 +23,7 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
   bool _recognizing = false;
   bool _checkingAi = true;
   bool _useAi = false;
+  var _resultType = _ScanResultType.extractText;
   OnDeviceAiStatus _aiStatus = OnDeviceAiStatus.unavailable;
   String _progressMessage = 'Reading Telugu and English text…';
   String? _error;
@@ -46,7 +49,7 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
     final response = await _picker.retrieveLostData();
     if (!mounted || response.isEmpty) return;
     final image = response.files?.firstOrNull;
-    if (image != null) await _recognize(image);
+    if (image != null) await _process(image);
   }
 
   Future<void> _pick(ImageSource source) async {
@@ -57,20 +60,27 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
         imageQuality: 95,
         maxWidth: 2400,
       );
-      if (image != null) await _recognize(image);
+      if (image != null) await _process(image);
     } catch (_) {
       if (!mounted) return;
       setState(() => _error = 'Could not open the camera or photo.');
     }
   }
 
-  Future<void> _recognize(XFile image) async {
+  Future<void> _process(XFile image) async {
     setState(() {
       _image = image;
-      _recognizing = true;
+      _recognizing = _resultType == _ScanResultType.extractText;
       _progressMessage = 'Reading Telugu and English text…';
       _error = null;
     });
+    if (_resultType == _ScanResultType.keepPhoto) {
+      context.pushReplacement(
+        '/custom-song/new',
+        extra: createPhotoSongDraft(image.path),
+      );
+      return;
+    }
     try {
       final text = await ref
           .read(songScanServiceProvider)
@@ -123,14 +133,45 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
               ),
             ),
           const SizedBox(height: 24),
-          _AiOrganizationOption(
-            checking: _checkingAi,
-            status: _aiStatus,
-            enabled: _useAi,
-            onChanged: _recognizing || _checkingAi
+          SegmentedButton<_ScanResultType>(
+            segments: const [
+              ButtonSegment(
+                value: _ScanResultType.extractText,
+                icon: Icon(Icons.text_snippet_outlined),
+                label: Text('Extract text'),
+              ),
+              ButtonSegment(
+                value: _ScanResultType.keepPhoto,
+                icon: Icon(Icons.image_outlined),
+                label: Text('Keep photo'),
+              ),
+            ],
+            selected: {_resultType},
+            onSelectionChanged: _recognizing
                 ? null
-                : (value) => setState(() => _useAi = value),
+                : (selection) => setState(() => _resultType = selection.single),
           ),
+          const SizedBox(height: 20),
+          if (_resultType == _ScanResultType.extractText)
+            _AiOrganizationOption(
+              checking: _checkingAi,
+              status: _aiStatus,
+              enabled: _useAi,
+              onChanged: _recognizing || _checkingAi
+                  ? null
+                  : (value) => setState(() => _useAi = value),
+            )
+          else
+            const Card(
+              child: ListTile(
+                leading: Icon(Icons.photo_outlined),
+                title: Text('Save the original photo'),
+                subtitle: Text(
+                  'No OCR is used. Add a title, then the photo will be kept '
+                  'privately inside Praise.',
+                ),
+              ),
+            ),
           const SizedBox(height: 20),
           if (_recognizing) ...[
             const Center(child: CircularProgressIndicator.adaptive()),
@@ -165,15 +206,18 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
             ),
           ],
           const SizedBox(height: 24),
-          const Row(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(Icons.offline_bolt_outlined, size: 20),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Recognition happens on this device. The photo is not uploaded. '
-                  'You can correct the title and lyrics before saving.',
+                  _resultType == _ScanResultType.extractText
+                      ? 'Recognition happens on this device. The photo is not uploaded. '
+                            'You can correct the title and lyrics before saving.'
+                      : 'The photo stays on this device and is not uploaded. It is '
+                            'copied into Praise only when you save the song.',
                 ),
               ),
             ],
@@ -238,14 +282,14 @@ class _ScanInstructions extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Photograph printed lyrics or clear screen text',
+              'Photograph lyrics or choose an existing photo',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 10),
             const Text(
-              'For the best result, use bright light, keep the page flat, and '
-              'fill the frame with the text.',
+              'Extract its text with offline OCR, or keep the original photo '
+              'when OCR may not be reliable.',
               textAlign: TextAlign.center,
             ),
           ],
