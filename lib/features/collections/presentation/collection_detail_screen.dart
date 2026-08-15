@@ -5,8 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../favorites/presentation/favorite_button.dart';
 import '../../songs/presentation/song_list_card.dart';
+import '../data/collection_export_renderer.dart';
+import '../data/collection_sharing_service.dart';
 import 'collection_dialogs.dart';
 import 'collection_providers.dart';
+
+enum _CollectionAction { copy, shareText, shareImage, sharePdf, rename, delete }
 
 class CollectionDetailScreen extends ConsumerWidget {
   const CollectionDetailScreen({super.key, required this.collectionId});
@@ -18,25 +22,73 @@ class CollectionDetailScreen extends ConsumerWidget {
     final collection = ref.watch(collectionProvider(collectionId));
     final songs = ref.watch(collectionSongsProvider(collectionId));
     final value = collection.valueOrNull;
+    final songItems = songs.valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(value?.name ?? 'List'),
         actions: [
-          if (value != null && !value.isSystem)
-            PopupMenuButton<String>(
-              tooltip: 'List actions',
-              onSelected: (action) {
-                if (action == 'rename') {
-                  _rename(context, ref, value);
-                } else if (action == 'delete') {
-                  _delete(context, ref, value);
-                }
-              },
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: 'rename', child: Text('Rename')),
-                PopupMenuItem(value: 'delete', child: Text('Delete')),
-              ],
+          if (value != null && songItems != null)
+            Builder(
+              builder: (actionContext) => PopupMenuButton<_CollectionAction>(
+                tooltip: 'Copy or share list',
+                icon: const Icon(Icons.ios_share_outlined),
+                onSelected: (action) =>
+                    _handleAction(actionContext, ref, value, songItems, action),
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: _CollectionAction.copy,
+                    child: ListTile(
+                      leading: Icon(Icons.copy_outlined),
+                      title: Text('Copy list'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: _CollectionAction.shareText,
+                    child: ListTile(
+                      leading: Icon(Icons.share_outlined),
+                      title: Text('Share as text'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: _CollectionAction.shareImage,
+                    child: ListTile(
+                      leading: Icon(Icons.image_outlined),
+                      title: Text('Share as image'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: _CollectionAction.sharePdf,
+                    child: ListTile(
+                      leading: Icon(Icons.picture_as_pdf_outlined),
+                      title: Text('Share as PDF'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  if (!value.isSystem) ...[
+                    const PopupMenuDivider(),
+                    const PopupMenuItem(
+                      value: _CollectionAction.rename,
+                      child: ListTile(
+                        leading: Icon(Icons.edit_outlined),
+                        title: Text('Rename'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: _CollectionAction.delete,
+                      child: ListTile(
+                        leading: Icon(Icons.delete_outline),
+                        title: Text('Delete'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
         ],
       ),
@@ -117,6 +169,88 @@ class CollectionDetailScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _handleAction(
+    BuildContext context,
+    WidgetRef ref,
+    SongCollection collection,
+    List<Song> songs,
+    _CollectionAction action,
+  ) async {
+    switch (action) {
+      case _CollectionAction.copy:
+        try {
+          await ref
+              .read(collectionSharingServiceProvider)
+              .copyCollection(collection, songs);
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('List copied.')));
+        } catch (_) {
+          if (context.mounted) _showShareFailure(context, 'copy');
+        }
+        return;
+      case _CollectionAction.shareText:
+        try {
+          final renderBox = context.findRenderObject() as RenderBox?;
+          final origin = renderBox == null
+              ? null
+              : renderBox.localToGlobal(Offset.zero) & renderBox.size;
+          await ref
+              .read(collectionSharingServiceProvider)
+              .shareCollection(collection, songs, sharePositionOrigin: origin);
+        } catch (_) {
+          if (context.mounted) _showShareFailure(context, 'share');
+        }
+        return;
+      case _CollectionAction.shareImage:
+        try {
+          await ref
+              .read(collectionSharingServiceProvider)
+              .shareCollectionImage(
+                collection,
+                songs,
+                sharePositionOrigin: _shareOrigin(context),
+              );
+        } on CollectionImageTooLargeException {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('This list is too long for an image. Use PDF.'),
+            ),
+          );
+        } catch (_) {
+          if (context.mounted) _showShareFailure(context, 'share');
+        }
+        return;
+      case _CollectionAction.sharePdf:
+        try {
+          await ref
+              .read(collectionSharingServiceProvider)
+              .shareCollectionPdf(
+                collection,
+                songs,
+                sharePositionOrigin: _shareOrigin(context),
+              );
+        } catch (_) {
+          if (context.mounted) _showShareFailure(context, 'share');
+        }
+        return;
+      case _CollectionAction.rename:
+        await _rename(context, ref, collection);
+        return;
+      case _CollectionAction.delete:
+        await _delete(context, ref, collection);
+        return;
+    }
+  }
+
+  Rect? _shareOrigin(BuildContext context) {
+    final renderBox = context.findRenderObject() as RenderBox?;
+    return renderBox == null
+        ? null
+        : renderBox.localToGlobal(Offset.zero) & renderBox.size;
+  }
+
   Future<void> _rename(
     BuildContext context,
     WidgetRef ref,
@@ -195,6 +329,11 @@ class CollectionDetailScreen extends ConsumerWidget {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Could not update the list.')));
+  }
+
+  void _showShareFailure(BuildContext context, String action) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('Could not $action the list.')));
   }
 
   void _logFailure(Object error, StackTrace stackTrace) {

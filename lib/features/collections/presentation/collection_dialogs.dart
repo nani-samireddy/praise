@@ -4,48 +4,75 @@ Future<String?> showCollectionNameDialog(
   BuildContext context, {
   required String title,
   String initialValue = '',
-}) async {
-  final controller = TextEditingController(text: initialValue);
-  final formKey = GlobalKey<FormState>();
-  final result = await showDialog<String>(
+}) {
+  return showDialog<String>(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(title),
+    builder: (dialogContext) =>
+        _CollectionNameDialog(title: title, initialValue: initialValue),
+  );
+}
+
+class _CollectionNameDialog extends StatefulWidget {
+  const _CollectionNameDialog({
+    required this.title,
+    required this.initialValue,
+  });
+
+  final String title;
+  final String initialValue;
+
+  @override
+  State<_CollectionNameDialog> createState() => _CollectionNameDialogState();
+}
+
+class _CollectionNameDialogState extends State<_CollectionNameDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState?.validate() ?? false) {
+      Navigator.pop(context, _controller.text.trim());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
       content: Form(
-        key: formKey,
+        key: _formKey,
         child: TextFormField(
-          controller: controller,
+          controller: _controller,
           autofocus: true,
           decoration: const InputDecoration(labelText: 'List name'),
           textCapitalization: TextCapitalization.words,
           validator: (value) => value == null || value.trim().isEmpty
               ? 'List name is required'
               : null,
-          onFieldSubmitted: (_) {
-            if (formKey.currentState?.validate() ?? false) {
-              Navigator.pop(dialogContext, controller.text.trim());
-            }
-          },
+          onFieldSubmitted: (_) => _submit(),
         ),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
+          onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        FilledButton(
-          onPressed: () {
-            if (formKey.currentState?.validate() ?? false) {
-              Navigator.pop(dialogContext, controller.text.trim());
-            }
-          },
-          child: const Text('Save'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('Save')),
       ],
-    ),
-  );
-  controller.dispose();
-  return result;
+    );
+  }
 }
 
 Future<bool> confirmCollectionDeletion(

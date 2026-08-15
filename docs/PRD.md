@@ -144,7 +144,11 @@ Users shall be able to:
 - view songs in a list;
 - add or remove server and custom songs;
 - prevent duplicate songs in the same list; and
-- reorder songs within a list.
+- reorder songs within a list;
+- copy an ordered list as readable text;
+- share an ordered list as text or a generated image through the platform share
+  sheet; and
+- share an ordered list as a paginated PDF with embedded Telugu font support.
 
 Example list names include Sunday Worship, Youth Meeting, Christmas, and Prayer
 Meeting.
@@ -269,7 +273,7 @@ spinner.
 
 - Authentication and user accounts
 - Cloud backup or synchronization of user data
-- Importable or shareable lists
+- Importable list packages
 - QR import or export
 - Community submissions and moderation
 - Transliteration
@@ -298,17 +302,17 @@ a maintained application server.
   custom song silently.
 - Duplicate and missing songs are summarized before the user confirms import.
 - Invalid or unsupported package versions fail safely with a readable message.
-- A readable plain-text list can also be shared with recipients who do not use
-  Praise.
+- V1 plain-text sharing remains available for recipients who do not use Praise.
 
-### Share formats
+### Share formats roadmap
 
-V2 shall expand sharing for both individual songs and complete lists:
+V1 supports text, image, and PDF exports for complete lists. V2 expands those
+formats to individual songs and adds an importable list package:
 
 | Content | Text | Image | PDF | Importable Praise package |
 | --- | --- | --- | --- | --- |
-| Song | Yes | Yes | Yes | No |
-| List | Yes | Yes | Yes | Yes |
+| Song | V1 | V2 | V2 | No |
+| List | V1 | V1 | V1 | V2 |
 
 - Text remains optimized for copying, messaging, and recipients without Praise.
 - Image export creates a readable share card or long image using the selected
@@ -337,6 +341,8 @@ rights messaging, must be decided before implementation.
 - [x] Favourite state survives an application restart.
 - [x] A custom song can be created, edited, deleted, favourited, and listed.
 - [x] Lists can be created, renamed, deleted, populated, and reordered.
+- [x] Lists can be copied and shared as readable ordered text.
+- [x] Lists can be shared as an on-device PNG or paginated PDF.
 - [x] Refresh inserts and updates server songs.
 - [x] Refresh hides server songs absent from the snapshot.
 - [x] Refresh never modifies custom songs.

@@ -390,7 +390,16 @@ Create lightweight ADRs if the team changes any of these decisions:
 - normalized search columns or full-text search; and
 - user data cloud-sync strategy.
 
-## 17. V2 shareable-list boundary
+## 17. List-sharing boundary
+
+V1 formats the current local list and its ordered song query as plain text, PNG,
+or PDF, then passes the result to the clipboard or operating-system share sheet.
+PNG rendering is height-bounded and redirects oversized lists to PDF. PDF
+rendering is paginated and embeds the bundled Noto Sans Telugu font. This path
+is read-only, creates no persistent export record, and requires no network
+access.
+
+### V2 importable lists
 
 Shareable lists should extend the local collections feature through explicit
 export and import services. They must not reuse the read-only catalogue update

@@ -137,6 +137,9 @@ after a recoverable failure.
 - Implement list CRUD and list-detail queries.
 - Add an add-to-list sheet from song detail.
 - Support removal and transactional reordering.
+- Add plain-text copy and platform sharing for ordered lists.
+- Render list images on-device with a bounded output height and a PDF fallback.
+- Render paginated list PDFs with an embedded Telugu-capable font.
 - Normalize sort orders after reorder or deletion.
 - Add empty states and deletion confirmation.
 - Test duplicate prevention, cascade behavior, and ordering.
@@ -152,6 +155,9 @@ list sizes are small enough for a straightforward update.
 - Lists retain membership and order across restarts.
 - The same song cannot be added twice to one list.
 - Deleting one list does not delete its songs or other lists.
+- Shared list text preserves order and available bilingual titles and authors.
+- List PNG and PDF exports preserve order, titles, and available authors without
+  requiring a network request.
 
 ## 8. Phase 5 — Remote catalogue sync
 
@@ -321,21 +327,22 @@ teardown. Avoid depending on test execution order or real network access.
 
 ## 14. Deferred implementation notes
 
-Do not build V1 placeholders for authentication, cloud sync, shareable lists,
-chords, audio, or presentation integration. V2 shareable lists use a versioned
-offline export/import package and the platform share sheet; they do not require
-authentication or extend the catalogue sync path. Define package limits,
-validation, duplicate handling, transactional import, and the custom-song
-lyrics policy before implementation.
+Do not build V1 placeholders for authentication, cloud sync, importable list
+packages, song image/PDF export, chords, audio, or presentation integration.
+V1 supports readable text, image, and PDF list sharing through the platform
+share sheet. V2 importable lists use a versioned offline export/import package;
+they do not
+require authentication or extend the catalogue sync path. Define package
+limits, validation, duplicate handling, transactional import, and the
+custom-song lyrics policy before implementation.
 
-Implement sharing in separable V2 increments:
+Continue sharing in separable V2 increments:
 
-1. Introduce the common song/list export document model and plain-text output.
-2. Add the versioned Praise list package with preview and transactional import.
-3. Add image rendering with size and memory limits.
-4. Add paginated PDF rendering with embedded Telugu fonts.
-5. Add golden tests for image output and text-extraction/rendering checks for
-   representative Telugu, English, and bilingual PDFs.
+1. Add the versioned Praise list package with preview and transactional import.
+2. Generalize the list renderers into a common song/list export document model.
+3. Add song image and PDF export with language and layout choices.
+4. Add golden tests and text-extraction/rendering checks for representative
+   Telugu, English, and bilingual exports.
 
 All generated presentation files are temporary cache artifacts. Do not store
 them as catalogue data or require a network request to create them.
