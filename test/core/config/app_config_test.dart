@@ -8,5 +8,10 @@ void main() {
       'https://nani-samireddy.github.io/praise-catalog/catalog/manifest.json',
     );
     expect(AppConfig.isCatalogueSyncConfigured, isTrue);
+    expect(
+      AppConfig.feedbackApiUrl,
+      'https://praise-support-api.onrender.com/v1/issues',
+    );
+    expect(AppConfig.isFeedbackConfigured, isTrue);
   });
 }

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: praise-support-api
+    runtime: python
+    plan: free
+    rootDir: support_api
+    buildCommand: echo "No dependencies to install"
+    startCommand: python server.py
+    healthCheckPath: /health
+    envVars:
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_REPOSITORY
+        value: nani-samireddy/praise
+      - key: RATE_LIMIT_PER_HOUR
+        value: "3"

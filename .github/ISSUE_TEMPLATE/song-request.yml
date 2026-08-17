@@ -1,0 +1,32 @@
+name: Request a song
+description: Ask for a song to be added to the Praise catalogue.
+title: "[Song request] "
+labels: []
+body:
+  - type: input
+    id: title
+    attributes:
+      label: Song title
+      placeholder: Enter the primary-language title
+    validations:
+      required: true
+  - type: input
+    id: english-title
+    attributes:
+      label: English title
+      description: Add this when known.
+  - type: input
+    id: author
+    attributes:
+      label: Author or source
+  - type: textarea
+    id: lyrics
+    attributes:
+      label: Lyrics or source link
+      description: Provide the lyrics, a reliable source link, or both.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes

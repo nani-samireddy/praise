@@ -1,0 +1,26 @@
+name: Report a song correction
+description: Report incorrect lyrics, spacing, title, or attribution.
+title: "[Song correction] "
+labels: []
+body:
+  - type: input
+    id: title
+    attributes:
+      label: Song title
+    validations:
+      required: true
+  - type: input
+    id: catalogue-id
+    attributes:
+      label: Catalogue ID
+      description: The app fills this automatically when reporting from a song.
+  - type: textarea
+    id: correction
+    attributes:
+      label: What should be corrected?
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Suggested correction or source

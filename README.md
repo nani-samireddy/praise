@@ -15,6 +15,7 @@ technical boundaries, and the proposed delivery sequence are documented here:
 - [Separate catalogue server setup](docs/CATALOG_SERVER_SETUP.md)
 - [Release process and cycles](docs/RELEASE_PROCESS.md)
 - [Android release signing setup](docs/RELEASE_SIGNING_SETUP.md)
+- [Anonymous GitHub issue relay](support_api/README.md)
 
 ## Planned stack
 
@@ -37,6 +38,8 @@ automatic English-title transliteration for custom songs, pinch-to-resize lyrics
 five persistent Telugu typeface choices (system plus four bundled Google Fonts
 families). A versioned GitHub Pages catalogue provides manual snapshot
 synchronization without a maintained application server.
+An optional stateless Render relay lets users submit public GitHub song requests
+and reports without a GitHub account, returning a tracking link to the app.
 
 ## Baseline commands
 

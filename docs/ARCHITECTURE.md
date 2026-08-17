@@ -487,3 +487,27 @@ exports identify image-only lyrics instead of emitting an empty lyrics section.
 OCR and on-device AI are assistance rather than an authoritative import. Errors return to the
 scan screen with retry guidance, empty recognition cannot proceed, and no text
 is saved until the user explicitly confirms the editable form.
+
+## 19. GitHub feedback boundary
+
+V1 uses the public application repository as its low-maintenance feedback
+channel. Settings exposes song-request and general-report forms, while a server
+song exposes a correction form from its detail menu. The app submits the
+validated form to a small stateless HTTPS service and receives the created
+GitHub issue number and public URL. The user can copy that URL or open it later
+through `url_launcher`.
+
+The support service runs from `support_api/` on a free Render web service. It
+holds a fine-grained GitHub token restricted to Issues write access on this
+repository, formats accepted fields, limits request size and per-IP submission
+frequency, calls GitHub's issue API, and returns only the issue number and URL.
+It stores no database or local files and never logs submitted bodies. Free
+Render cold starts can delay the first submission, so the app uses a longer
+feedback response timeout and gives retry guidance.
+
+GitHub credentials are never included in the APK. Before submission, Praise
+states that the issue will be public and tells the user not to include private
+information. Song corrections contain public catalogue identifiers and titles;
+general device details are entered voluntarily. The public endpoint remains an
+abuse surface even with lightweight rate limiting, so moderation and a stronger
+attestation or challenge mechanism should be added if usage grows.

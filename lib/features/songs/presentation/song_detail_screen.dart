@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/export/export_document_renderer.dart';
 import '../../collections/presentation/add_to_list_sheet.dart';
+import '../../feedback/data/github_feedback_service.dart';
+import '../../feedback/presentation/feedback_dialogs.dart';
 import '../../favorites/presentation/favorite_button.dart';
 import '../../settings/data/settings_repository.dart';
 import '../../settings/data/telugu_font.dart';
@@ -15,7 +17,7 @@ import '../data/song_sharing_service.dart';
 import 'formatted_lyrics.dart';
 import 'song_providers.dart';
 
-enum _SongAction { copy, shareText, shareImage, sharePdf, edit, delete }
+enum _SongAction { copy, shareText, shareImage, sharePdf, report, edit, delete }
 
 class SongDetailScreen extends ConsumerWidget {
   const SongDetailScreen({super.key, required this.songId});
@@ -89,6 +91,17 @@ class SongDetailScreen extends ConsumerWidget {
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
+                    if (value.source == 'server') ...[
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: _SongAction.report,
+                        child: ListTile(
+                          leading: Icon(Icons.flag_outlined),
+                          title: Text('Report this song'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
                     if (value.source == 'custom') ...[
                       const PopupMenuDivider(),
                       const PopupMenuItem(
@@ -189,6 +202,14 @@ class SongDetailScreen extends ConsumerWidget {
             const SnackBar(content: Text('Could not share the song PDF.')),
           );
         }
+        return;
+      case _SongAction.report:
+        await showFeedbackForm(
+          context: context,
+          service: ref.read(githubFeedbackServiceProvider),
+          type: FeedbackFormType.songCorrection,
+          song: song,
+        );
         return;
       case _SongAction.edit:
         await context.push('/custom-song/${song.id}/edit');

@@ -366,6 +366,14 @@ Continue sharing in separable V2 increments:
 All generated presentation files are temporary cache artifacts. Do not store
 them as catalogue data or require a network request to create them.
 
+V1 feedback uses a stateless Render relay rather than requiring users to own a
+GitHub account. Keep request construction and response validation in a testable
+app service. The relay owns GitHub formatting and credentials, validates size
+and required fields, rate-limits submissions, and returns a durable issue URL.
+After success, show the number and copyable link; opening GitHub is optional.
+Repository issue forms mirror song request, song correction, and app problem
+categories for users who start from GitHub directly.
+
 If cloud collaboration is approved later, start with explicit ownership and
 conflict-resolution requirements rather than evolving the offline package into
 an implicit synchronization protocol.

@@ -83,6 +83,9 @@ jobs:
       - name: Test release tooling
         run: python -m unittest discover -s test/tool -p "test_*.py"
 
+      - name: Test support API
+        run: python -m unittest discover -s support_api/tests -p "test_*.py"
+
       - name: Validate catalogue
         run: python tool/validate_catalog.py
 

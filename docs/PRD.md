@@ -105,6 +105,9 @@ The song reader shall:
 - allow the complete bilingual song to be copied as readable plain text;
 - allow the complete bilingual song to be shared as text, image, or paginated
   PDF through the platform share sheet;
+- allow a server song correction to be submitted in the app; the resulting
+  public GitHub issue shall include its title and catalogue ID and return a
+  tracking link;
 - allow custom songs to be edited or deleted;
 - use the configured lyrics font size and Telugu typeface;
 - visually separate structural labels and repeat cues from the lyric line that
@@ -206,7 +209,14 @@ V1 settings shall include:
   Ramabhadra;
 - theme preference: system, light, or dark;
 - latest successful catalogue sync time; and
-- a manual catalogue refresh action.
+- a manual catalogue refresh action;
+- an in-app song-request form that returns a GitHub issue tracking link; and
+- an in-app problem-report form that returns a GitHub issue tracking link.
+
+Submission is explicit: Praise shows that the content will become public,
+creates the issue through the Praise support service only after the user taps
+Submit, and displays its issue number and copyable GitHub link. The user does
+not need a GitHub account, and the app never contains GitHub credentials.
 
 ## 7. Navigation
 
@@ -363,6 +373,7 @@ rights messaging, must be decided before implementation.
 - [x] Lists can be copied and shared as readable ordered text.
 - [x] Lists can be shared as an on-device PNG or paginated PDF.
 - [x] Songs can be shared as an on-device PNG or paginated PDF.
+- [x] Users can request songs and report catalogue songs or app problems on GitHub.
 - [x] List PNG/PDF export can include every song's full lyrics.
 - [x] Refresh inserts and updates server songs.
 - [x] Refresh hides server songs absent from the snapshot.

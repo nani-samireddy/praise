@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/app_config.dart';
 import '../../catalogue_sync/presentation/catalogue_sync_feedback.dart';
 import '../../catalogue_sync/presentation/catalogue_sync_providers.dart';
+import '../../feedback/data/github_feedback_service.dart';
+import '../../feedback/presentation/feedback_dialogs.dart';
 import '../data/settings_repository.dart';
 import '../data/telugu_font.dart';
 import 'settings_providers.dart';
@@ -278,6 +280,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                 ],
               ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const _SectionTitle('Feedback & requests'),
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.library_add_outlined),
+                  title: const Text('Request a song'),
+                  subtitle: const Text('Submit and receive a tracking link'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => showFeedbackForm(
+                    context: context,
+                    service: ref.read(githubFeedbackServiceProvider),
+                    type: FeedbackFormType.songRequest,
+                  ),
+                ),
+                const Divider(height: 1, indent: 56),
+                ListTile(
+                  leading: const Icon(Icons.bug_report_outlined),
+                  title: const Text('Report a problem'),
+                  subtitle: const Text('Submit and receive a tracking link'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => showFeedbackForm(
+                    context: context,
+                    service: ref.read(githubFeedbackServiceProvider),
+                    type: FeedbackFormType.problemReport,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),

@@ -5,6 +5,7 @@ import 'package:praise/app/app.dart';
 import 'package:praise/core/database/app_database.dart';
 import 'package:praise/features/favorites/data/favorites_repository.dart';
 import 'package:praise/features/favorites/presentation/favorite_providers.dart';
+import 'package:praise/features/feedback/data/github_feedback_service.dart';
 import 'package:praise/features/songs/data/song_repository.dart';
 import 'package:praise/features/songs/data/song_sharing_service.dart';
 import 'package:praise/features/songs/presentation/song_providers.dart';
@@ -30,12 +31,14 @@ void main() {
       isDeleted: false,
     );
     final sharingService = _FakeSongSharingService();
+    final feedbackService = _FakeGithubFeedbackService();
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           songRepositoryProvider.overrideWithValue(_FakeSongRepository(song)),
           songSharingServiceProvider.overrideWithValue(sharingService),
+          githubFeedbackServiceProvider.overrideWithValue(feedbackService),
           favoritesRepositoryProvider.overrideWithValue(
             const _FakeFavoritesRepository(),
           ),
@@ -86,7 +89,59 @@ void main() {
     await tester.tap(find.text('Share as PDF'));
     await _pumpFrames(tester);
     expect(sharingService.sharedPdfSong, song);
+
+    await tester.tap(find.byTooltip('Copy or share song'));
+    await _pumpFrames(tester);
+    await tester.tap(find.text('Report this song'));
+    await _pumpFrames(tester);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'What should be corrected?'),
+      'The second line is incorrect.',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Submit'));
+    await _pumpFrames(tester);
+    expect(feedbackService.reportedSong, song);
+    expect(find.text('Issue #77 created'), findsOneWidget);
   });
+}
+
+class _FakeGithubFeedbackService implements GithubFeedbackService {
+  Song? reportedSong;
+
+  @override
+  Future<void> openIssue(GithubIssueReceipt receipt) async {}
+
+  @override
+  Future<GithubIssueReceipt> reportProblem({
+    required String summary,
+    required String description,
+    String? steps,
+    String? deviceDetails,
+  }) async => _receipt;
+
+  @override
+  Future<GithubIssueReceipt> reportSong({
+    required Song song,
+    required String correction,
+    String? suggestedCorrectionOrSource,
+  }) async {
+    reportedSong = song;
+    return _receipt;
+  }
+
+  @override
+  Future<GithubIssueReceipt> requestSong({
+    required String title,
+    String? englishTitle,
+    String? author,
+    required String lyricsOrSource,
+    String? notes,
+  }) async => _receipt;
+
+  static final _receipt = GithubIssueReceipt(
+    number: 77,
+    url: Uri.parse('https://github.com/example/issues/77'),
+  );
 }
 
 class _FakeSongSharingService implements SongSharingService {
