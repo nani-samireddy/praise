@@ -1,16 +1,14 @@
 {
   "songCount": 1374,
-  "changedSongCount": 1373,
-  "normalizedRepeatCueCount": 9305,
-  "normalizedRepeatCountCount": 17688,
-  "repairedMalformedRepeatMarkerCount": 7,
-  "repairedJoinedLineBoundaryCount": 163,
+  "changedSongCount": 2,
+  "normalizedRepeatCueCount": 0,
+  "normalizedRepeatCountCount": 0,
+  "repairedMalformedRepeatMarkerCount": 0,
+  "repairedJoinedLineBoundaryCount": 0,
   "lineBreakOverrideSongCount": 7,
   "stanzaSpacingSongCount": 5,
-  "reviewIssueCount": 30,
-  "reviewIssueCounts": {
-    "repeat_marker_count_mismatch": 30
-  },
-  "sourceFile": "lyricly - TELUGU.csv",
+  "reviewIssueCount": 0,
+  "reviewIssueCounts": {},
+  "sourceFile": "songs.normalized.csv",
   "normalizedFile": "catalog/source/songs.normalized.csv"
 }

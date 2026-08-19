@@ -98,14 +98,16 @@ String normalizeScannedLyrics(String value) {
 
 String _normalizeScannedLine(String line) {
   final trimmed = line.trimRight();
-  final inlineCount = RegExp(r'^(.+?\S)\s*(?:[xX*]|✕)\s*([2-9]|1[0-2])\s*$')
-      .firstMatch(trimmed);
+  final inlineCount = RegExp(
+    r'^(.+?\S)\s*(?:[xX*×✕]|\((?=[2-9]|1[0-2]\))|\"(?=[2-9]|1[0-2]\"))\s*([2-9]|1[0-2])\s*[\)\"]?\s*$',
+  ).firstMatch(trimmed);
   return inlineCount == null
       ? trimmed
       : '${inlineCount.group(1)} ×${inlineCount.group(2)}';
 }
 
-final _standaloneRepeatPattern = RegExp(r'^(?:[xX*×✕])\s*([2-9]|1[0-2])$');
+final _standaloneRepeatPattern =
+    RegExp(r'^(?:[xX*×✕]|\((?=[2-9]|1[0-2]\))|\"(?=[2-9]|1[0-2]\"))\s*([2-9]|1[0-2])[\)\"]?$');
 
 String? _normalizedField(Object? value) {
   if (value is! String) return null;

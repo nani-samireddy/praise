@@ -12,12 +12,12 @@ from pathlib import Path
 
 
 LYRIC_COLUMNS = ("TELUGU SONG", "ENGLISH SONG")
-MARKER = re.compile(r"\|\|\s*([^|\r\n]+?)\s*\|\|")
-REPEAT_COUNT = re.compile(r"\(\s*([2-9]\d*)\s*\)")
+MARKER = re.compile(r"(?:\|\||॥|।।|౹౹)\s*([^|॥।౹\r\n]+?)\s*(?:\|\||॥|।।|౹౹)")
+REPEAT_COUNT = re.compile(r'(?:\(|\")\s*([2-9]|1[0-2]|\d{2,})\s*(?:\)|\")(?:\.?)')
 HORIZONTAL_SPACE = re.compile(r"[\t \u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+")
 JOINED_WORDS = re.compile(r"[a-z][A-Z]")
 JOINED_ENGLISH_LINE = re.compile(r"(?<=[a-z])(?=[A-Z])")
-REPEAT_LINE_BOUNDARY = re.compile(r"(×\d+)(?=\S)")
+REPEAT_LINE_BOUNDARY = re.compile(r"(×\d+)(?=[^\s\d])")
 SPACED_MARKER_DELIMITER = re.compile(r"\|\s+\|")
 SINGLE_CLOSING_DELIMITER = re.compile(r"(\|\|[^|\n]+)\|$")
 
@@ -171,7 +171,7 @@ def normalize_body(value: str, *, english: bool) -> tuple[str, int, int, int, in
 
     for raw_line in value.split("\n"):
         line = clean_inline(raw_line)
-        if not line:
+        if not line or line == "|":
             append_blank(output)
             continue
 

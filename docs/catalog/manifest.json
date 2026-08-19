@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 7,
-  "generatedAt": "2026-08-13T16:29:44.458420Z",
+  "catalogVersion": 8,
+  "generatedAt": "2026-08-19T18:42:50.859531Z",
   "songCount": 1374,
-  "sha256": "86c78bd8a7d166d681be36694b11d28c5c50682491734982220c329e65f8a72f",
+  "sha256": "be655f908adb07e032833b1b38f6aa776668ca61f204d26b39de4593885e088f",
   "catalogUrl": "songs.json"
 }

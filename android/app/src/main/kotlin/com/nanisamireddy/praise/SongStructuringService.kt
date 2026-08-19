@@ -93,13 +93,13 @@ class SongStructuringService {
     private fun normalizeLyricLine(value: String): String {
         val line = value.trim().replace(Regex("[ \\t]+"), " ")
         return line.replace(
-            Regex("\\s*(?:[xX*]|×|✕)\\s*([2-9]|1[0-2])\\s*$"),
+            Regex("\\s*(?:[xX*]|×|✕|\\((?=[2-9]|1[0-2]\\))|\"(?=[2-9]|1[0-2]\"))\\s*([2-9]|1[0-2])[)\"]?\\s*$"),
             " ×$1",
         ).trim()
     }
 
     private companion object {
-        val standaloneRepeat = Regex("^(?:[xX*]|×|✕)\\s*([2-9]|1[0-2])$")
+        val standaloneRepeat = Regex("^(?:[xX*]|×|✕|\\((?=[2-9]|1[0-2]\\))|\"(?=[2-9]|1[0-2]\"))\\s*([2-9]|1[0-2])[)\"]?$")
     }
 
     private suspend fun prepareModel() {
