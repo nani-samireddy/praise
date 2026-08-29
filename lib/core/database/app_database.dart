@@ -68,6 +68,22 @@ class AppMetadata extends Table {
   Set<Column<Object>> get primaryKey => {key};
 }
 
+class SongIndexEntry {
+  const SongIndexEntry({
+    required this.id,
+    required this.title,
+    required this.source,
+    this.englishTitle,
+    this.author,
+  });
+
+  final String id;
+  final String title;
+  final String? englishTitle;
+  final String? author;
+  final String source;
+}
+
 @DriftDatabase(
   tables: [Songs, Favorites, Collections, CollectionSongs, AppMetadata],
 )
@@ -98,29 +114,46 @@ class AppDatabase extends _$AppDatabase {
     return query.watch();
   }
 
-  Future<List<Song>> fetchSongsPage({
+  Future<List<SongIndexEntry>> fetchSongIndexPage({
     String search = '',
     required int limit,
     required int offset,
   }) {
-    final query = select(songs)
-      ..where((row) {
-        final active = row.isDeleted.equals(false);
+    final query = selectOnly(songs)
+      ..addColumns([
+        songs.id,
+        songs.title,
+        songs.englishTitle,
+        songs.author,
+        songs.source,
+      ])
+      ..where(() {
+        final active = songs.isDeleted.equals(false);
         final term = search.trim().toLowerCase();
         if (term.isEmpty) return active;
 
         return active &
-            (row.title.lower().contains(term) |
-                row.englishTitle.lower().contains(term) |
-                row.author.lower().contains(term));
-      })
+            (songs.title.lower().contains(term) |
+                songs.englishTitle.lower().contains(term) |
+                songs.author.lower().contains(term));
+      }())
       ..orderBy([
-        (row) => OrderingTerm.asc(row.title),
-        (row) => OrderingTerm.asc(row.englishTitle),
+        OrderingTerm.asc(songs.title),
+        OrderingTerm.asc(songs.englishTitle),
       ])
       ..limit(limit, offset: offset);
 
-    return query.get();
+    return query
+        .map(
+          (row) => SongIndexEntry(
+            id: row.read(songs.id)!,
+            title: row.read(songs.title)!,
+            englishTitle: row.read(songs.englishTitle),
+            author: row.read(songs.author),
+            source: row.read(songs.source)!,
+          ),
+        )
+        .get();
   }
 
   Stream<Song?> watchSong(String id) {

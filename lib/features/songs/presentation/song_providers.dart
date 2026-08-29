@@ -36,12 +36,12 @@ class PagedSongsState {
     this.isLoadingMore = false,
   });
 
-  final List<Song> items;
+  final List<SongIndexEntry> items;
   final bool hasMore;
   final bool isLoadingMore;
 
   PagedSongsState copyWith({
-    List<Song>? items,
+    List<SongIndexEntry>? items,
     bool? hasMore,
     bool? isLoadingMore,
   }) {
@@ -91,13 +91,20 @@ class PagedSongsController extends AsyncNotifier<PagedSongsState> {
     }
   }
 
-  Future<List<Song>> _fetchPage({required String search, required int offset}) {
+  Future<List<SongIndexEntry>> _fetchPage({
+    required String search,
+    required int offset,
+  }) {
     return ref
         .read(songRepositoryProvider)
-        .fetchSongsPage(search: search, limit: _pageSize + 1, offset: offset);
+        .fetchSongIndexPage(
+          search: search,
+          limit: _pageSize + 1,
+          offset: offset,
+        );
   }
 
-  List<Song> _visiblePage(List<Song> items) {
+  List<SongIndexEntry> _visiblePage(List<SongIndexEntry> items) {
     if (items.length <= _pageSize) return items;
     return items.take(_pageSize).toList(growable: false);
   }

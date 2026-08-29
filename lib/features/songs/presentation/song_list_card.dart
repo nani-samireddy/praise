@@ -8,21 +8,37 @@ import '../../settings/data/telugu_font.dart';
 import '../../settings/presentation/settings_providers.dart';
 
 class SongListCard extends ConsumerWidget {
-  const SongListCard({super.key, required this.song});
+  SongListCard({super.key, required Song song})
+    : id = song.id,
+      title = song.title,
+      englishTitle = song.englishTitle,
+      author = song.author,
+      source = song.source;
 
-  final Song song;
+  const SongListCard.index({
+    super.key,
+    required this.id,
+    required this.title,
+    required this.source,
+    this.englishTitle,
+    this.author,
+  });
+
+  final String id;
+  final String title;
+  final String? englishTitle;
+  final String? author;
+  final String source;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final englishTitle = song.englishTitle;
-    final author = song.author;
     final teluguFont =
         ref.watch(teluguFontProvider).valueOrNull ?? TeluguFont.system;
 
     return Card(
       clipBehavior: Clip.antiAlias,
       child: ListTile(
-        onTap: () => context.push('/songs/${song.id}'),
+        onTap: () => context.push('/songs/$id'),
         contentPadding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
         minVerticalPadding: 8,
         visualDensity: const VisualDensity(vertical: -1),
@@ -30,7 +46,7 @@ class SongListCard extends ConsumerWidget {
           children: [
             Expanded(
               child: Text(
-                song.title,
+                title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -39,7 +55,7 @@ class SongListCard extends ConsumerWidget {
                 ),
               ),
             ),
-            if (song.source == 'custom') ...[
+            if (source == 'custom') ...[
               const SizedBox(width: 6),
               Tooltip(
                 message: 'Your song',
@@ -65,7 +81,7 @@ class SongListCard extends ConsumerWidget {
                   ),
                 ),
               ),
-        trailing: FavoriteButton(songId: song.id),
+        trailing: FavoriteButton(songId: id),
       ),
     );
   }

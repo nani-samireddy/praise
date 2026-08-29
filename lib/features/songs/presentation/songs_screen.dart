@@ -260,7 +260,7 @@ class _SongList extends StatelessWidget {
     required this.onRefresh,
   });
 
-  final List<Song> items;
+  final List<SongIndexEntry> items;
   final String search;
   final bool hasMore;
   final bool isLoadingMore;
@@ -307,7 +307,14 @@ class _SongList extends StatelessWidget {
                 child: Center(child: CircularProgressIndicator.adaptive()),
               );
             }
-            return SongListCard(song: items[index]);
+            final song = items[index];
+            return SongListCard.index(
+              id: song.id,
+              title: song.title,
+              englishTitle: song.englishTitle,
+              author: song.author,
+              source: song.source,
+            );
           },
         ),
       ),
