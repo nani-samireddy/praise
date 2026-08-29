@@ -17,6 +17,7 @@ import '../shared/presentation/app_shell.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: '/songs',
+    overridePlatformDefaultLocation: true,
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
