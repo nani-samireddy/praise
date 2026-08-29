@@ -15,6 +15,7 @@ import '../../favorites/presentation/favorite_button.dart';
 import '../../settings/data/settings_repository.dart';
 import '../../settings/data/telugu_font.dart';
 import '../../settings/presentation/settings_providers.dart';
+import '../../../shared/presentation/action_sheet.dart';
 import '../data/song_sharing_service.dart';
 import 'formatted_lyrics.dart';
 import 'song_providers.dart';
@@ -36,103 +37,84 @@ class SongDetailScreen extends ConsumerWidget {
           return const Scaffold(appBar: _LyricsAppBar(), body: _SongNotFound());
         }
         return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              value.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            actions: [
-              FavoriteButton(songId: value.id),
-              IconButton(
-                onPressed: () => showModalBottomSheet<void>(
-                  context: context,
-                  isScrollControlled: true,
-                  showDragHandle: false,
-                  builder: (context) => AddToListSheet(songId: value.id),
-                ),
-                tooltip: 'Add to list',
-                icon: const Icon(Icons.playlist_add),
+          body: _SongReader(
+            song: value,
+            appBar: SliverAppBar.medium(
+              title: Text(
+                value.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              Builder(
-                builder: (actionContext) => PopupMenuButton<_SongAction>(
-                  tooltip: 'Song sharing and actions',
-                  icon: const Icon(Icons.ios_share_outlined),
+              actions: [
+                FavoriteButton(songId: value.id),
+                IconButton(
+                  onPressed: () => showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    showDragHandle: false,
+                    builder: (context) => AddToListSheet(songId: value.id),
+                  ),
+                  tooltip: 'Add to list',
+                  icon: const Icon(Icons.playlist_add),
+                ),
+                Builder(
+                  builder: (actionContext) => IconButton(
+                    tooltip: 'Share song',
+                    icon: const Icon(Icons.ios_share_outlined),
+                    onPressed: () async {
+                      ScaffoldMessenger.of(actionContext).hideCurrentSnackBar();
+                      final action = await _showSongShareSheet(
+                        actionContext,
+                        value,
+                      );
+                      if (action == null || !actionContext.mounted) return;
+                      await _handleSongAction(
+                        actionContext,
+                        ref,
+                        value,
+                        action,
+                      );
+                    },
+                  ),
+                ),
+                PopupMenuButton<_SongAction>(
+                  tooltip: 'More options',
+                  icon: const Icon(Icons.more_vert),
                   onSelected: (action) =>
-                      _handleSongAction(actionContext, ref, value, action),
+                      _handleSongAction(context, ref, value, action),
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: _SongAction.copy,
-                      child: ListTile(
-                        leading: Icon(Icons.copy_outlined),
-                        title: Text('Copy song'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: _SongAction.shareText,
-                      child: ListTile(
-                        leading: Icon(Icons.share_outlined),
-                        title: Text('Share text'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: _SongAction.shareImage,
-                      child: ListTile(
-                        leading: const Icon(Icons.image_outlined),
-                        title: Text(
-                          value.imagePath == null
-                              ? 'Share image'
-                              : 'Share original photo',
-                        ),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: _SongAction.sharePdf,
-                      child: ListTile(
-                        leading: Icon(Icons.picture_as_pdf_outlined),
-                        title: Text('Share PDF'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    if (value.source == 'server') ...[
-                      const PopupMenuDivider(),
+                    if (value.source == 'server')
                       const PopupMenuItem(
                         value: _SongAction.report,
                         child: ListTile(
+                          contentPadding: EdgeInsets.zero,
                           leading: Icon(Icons.flag_outlined),
                           title: Text('Report this song'),
-                          contentPadding: EdgeInsets.zero,
                         ),
                       ),
-                    ],
                     if (value.source == 'custom') ...[
-                      const PopupMenuDivider(),
                       const PopupMenuItem(
                         value: _SongAction.edit,
                         child: ListTile(
+                          contentPadding: EdgeInsets.zero,
                           leading: Icon(Icons.edit_outlined),
                           title: Text('Edit song'),
-                          contentPadding: EdgeInsets.zero,
                         ),
                       ),
                       const PopupMenuItem(
                         value: _SongAction.delete,
                         child: ListTile(
+                          contentPadding: EdgeInsets.zero,
                           leading: Icon(Icons.delete_outline),
                           title: Text('Delete song'),
-                          contentPadding: EdgeInsets.zero,
                         ),
                       ),
                     ],
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          body: _SongReader(song: value),
         );
       },
       loading: () => const Scaffold(
@@ -143,6 +125,43 @@ class SongDetailScreen extends ConsumerWidget {
         appBar: const _LyricsAppBar(),
         body: _DetailError(onRetry: () => ref.invalidate(songProvider(songId))),
       ),
+    );
+  }
+
+  Future<_SongAction?> _showSongShareSheet(BuildContext context, Song song) {
+    return showActionSheet<_SongAction>(
+      context: context,
+      title: 'Share song',
+      items: [
+        const ActionSheetItem(
+          value: _SongAction.copy,
+          icon: Icons.copy_outlined,
+          title: 'Copy text',
+          subtitle: 'Copy the full song to your clipboard',
+        ),
+        const ActionSheetItem(
+          value: _SongAction.shareText,
+          icon: Icons.share_outlined,
+          title: 'Share text',
+          subtitle: 'Best for messages and WhatsApp',
+        ),
+        ActionSheetItem(
+          value: _SongAction.shareImage,
+          icon: Icons.image_outlined,
+          title: song.imagePath == null
+              ? 'Share image'
+              : 'Share original photo',
+          subtitle: song.imagePath == null
+              ? 'Create a visual lyric card'
+              : 'Share the saved source photo',
+        ),
+        const ActionSheetItem(
+          value: _SongAction.sharePdf,
+          icon: Icons.picture_as_pdf_outlined,
+          title: 'Share PDF',
+          subtitle: 'Best for printing or long songs',
+        ),
+      ],
     );
   }
 
@@ -281,9 +300,10 @@ class _LyricsAppBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _SongReader extends ConsumerStatefulWidget {
-  const _SongReader({required this.song});
+  const _SongReader({required this.song, required this.appBar});
 
   final Song song;
+  final SliverAppBar appBar;
 
   @override
   ConsumerState<_SongReader> createState() => _SongReaderState();
@@ -320,8 +340,6 @@ class _SongReaderState extends ConsumerState<_SongReader> {
         displayMode != LyricsDisplayMode.english || englishBody == null;
     final showEnglish =
         englishBody != null && displayMode != LyricsDisplayMode.primary;
-    final showPrimaryTitle =
-        displayMode != LyricsDisplayMode.english || englishTitle == null;
     final showEnglishTitle =
         englishTitle != null && displayMode != LyricsDisplayMode.primary;
 
@@ -338,110 +356,174 @@ class _SongReaderState extends ConsumerState<_SongReader> {
       onScaleEnd: (details) =>
           ref.read(settingsRepositoryProvider).setLyricsFontSize(_fontSize),
       child: SelectionArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-          children: [
-            if (hasPrimaryLyrics || englishBody != null)
-              Row(
-                children: [
-                  Icon(
-                    Icons.pinch_outlined,
-                    size: 18,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 7),
-                  Expanded(
-                    child: Text(
-                      'Pinch to resize lyrics',
-                      style: Theme.of(context).textTheme.labelMedium
+        child: CustomScrollView(
+          slivers: [
+            widget.appBar,
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 48),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  if (hasPrimaryLyrics || englishBody != null)
+                    Row(
+                      children: [
+                        TextButton.icon(
+                          onPressed: _chooseFontSize,
+                          icon: const Icon(Icons.text_fields, size: 18),
+                          label: Text('Text ${_fontSize.round()}'),
+                        ),
+                        const Spacer(),
+                        TextButton.icon(
+                          onPressed: () => setState(() {
+                            _expandCounts = !_expandCounts;
+                          }),
+                          icon: Icon(
+                            _expandCounts
+                                ? Icons.unfold_less
+                                : Icons.unfold_more,
+                            size: 18,
+                          ),
+                          label: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 160),
+                            child: Text(
+                              _expandCounts ? 'Compact' : 'Expand ×N',
+                              key: ValueKey(_expandCounts),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (showEnglishTitle) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      englishTitle,
+                      style: Theme.of(context).textTheme.titleLarge
                           ?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
-                  ),
-                  TextButton.icon(
-                    onPressed: () => setState(() {
-                      _expandCounts = !_expandCounts;
-                    }),
-                    icon: Icon(
-                      _expandCounts ? Icons.unfold_less : Icons.unfold_more,
-                      size: 18,
+                  ],
+                  if (author != null) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline,
+                          size: 18,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            author,
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(color: colorScheme.primary),
+                          ),
+                        ),
+                      ],
                     ),
-                    label: Text(_expandCounts ? 'Compact' : 'Expand ×N'),
-                  ),
-                ],
-              ),
-            const SizedBox(height: 18),
-            if (showPrimaryTitle)
-              Text(
-                widget.song.title,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontFamily: teluguFont.fontFamily,
-                  fontWeight: FontWeight.w800,
-                  height: 1.25,
-                ),
-              ),
-            if (showEnglishTitle) ...[
-              const SizedBox(height: 8),
-              Text(
-                englishTitle,
-                style: Theme.of(context).textTheme.titleLarge
-                    ?.copyWith(color: colorScheme.onSurfaceVariant),
-              ),
-            ],
-            if (author != null) ...[
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Icon(
-                    Icons.person_outline,
-                    size: 18,
-                    color: colorScheme.primary,
-                  ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      author,
-                      style: Theme.of(context).textTheme.labelLarge
-                          ?.copyWith(color: colorScheme.primary),
+                  ],
+                  const SizedBox(height: 24),
+                  if (widget.song.maleVideoUrl != null ||
+                      widget.song.femaleVideoUrl != null) ...[
+                    _PracticeVideos(song: widget.song),
+                    const SizedBox(height: 28),
+                  ],
+                  if (imagePath != null) ...[
+                    _SongPhoto(imagePath: imagePath),
+                    if (hasPrimaryLyrics || showEnglish)
+                      const SizedBox(height: 28),
+                  ],
+                  if (showPrimary && hasPrimaryLyrics)
+                    _LyricsSection(
+                      label: showEnglish ? 'Original lyrics' : 'Lyrics',
+                      body: widget.song.body,
+                      fontSize: _fontSize,
+                      fontFamily: teluguFont.fontFamily,
+                      expandCounts: _expandCounts,
                     ),
-                  ),
-                ],
+                  if (showEnglish) ...[
+                    const SizedBox(height: 32),
+                    if (showPrimary && hasPrimaryLyrics)
+                      Divider(color: colorScheme.outlineVariant),
+                    const SizedBox(height: 20),
+                    _LyricsSection(
+                      label: 'English lyrics',
+                      body: englishBody,
+                      fontSize: _fontSize,
+                      fontFamily: null,
+                      expandCounts: _expandCounts,
+                    ),
+                  ],
+                ]),
               ),
-            ],
-            const SizedBox(height: 28),
-            if (widget.song.maleVideoUrl != null ||
-                widget.song.femaleVideoUrl != null) ...[
-              _PracticeVideos(song: widget.song),
-              const SizedBox(height: 32),
-            ],
-            if (imagePath != null) ...[
-              _SongPhoto(imagePath: imagePath),
-              if (hasPrimaryLyrics || showEnglish) const SizedBox(height: 32),
-            ],
-            if (showPrimary && hasPrimaryLyrics)
-              _LyricsSection(
-                label: showEnglish ? 'Primary lyrics' : 'Lyrics',
-                body: widget.song.body,
-                fontSize: _fontSize,
-                fontFamily: teluguFont.fontFamily,
-                expandCounts: _expandCounts,
-              ),
-            if (showEnglish) ...[
-              const SizedBox(height: 32),
-              if (showPrimary && hasPrimaryLyrics)
-                Divider(color: colorScheme.outlineVariant),
-              const SizedBox(height: 24),
-              _LyricsSection(
-                label: 'English lyrics',
-                body: englishBody,
-                fontSize: _fontSize,
-                fontFamily: null,
-                expandCounts: _expandCounts,
-              ),
-            ],
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _chooseFontSize() async {
+    var draft = _fontSize;
+    final selected = await showModalBottomSheet<double>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Lyrics text size',
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Text('A', style: TextStyle(fontSize: 16)),
+                    Expanded(
+                      child: Slider(
+                        value: draft,
+                        min: _minimumFontSize,
+                        max: _maximumFontSize,
+                        divisions: 22,
+                        label: '${draft.round()}',
+                        semanticFormatterCallback: (value) =>
+                            'Text size ${value.round()}',
+                        onChanged: (value) =>
+                            setSheetState(() => draft = value),
+                      ),
+                    ),
+                    const Text('A', style: TextStyle(fontSize: 28)),
+                  ],
+                ),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () => setSheetState(() => draft = 19),
+                      child: const Text('Reset'),
+                    ),
+                    const Spacer(),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(sheetContext, draft),
+                      child: const Text('Done'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _fontSize = selected;
+      _scaleStartFontSize = selected;
+    });
+    await ref.read(settingsRepositoryProvider).setLyricsFontSize(selected);
   }
 }
 
@@ -671,12 +753,18 @@ class _LyricsSection extends StatelessWidget {
             letterSpacing: 1.1,
           ),
         ),
-        const SizedBox(height: 28),
-        FormattedLyrics(
-          body: body,
-          fontSize: fontSize,
-          fontFamily: fontFamily,
-          expandCounts: expandCounts,
+        const SizedBox(height: 16),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: FormattedLyrics(
+            key: ValueKey(expandCounts),
+            body: body,
+            fontSize: fontSize,
+            fontFamily: fontFamily,
+            expandCounts: expandCounts,
+          ),
         ),
       ],
     );

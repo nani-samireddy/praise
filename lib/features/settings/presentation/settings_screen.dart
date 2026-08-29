@@ -117,7 +117,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
-                      Text('${fontSize.round()} px'),
+                      Text('${fontSize.round()}'),
                     ],
                   ),
                   Slider(
@@ -125,7 +125,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     min: 16,
                     max: 38,
                     divisions: 22,
-                    label: '${fontSize.round()} px',
+                    label: '${fontSize.round()}',
+                    semanticFormatterCallback: (value) =>
+                        'Text size ${value.round()}',
                     onChanged: (value) =>
                         setState(() => _draftFontSize = value),
                     onChangeEnd: (value) async {
@@ -189,8 +191,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     child: Text(
                       'ఆరాధన • యేసు నామం • స్తోత్ర గీతం',
-                      style: Theme.of(context).textTheme.titleMedium
-                          ?.copyWith(fontFamily: teluguFont.fontFamily),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontFamily: teluguFont.fontFamily,
+                        fontSize: 21,
+                        height: 1.45,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -205,7 +210,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     segments: const [
                       ButtonSegment(
                         value: LyricsDisplayMode.primary,
-                        label: Text('Primary'),
+                        label: Text('Original'),
                       ),
                       ButtonSegment(
                         value: LyricsDisplayMode.english,

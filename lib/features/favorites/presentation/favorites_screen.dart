@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../songs/presentation/song_list_card.dart';
 import 'favorite_providers.dart';
@@ -22,9 +23,9 @@ class FavoritesScreen extends ConsumerWidget {
         data: (songs) {
           if (songs.isEmpty) return const _EmptyFavorites();
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
             itemCount: songs.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            separatorBuilder: (context, index) => const SizedBox(height: 6),
             itemBuilder: (context, index) => SongListCard(song: songs[index]),
           );
         },
@@ -66,6 +67,12 @@ class _EmptyFavorites extends StatelessWidget {
             const Text(
               'Tap the heart beside a song to keep it here.',
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 18),
+            FilledButton.tonalIcon(
+              onPressed: () => context.go('/songs'),
+              icon: const Icon(Icons.library_music_outlined),
+              label: const Text('Browse songs'),
             ),
           ],
         ),

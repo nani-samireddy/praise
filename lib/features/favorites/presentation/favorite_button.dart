@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'favorite_providers.dart';
@@ -19,6 +20,7 @@ class FavoriteButton extends ConsumerWidget {
             await ref
                 .read(favoritesRepositoryProvider)
                 .setFavorite(songId, isFavorite: !isFavorite);
+            await HapticFeedback.selectionClick();
           } catch (error, stackTrace) {
             debugPrint('Favorite update failed: $error');
             debugPrintStack(stackTrace: stackTrace);
@@ -29,7 +31,15 @@ class FavoriteButton extends ConsumerWidget {
           }
         },
         tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
-        icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_outline),
+        icon: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          transitionBuilder: (child, animation) =>
+              ScaleTransition(scale: animation, child: child),
+          child: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_outline,
+            key: ValueKey(isFavorite),
+          ),
+        ),
         color: isFavorite ? Theme.of(context).colorScheme.primary : null,
       ),
       loading: () => const IconButton(

@@ -33,25 +33,21 @@ class CollectionsScreen extends ConsumerWidget {
         data: (items) {
           if (items.isEmpty) return const _EmptyCollections();
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 112),
             itemCount: items.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            separatorBuilder: (context, index) => const SizedBox(height: 6),
             itemBuilder: (context, index) {
               final item = items[index];
               return Card(
                 clipBehavior: Clip.antiAlias,
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 10,
-                  ),
+                  contentPadding: const EdgeInsets.fromLTRB(16, 4, 6, 4),
+                  visualDensity: const VisualDensity(vertical: -1),
                   onTap: () => context.push('/lists/${item.collection.id}'),
-                  leading: CircleAvatar(
-                    child: Icon(
-                      item.collection.isSystem
-                          ? Icons.person_outline
-                          : Icons.queue_music,
-                    ),
+                  leading: Icon(
+                    item.collection.isSystem
+                        ? Icons.person_outline
+                        : Icons.queue_music_outlined,
                   ),
                   title: Text(
                     item.collection.name,
@@ -109,9 +105,24 @@ class CollectionsScreen extends ConsumerWidget {
         loading: () =>
             const Center(child: CircularProgressIndicator.adaptive()),
         error: (error, stackTrace) => Center(
-          child: FilledButton.tonal(
-            onPressed: () => ref.invalidate(collectionsProvider),
-            child: const Text('Try again'),
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.playlist_remove_outlined, size: 52),
+                const SizedBox(height: 16),
+                Text(
+                  'Could not open your lists',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 16),
+                FilledButton.tonal(
+                  onPressed: () => ref.invalidate(collectionsProvider),
+                  child: const Text('Try again'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

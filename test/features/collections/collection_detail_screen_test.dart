@@ -35,7 +35,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('List sharing and actions'));
+    await tester.tap(find.byTooltip('Share list'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Share PDF'));
     await tester.pumpAndSettle();
@@ -45,7 +45,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(sharing.pdfIncludesSongs, isTrue);
 
-    await tester.tap(find.byTooltip('List sharing and actions'));
+    await tester.tap(find.byTooltip('Share list'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Share image'));
     await tester.pumpAndSettle();

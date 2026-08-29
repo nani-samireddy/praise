@@ -107,7 +107,7 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
               child: TextField(
                 controller: _searchController,
                 onChanged: (value) {
@@ -116,6 +116,8 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   hintText: 'Search title or author',
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: search.isEmpty
                       ? null
@@ -134,13 +136,105 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
                   search: search,
                   onRefresh: _refreshCatalogue,
                 ),
-                loading: () =>
-                    const Center(child: CircularProgressIndicator.adaptive()),
+                loading: () => const _SongListSkeleton(),
                 error: (error, stackTrace) =>
                     _SongsError(onRetry: () => ref.invalidate(songsProvider)),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SongListSkeleton extends StatefulWidget {
+  const _SongListSkeleton();
+
+  @override
+  State<_SongListSkeleton> createState() => _SongListSkeletonState();
+}
+
+class _SongListSkeletonState extends State<_SongListSkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 850),
+    )..repeat(reverse: true);
+    _opacity = Tween(
+      begin: 0.42,
+      end: 0.78,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final placeholder = Theme.of(context).colorScheme.surfaceContainerHighest;
+    return ExcludeSemantics(
+      child: FadeTransition(
+        opacity: _opacity,
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+          itemCount: 8,
+          separatorBuilder: (context, index) => const SizedBox(height: 6),
+          itemBuilder: (context, index) => Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FractionallySizedBox(
+                          widthFactor: index.isEven ? 0.62 : 0.78,
+                          child: Container(
+                            height: 17,
+                            decoration: BoxDecoration(
+                              color: placeholder,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 9),
+                        FractionallySizedBox(
+                          widthFactor: index.isEven ? 0.42 : 0.56,
+                          child: Container(
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: placeholder,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: placeholder,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -179,9 +273,9 @@ class _SongList extends StatelessWidget {
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
         itemCount: items.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 10),
+        separatorBuilder: (context, index) => const SizedBox(height: 6),
         itemBuilder: (context, index) => SongListCard(song: items[index]),
       ),
     );

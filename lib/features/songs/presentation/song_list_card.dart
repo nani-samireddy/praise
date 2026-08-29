@@ -14,7 +14,6 @@ class SongListCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
     final englishTitle = song.englishTitle;
     final author = song.author;
     final teluguFont =
@@ -22,76 +21,51 @@ class SongListCard extends ConsumerWidget {
 
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
+      child: ListTile(
         onTap: () => context.push('/songs/${song.id}'),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: colorScheme.primaryContainer,
-                foregroundColor: colorScheme.onPrimaryContainer,
-                child: const Icon(Icons.music_note),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            song.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  fontFamily: teluguFont.fontFamily,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                        ),
-                        if (song.source == 'custom') ...[
-                          const SizedBox(width: 6),
-                          Tooltip(
-                            message: 'Custom song',
-                            child: Icon(
-                              Icons.edit_note,
-                              size: 19,
-                              color: colorScheme.primary,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    if (englishTitle != null) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        englishTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(color: colorScheme.onSurfaceVariant),
-                      ),
-                    ],
-                    if (author != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        author,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(color: colorScheme.primary),
-                      ),
-                    ],
-                  ],
+        contentPadding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
+        minVerticalPadding: 8,
+        visualDensity: const VisualDensity(vertical: -1),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                song.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontFamily: teluguFont.fontFamily,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              FavoriteButton(songId: song.id),
+            ),
+            if (song.source == 'custom') ...[
+              const SizedBox(width: 6),
+              Tooltip(
+                message: 'Your song',
+                child: Icon(
+                  Icons.edit_note_outlined,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
             ],
-          ),
+          ],
         ),
+        subtitle: englishTitle == null && author == null
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Text(
+                  [?englishTitle, ?author].join('  •  '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+        trailing: FavoriteButton(songId: song.id),
       ),
     );
   }
