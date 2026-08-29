@@ -37,7 +37,11 @@ class SongDetailScreen extends ConsumerWidget {
         }
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Lyrics'),
+            title: Text(
+              value.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             actions: [
               FavoriteButton(songId: value.id),
               IconButton(
@@ -273,7 +277,7 @@ class _LyricsAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
-  Widget build(BuildContext context) => AppBar(title: const Text('Lyrics'));
+  Widget build(BuildContext context) => AppBar(title: const Text('Song'));
 }
 
 class _SongReader extends ConsumerStatefulWidget {

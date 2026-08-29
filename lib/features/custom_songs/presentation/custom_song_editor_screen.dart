@@ -134,7 +134,7 @@ class _CustomSongEditorScreenState
           _isEditing
               ? 'Edit song'
               : widget.scannedDraft == null
-              ? 'New song'
+              ? 'Add song'
               : 'Review scanned song',
         ),
       ),

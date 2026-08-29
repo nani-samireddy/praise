@@ -118,7 +118,7 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan song')),
+      appBar: AppBar(title: const Text('Scan lyrics')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [

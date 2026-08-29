@@ -27,7 +27,15 @@ class _AddSongsScreenState extends ConsumerState<AddSongsScreen> {
     final editable = collection.valueOrNull?.isSystem == false;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add songs')),
+      appBar: AppBar(
+        title: Text(
+          collection.valueOrNull == null
+              ? 'Add songs'
+              : 'Add to ${collection.valueOrNull!.name}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
       body: !editable && collection.hasValue
           ? const Center(child: Text('This list is managed automatically.'))
           : Column(
