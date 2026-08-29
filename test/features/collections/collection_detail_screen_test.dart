@@ -35,9 +35,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Copy or share list'));
+    await tester.tap(find.byTooltip('List sharing and actions'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Share as PDF'));
+    await tester.tap(find.text('Share PDF'));
     await tester.pumpAndSettle();
     expect(find.text('Song list only'), findsOneWidget);
     expect(find.text('Full songs'), findsOneWidget);
@@ -45,9 +45,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(sharing.pdfIncludesSongs, isTrue);
 
-    await tester.tap(find.byTooltip('Copy or share list'));
+    await tester.tap(find.byTooltip('List sharing and actions'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Share as image'));
+    await tester.tap(find.text('Share image'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Song list only'));
     await tester.pumpAndSettle();

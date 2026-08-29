@@ -118,15 +118,20 @@ class _LyricsLines extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lines = text.split('\n');
+    final lastContentIndex = lines.lastIndexWhere(
+      (line) => line.trim().isNotEmpty,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final line in text.split('\n'))
+        for (var index = 0; index < lines.length; index++)
           _LyricsLine(
-            line: line,
+            line: lines[index],
             fontSize: fontSize,
             fontFamily: fontFamily,
             expandCount: expandCounts,
+            addExpandedBottomSpacing: index < lastContentIndex,
           ),
       ],
     );
@@ -139,12 +144,14 @@ class _LyricsLine extends StatelessWidget {
     required this.fontSize,
     required this.fontFamily,
     required this.expandCount,
+    required this.addExpandedBottomSpacing,
   });
 
   final String line;
   final double fontSize;
   final String? fontFamily;
   final bool expandCount;
+  final bool addExpandedBottomSpacing;
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +171,7 @@ class _LyricsLine extends StatelessWidget {
         child: Text(
           '×${repeatable.repeatCount}',
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontSize: (fontSize * 0.72).clamp(12, 24),
             fontFamily: fontFamily,
             color: Theme.of(context).colorScheme.onPrimaryContainer,
             fontWeight: FontWeight.w800,
@@ -185,7 +193,10 @@ class _LyricsLine extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.only(
+        top: 4,
+        bottom: addExpandedBottomSpacing ? 18 : 4,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
