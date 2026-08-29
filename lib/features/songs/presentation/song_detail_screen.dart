@@ -52,7 +52,7 @@ class SongDetailScreen extends ConsumerWidget {
               ),
               Builder(
                 builder: (actionContext) => PopupMenuButton<_SongAction>(
-                  tooltip: 'Copy or share song',
+                  tooltip: 'Song sharing and actions',
                   icon: const Icon(Icons.ios_share_outlined),
                   onSelected: (action) =>
                       _handleSongAction(actionContext, ref, value, action),
@@ -69,7 +69,7 @@ class SongDetailScreen extends ConsumerWidget {
                       value: _SongAction.shareText,
                       child: ListTile(
                         leading: Icon(Icons.share_outlined),
-                        title: Text('Share as text'),
+                        title: Text('Share text'),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
@@ -79,7 +79,7 @@ class SongDetailScreen extends ConsumerWidget {
                         leading: const Icon(Icons.image_outlined),
                         title: Text(
                           value.imagePath == null
-                              ? 'Share as image'
+                              ? 'Share image'
                               : 'Share original photo',
                         ),
                         contentPadding: EdgeInsets.zero,
@@ -89,7 +89,7 @@ class SongDetailScreen extends ConsumerWidget {
                       value: _SongAction.sharePdf,
                       child: ListTile(
                         leading: Icon(Icons.picture_as_pdf_outlined),
-                        title: Text('Share as PDF'),
+                        title: Text('Share PDF'),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),

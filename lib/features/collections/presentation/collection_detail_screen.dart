@@ -39,7 +39,7 @@ class CollectionDetailScreen extends ConsumerWidget {
           if (value != null && songItems != null)
             Builder(
               builder: (actionContext) => PopupMenuButton<_CollectionAction>(
-                tooltip: 'Copy or share list',
+                tooltip: 'List sharing and actions',
                 icon: const Icon(Icons.ios_share_outlined),
                 onSelected: (action) =>
                     _handleAction(actionContext, ref, value, songItems, action),
@@ -48,7 +48,7 @@ class CollectionDetailScreen extends ConsumerWidget {
                     value: _CollectionAction.copy,
                     child: ListTile(
                       leading: Icon(Icons.copy_outlined),
-                      title: Text('Copy list'),
+                      title: Text('Copy text'),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
@@ -56,7 +56,7 @@ class CollectionDetailScreen extends ConsumerWidget {
                     value: _CollectionAction.shareText,
                     child: ListTile(
                       leading: Icon(Icons.share_outlined),
-                      title: Text('Share as text'),
+                      title: Text('Share text'),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
@@ -64,7 +64,7 @@ class CollectionDetailScreen extends ConsumerWidget {
                     value: _CollectionAction.shareLink,
                     child: ListTile(
                       leading: Icon(Icons.link_outlined),
-                      title: Text('Share import link'),
+                      title: Text('Share link'),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
@@ -72,7 +72,7 @@ class CollectionDetailScreen extends ConsumerWidget {
                     value: _CollectionAction.shareImage,
                     child: ListTile(
                       leading: Icon(Icons.image_outlined),
-                      title: Text('Share as image'),
+                      title: Text('Share image'),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
@@ -80,7 +80,7 @@ class CollectionDetailScreen extends ConsumerWidget {
                     value: _CollectionAction.sharePdf,
                     child: ListTile(
                       leading: Icon(Icons.picture_as_pdf_outlined),
-                      title: Text('Share as PDF'),
+                      title: Text('Share PDF'),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),

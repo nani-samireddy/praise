@@ -65,32 +65,32 @@ void main() {
       TeluguFont.notoSansTelugu.fontFamily,
     );
 
-    await tester.tap(find.byTooltip('Copy or share song'));
+    await tester.tap(find.byTooltip('Song sharing and actions'));
     await _pumpFrames(tester);
     await tester.tap(find.text('Copy song'));
     await _pumpFrames(tester);
     expect(sharingService.copiedSong, song);
     expect(find.text('Song copied.'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Copy or share song'));
+    await tester.tap(find.byTooltip('Song sharing and actions'));
     await _pumpFrames(tester);
-    await tester.tap(find.text('Share as text'));
+    await tester.tap(find.text('Share text'));
     await _pumpFrames(tester);
     expect(sharingService.sharedSong, song);
 
-    await tester.tap(find.byTooltip('Copy or share song'));
+    await tester.tap(find.byTooltip('Song sharing and actions'));
     await _pumpFrames(tester);
-    await tester.tap(find.text('Share as image'));
+    await tester.tap(find.text('Share image'));
     await _pumpFrames(tester);
     expect(sharingService.sharedImageSong, song);
 
-    await tester.tap(find.byTooltip('Copy or share song'));
+    await tester.tap(find.byTooltip('Song sharing and actions'));
     await _pumpFrames(tester);
-    await tester.tap(find.text('Share as PDF'));
+    await tester.tap(find.text('Share PDF'));
     await _pumpFrames(tester);
     expect(sharingService.sharedPdfSong, song);
 
-    await tester.tap(find.byTooltip('Copy or share song'));
+    await tester.tap(find.byTooltip('Song sharing and actions'));
     await _pumpFrames(tester);
     await tester.tap(find.text('Report this song'));
     await _pumpFrames(tester);

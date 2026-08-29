@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
+import '../data/collection_link_codec.dart';
+import '../data/collection_sharing_service.dart';
 import 'collection_providers.dart';
 import 'collection_dialogs.dart';
+
+enum _ListAction { shareLink, rename, delete }
 
 class CollectionsScreen extends ConsumerWidget {
   const CollectionsScreen({super.key});
@@ -56,28 +60,47 @@ class CollectionsScreen extends ConsumerWidget {
                   subtitle: Text(
                     '${item.songCount} ${item.songCount == 1 ? 'song' : 'songs'}',
                   ),
-                  trailing: item.collection.isSystem
-                      ? const Icon(Icons.chevron_right)
-                      : PopupMenuButton<String>(
-                          tooltip: 'List actions',
-                          onSelected: (action) {
-                            if (action == 'rename') {
-                              _renameCollection(context, ref, item.collection);
-                            } else if (action == 'delete') {
-                              _deleteCollection(context, ref, item.collection);
-                            }
-                          },
-                          itemBuilder: (context) => const [
-                            PopupMenuItem(
-                              value: 'rename',
-                              child: Text('Rename'),
-                            ),
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Text('Delete'),
-                            ),
-                          ],
+                  trailing: Builder(
+                    builder: (actionContext) => PopupMenuButton<_ListAction>(
+                      tooltip: 'List actions',
+                      onSelected: (action) => _handleListAction(
+                        actionContext,
+                        ref,
+                        item.collection,
+                        item.songCount,
+                        action,
+                      ),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: _ListAction.shareLink,
+                          child: ListTile(
+                            leading: Icon(Icons.link_outlined),
+                            title: Text('Share link'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
                         ),
+                        if (!item.collection.isSystem) ...[
+                          const PopupMenuDivider(),
+                          const PopupMenuItem(
+                            value: _ListAction.rename,
+                            child: ListTile(
+                              leading: Icon(Icons.edit_outlined),
+                              title: Text('Rename'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: _ListAction.delete,
+                            child: ListTile(
+                              leading: Icon(Icons.delete_outline),
+                              title: Text('Delete'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
@@ -93,6 +116,66 @@ class CollectionsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleListAction(
+    BuildContext context,
+    WidgetRef ref,
+    SongCollection collection,
+    int songCount,
+    _ListAction action,
+  ) async {
+    switch (action) {
+      case _ListAction.shareLink:
+        await _shareCollectionLink(context, ref, collection, songCount);
+        return;
+      case _ListAction.rename:
+        await _renameCollection(context, ref, collection);
+        return;
+      case _ListAction.delete:
+        await _deleteCollection(context, ref, collection);
+        return;
+    }
+  }
+
+  Future<void> _shareCollectionLink(
+    BuildContext context,
+    WidgetRef ref,
+    SongCollection collection,
+    int songCount,
+  ) async {
+    if (songCount == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add songs before sharing this list.')),
+      );
+      return;
+    }
+
+    try {
+      final songs = await ref
+          .read(collectionsRepositoryProvider)
+          .watchCollectionSongs(collection.id)
+          .first;
+      if (!context.mounted) return;
+      await ref
+          .read(collectionSharingServiceProvider)
+          .shareCollectionLink(
+            collection,
+            songs,
+            sharePositionOrigin: _shareOrigin(context),
+          );
+    } on CollectionLinkException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error, stackTrace) {
+      _logFailure(error, stackTrace);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not share this list link.')),
+        );
+      }
+    }
   }
 
   Future<void> _createCollection(BuildContext context, WidgetRef ref) async {
@@ -153,6 +236,13 @@ class CollectionsScreen extends ConsumerWidget {
     ).showSnackBar(const SnackBar(content: Text('Could not update the list.')));
   }
 
+  Rect? _shareOrigin(BuildContext context) {
+    final renderBox = context.findRenderObject() as RenderBox?;
+    return renderBox == null
+        ? null
+        : renderBox.localToGlobal(Offset.zero) & renderBox.size;
+  }
+
   void _logFailure(Object error, StackTrace stackTrace) {
     debugPrint('Collection action failed: $error');
     debugPrintStack(stackTrace: stackTrace);
@@ -182,7 +272,7 @@ class _EmptyCollections extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Create your first custom song and My Songs will appear here.',
+              'Create a list for practice sets. My Songs appears automatically when you add custom songs.',
               textAlign: TextAlign.center,
             ),
           ],
