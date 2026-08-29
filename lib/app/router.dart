@@ -18,6 +18,15 @@ final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: '/songs',
     overridePlatformDefaultLocation: true,
+    redirect: (context, state) {
+      final uri = state.uri;
+      final isCollectionAppLink = uri.scheme == 'praise' && uri.host == 'list';
+      final isCollectionWebLink =
+          uri.scheme == 'https' &&
+          uri.host == 'nani-samireddy.github.io' &&
+          uri.path == '/praise-catalog/list';
+      return isCollectionAppLink || isCollectionWebLink ? '/songs' : null;
+    },
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
