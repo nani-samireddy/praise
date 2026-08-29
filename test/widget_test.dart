@@ -182,6 +182,16 @@ class _FakeSongRepository implements SongRepository {
   Stream<List<Song>> watchSongs({String search = ''}) => Stream.value([song]);
 
   @override
+  Future<List<Song>> fetchSongsPage({
+    String search = '',
+    required int limit,
+    required int offset,
+  }) async {
+    if (offset > 0) return const [];
+    return [song];
+  }
+
+  @override
   Future<String> createCustomSong(SongInput input) =>
       throw UnimplementedError();
 

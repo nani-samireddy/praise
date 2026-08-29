@@ -64,7 +64,10 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
         ),
       ),
     );
-    if (route != null && mounted) context.push(route);
+    if (route != null && mounted) {
+      await context.push(route);
+      if (mounted) ref.invalidate(pagedSongsProvider);
+    }
   }
 
   Future<void> _refreshCatalogue() async {
@@ -76,6 +79,7 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(catalogueSyncSuccessMessage(result))),
       );
+      ref.invalidate(pagedSongsProvider);
     } on Object catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -86,7 +90,7 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final songs = ref.watch(songsProvider);
+    final songs = ref.watch(pagedSongsProvider);
     final search = ref.watch(songSearchProvider);
 
     return Scaffold(
@@ -131,14 +135,19 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
             ),
             Expanded(
               child: songs.when(
-                data: (items) => _SongList(
-                  items: items,
+                data: (state) => _SongList(
+                  items: state.items,
                   search: search,
+                  hasMore: state.hasMore,
+                  isLoadingMore: state.isLoadingMore,
+                  onLoadMore: () =>
+                      ref.read(pagedSongsProvider.notifier).loadMore(),
                   onRefresh: _refreshCatalogue,
                 ),
                 loading: () => const _SongListSkeleton(),
-                error: (error, stackTrace) =>
-                    _SongsError(onRetry: () => ref.invalidate(songsProvider)),
+                error: (error, stackTrace) => _SongsError(
+                  onRetry: () => ref.invalidate(pagedSongsProvider),
+                ),
               ),
             ),
           ],
@@ -245,11 +254,17 @@ class _SongList extends StatelessWidget {
   const _SongList({
     required this.items,
     required this.search,
+    required this.hasMore,
+    required this.isLoadingMore,
+    required this.onLoadMore,
     required this.onRefresh,
   });
 
   final List<Song> items;
   final String search;
+  final bool hasMore;
+  final bool isLoadingMore;
+  final VoidCallback onLoadMore;
   final Future<void> Function() onRefresh;
 
   @override
@@ -268,15 +283,33 @@ class _SongList extends StatelessWidget {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
-        itemCount: items.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 6),
-        itemBuilder: (context, index) => SongListCard(song: items[index]),
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification.metrics.extentAfter < 480 &&
+            hasMore &&
+            !isLoadingMore) {
+          onLoadMore();
+        }
+        return false;
+      },
+      child: RefreshIndicator(
+        onRefresh: onRefresh,
+        child: ListView.separated(
+          physics: const AlwaysScrollableScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+          itemCount: items.length + (hasMore || isLoadingMore ? 1 : 0),
+          separatorBuilder: (context, index) => const SizedBox(height: 6),
+          itemBuilder: (context, index) {
+            if (index >= items.length) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 18),
+                child: Center(child: CircularProgressIndicator.adaptive()),
+              );
+            }
+            return SongListCard(song: items[index]);
+          },
+        ),
       ),
     );
   }

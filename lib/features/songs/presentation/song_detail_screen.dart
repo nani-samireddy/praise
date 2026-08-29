@@ -198,12 +198,16 @@ class SongDetailScreen extends ConsumerWidget {
         }
         return;
       case _SongAction.shareImage:
+        _showPreparingShareMessage(context, 'Preparing image...');
+        var keepResultMessageVisible = false;
         try {
           await ref
               .read(songSharingServiceProvider)
               .shareSongImage(song, sharePositionOrigin: _shareOrigin(context));
         } on ExportImageTooLargeException {
           if (!context.mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          keepResultMessageVisible = true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('This song is too long for an image. Use PDF.'),
@@ -211,21 +215,35 @@ class SongDetailScreen extends ConsumerWidget {
           );
         } catch (_) {
           if (!context.mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          keepResultMessageVisible = true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Could not share the song image.')),
           );
+        } finally {
+          if (context.mounted && !keepResultMessageVisible) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          }
         }
         return;
       case _SongAction.sharePdf:
+        _showPreparingShareMessage(context, 'Preparing PDF...');
+        var keepResultMessageVisible = false;
         try {
           await ref
               .read(songSharingServiceProvider)
               .shareSongPdf(song, sharePositionOrigin: _shareOrigin(context));
         } catch (_) {
           if (!context.mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          keepResultMessageVisible = true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Could not share the song PDF.')),
           );
+        } finally {
+          if (context.mounted && !keepResultMessageVisible) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          }
         }
         return;
       case _SongAction.report:
@@ -250,6 +268,26 @@ class SongDetailScreen extends ConsumerWidget {
     return renderBox == null
         ? null
         : renderBox.localToGlobal(Offset.zero) & renderBox.size;
+  }
+
+  void _showPreparingShareMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: const Duration(minutes: 1),
+          content: Row(
+            children: [
+              const SizedBox.square(
+                dimension: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 12),
+              Text(message),
+            ],
+          ),
+        ),
+      );
   }
 
   Future<void> _deleteSong(

@@ -98,6 +98,31 @@ class AppDatabase extends _$AppDatabase {
     return query.watch();
   }
 
+  Future<List<Song>> fetchSongsPage({
+    String search = '',
+    required int limit,
+    required int offset,
+  }) {
+    final query = select(songs)
+      ..where((row) {
+        final active = row.isDeleted.equals(false);
+        final term = search.trim().toLowerCase();
+        if (term.isEmpty) return active;
+
+        return active &
+            (row.title.lower().contains(term) |
+                row.englishTitle.lower().contains(term) |
+                row.author.lower().contains(term));
+      })
+      ..orderBy([
+        (row) => OrderingTerm.asc(row.title),
+        (row) => OrderingTerm.asc(row.englishTitle),
+      ])
+      ..limit(limit, offset: offset);
+
+    return query.get();
+  }
+
   Stream<Song?> watchSong(String id) {
     return (select(songs)
           ..where((row) => row.id.equals(id) & row.isDeleted.equals(false)))

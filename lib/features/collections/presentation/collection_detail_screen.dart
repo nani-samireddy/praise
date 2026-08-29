@@ -245,9 +245,11 @@ class CollectionDetailScreen extends ConsumerWidget {
         }
         return;
       case _CollectionAction.shareImage:
+        final includeSongs = await _chooseExportContent(context, 'image');
+        if (includeSongs == null || !context.mounted) return;
+        _showPreparingShareMessage(context, 'Preparing image...');
+        var keepResultMessageVisible = false;
         try {
-          final includeSongs = await _chooseExportContent(context, 'image');
-          if (includeSongs == null || !context.mounted) return;
           await ref
               .read(collectionSharingServiceProvider)
               .shareCollectionImage(
@@ -258,19 +260,28 @@ class CollectionDetailScreen extends ConsumerWidget {
               );
         } on ExportImageTooLargeException {
           if (!context.mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          keepResultMessageVisible = true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('This list is too long for an image. Use PDF.'),
             ),
           );
         } catch (_) {
+          keepResultMessageVisible = true;
           if (context.mounted) _showShareFailure(context, 'share');
+        } finally {
+          if (context.mounted && !keepResultMessageVisible) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          }
         }
         return;
       case _CollectionAction.sharePdf:
+        final includeSongs = await _chooseExportContent(context, 'PDF');
+        if (includeSongs == null || !context.mounted) return;
+        _showPreparingShareMessage(context, 'Preparing PDF...');
+        var keepResultMessageVisible = false;
         try {
-          final includeSongs = await _chooseExportContent(context, 'PDF');
-          if (includeSongs == null || !context.mounted) return;
           await ref
               .read(collectionSharingServiceProvider)
               .shareCollectionPdf(
@@ -280,7 +291,12 @@ class CollectionDetailScreen extends ConsumerWidget {
                 sharePositionOrigin: _shareOrigin(context),
               );
         } catch (_) {
+          keepResultMessageVisible = true;
           if (context.mounted) _showShareFailure(context, 'share');
+        } finally {
+          if (context.mounted && !keepResultMessageVisible) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          }
         }
         return;
       case _CollectionAction.rename:
@@ -336,6 +352,26 @@ class CollectionDetailScreen extends ConsumerWidget {
     return renderBox == null
         ? null
         : renderBox.localToGlobal(Offset.zero) & renderBox.size;
+  }
+
+  void _showPreparingShareMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: const Duration(minutes: 1),
+          content: Row(
+            children: [
+              const SizedBox.square(
+                dimension: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 12),
+              Text(message),
+            ],
+          ),
+        ),
+      );
   }
 
   Future<void> _rename(

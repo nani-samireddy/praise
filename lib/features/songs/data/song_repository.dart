@@ -32,6 +32,12 @@ class SongInput {
 abstract interface class SongRepository {
   Stream<List<Song>> watchSongs({String search});
 
+  Future<List<Song>> fetchSongsPage({
+    String search,
+    required int limit,
+    required int offset,
+  });
+
   Stream<Song?> watchSong(String id);
 
   Future<String> createCustomSong(SongInput input);
@@ -54,6 +60,19 @@ class DriftSongRepository implements SongRepository {
   @override
   Stream<List<Song>> watchSongs({String search = ''}) {
     return _database.watchSongs(search: search);
+  }
+
+  @override
+  Future<List<Song>> fetchSongsPage({
+    String search = '',
+    required int limit,
+    required int offset,
+  }) {
+    return _database.fetchSongsPage(
+      search: search,
+      limit: limit,
+      offset: offset,
+    );
   }
 
   @override
