@@ -91,6 +91,7 @@ interfaces or mapping layers solely to mirror a theoretical architecture.
 | --- | --- | --- |
 | Server songs | Catalogue server | Yes |
 | Custom songs | Local user | No |
+| Practice video URLs | Catalogue server or local user | Server refresh may update server-song URLs only |
 | Favourites | Local user | No, except orphan cleanup |
 | Lists | Local user | No |
 | List membership and order | Local user | No, except orphan cleanup |
@@ -114,6 +115,9 @@ must explicitly restrict updates and deletions to `source = server`.
 | `body` | text | Required primary-language body; preserves line breaks |
 | `english_body` | text, nullable | Optional English body; preserves line breaks |
 | `author` | text, nullable | Optional author or source attribution |
+| `image_path` | text, nullable | Private app-owned photo for image-only custom songs |
+| `male_video_url` | text, nullable | Optional YouTube practice video URL |
+| `female_video_url` | text, nullable | Optional YouTube practice video URL |
 | `source` | text | `server` or `custom` |
 | `created_at` | datetime | Stored in UTC |
 | `updated_at` | datetime | Stored in UTC |
@@ -390,7 +394,26 @@ Create lightweight ADRs if the team changes any of these decisions:
 - normalized search columns or full-text search; and
 - user data cloud-sync strategy.
 
-## 17. List-sharing boundary
+## 17. Editorial catalogue workflow
+
+The public catalogue can be maintained from Google Sheets through AppSheet
+without adding a permanent backend. Google Sheets is the editorial source,
+AppSheet provides the editor and review UI, and GitHub Actions performs the
+trusted build. The deploy switch in AppSheet should trigger a workflow in the
+application repository; it should not write directly to GitHub Pages.
+
+The workflow reads approved rows from the sheet, strips editor-only metadata,
+normalizes lyrics, preserves stable application IDs through
+`tool/catalog_id_map.json`, validates the generated snapshot, and publishes the
+same `manifest.json` and `songs.json` files to the existing
+`nani-samireddy/praise-catalog` repository. The mobile app remains unchanged:
+it refreshes only from the static manifest URL and applies the validated
+snapshot locally.
+
+See `docs/APPSHEET_CATALOG_WORKFLOW.md` for the sheet columns, deploy sequence,
+required secrets, and safety rules.
+
+## 18. List-sharing boundary
 
 V1 formats the current local song or ordered list query as plain text, PNG, or
 PDF, then passes the result to the clipboard or operating-system share sheet.
@@ -400,17 +423,17 @@ redirects oversized content to PDF. PDF rendering is paginated and embeds the
 bundled Noto Sans Telugu font. This path is read-only, creates no persistent
 export record, and requires no network access.
 
-### V2 importable lists
+### Importable lists
 
-Shareable lists should extend the local collections feature through explicit
-export and import services. They must not reuse the read-only catalogue update
-channel or introduce a writable GitHub repository.
+Shareable lists extend the local collections feature through explicit export
+and import services. They do not reuse the read-only catalogue update channel or
+introduce a writable GitHub repository.
 
-The transport is a versioned, size-limited Praise list package passed through
-the operating-system share and file-opening mechanisms. The package contains
-list metadata and stable catalogue song identifiers. Import always creates new
-local identifiers, validates the complete package before writing, and performs
-the accepted import in one database transaction.
+The transport is a versioned, size-limited Praise list link passed through the
+operating-system share sheet. The link contains list metadata and stable
+catalogue song identifiers in an encoded `p` query parameter. Import always creates a
+new local list identifier, validates the complete payload before writing, and
+performs the accepted import in one database transaction.
 
 Custom-song payloads require a product decision before the schema is finalized.
 If included, their lyrics must be clearly disclosed in the preview and require
@@ -439,7 +462,7 @@ The importable Praise list package remains a data-transfer format rather than a
 presentation renderer. Images and PDFs are readable exports and are not
 imported back into Praise.
 
-## 18. On-device song scanning
+## 19. On-device song scanning
 
 V1 song scanning is Android-first and has no server dependency. `image_picker`
 opens the camera or Android photo picker. The user then chooses either Extract
@@ -488,7 +511,7 @@ OCR and on-device AI are assistance rather than an authoritative import. Errors 
 scan screen with retry guidance, empty recognition cannot proceed, and no text
 is saved until the user explicitly confirms the editable form.
 
-## 19. GitHub feedback boundary
+## 20. GitHub feedback boundary
 
 V1 uses the public application repository as its low-maintenance feedback
 channel. Settings exposes song-request and general-report forms, while a server
@@ -511,3 +534,20 @@ information. Song corrections contain public catalogue identifiers and titles;
 general device details are entered voluntarily. The public endpoint remains an
 abuse surface even with lightweight rate limiting, so moderation and a stronger
 attestation or challenge mechanism should be added if usage grows.
+
+## 21. Chord support boundary
+
+Chords are optional song presentation metadata and must not replace the
+canonical plain lyric bodies. The base `songs` table remains optimized for
+search, lists, refresh, and ordinary lyric reading. Chord arrangements should be
+loaded only on song detail when the user opens a chord view.
+
+The recommended schema stores structured arrangements separately from the plain
+`body` and `english_body`: each arrangement has a key, capo, sections, lyric
+lines, and chord labels anchored to character offsets in those lines. This
+avoids padded chord text, which breaks with Telugu fonts, proportional
+typography, pinch scaling, and PDF export.
+
+Chord rendering is a V2 feature because it requires catalogue validation,
+database migration, reader UI, export support, and transpose behavior. The full
+schema and validation rules are in `docs/CHORDS_SCHEMA.md`.

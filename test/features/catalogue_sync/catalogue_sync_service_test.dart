@@ -88,7 +88,13 @@ void main() {
         manifest: manifest,
         songs: const [
           CatalogueSong(id: 'retained', title: 'New title', body: 'New body'),
-          CatalogueSong(id: 'new', title: 'New song', body: 'New song body'),
+          CatalogueSong(
+            id: 'new',
+            title: 'New song',
+            body: 'New song body',
+            maleVideoUrl: 'https://www.youtube.com/watch?v=male1234567',
+            femaleVideoUrl: 'https://youtu.be/female12345',
+          ),
           CatalogueSong(
             id: 'custom-conflict',
             title: 'Server title',
@@ -114,6 +120,8 @@ void main() {
       expect(songs['retained']?.title, 'New title');
       expect(songs['retained']?.isDeleted, isFalse);
       expect(songs['new']?.source, 'server');
+      expect(songs['new']?.maleVideoUrl, contains('youtube.com'));
+      expect(songs['new']?.femaleVideoUrl, contains('youtu.be'));
       expect(songs['removed']?.isDeleted, isTrue);
       expect(songs['custom-conflict']?.title, 'My conflicting song');
       expect(songs['custom-conflict']?.source, 'custom');

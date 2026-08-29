@@ -4,11 +4,18 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/database/app_database.dart';
 import 'collection_export_renderer.dart';
+import 'collection_link_codec.dart';
 
 abstract interface class CollectionSharingService {
   Future<void> copyCollection(SongCollection collection, List<Song> songs);
 
   Future<void> shareCollection(
+    SongCollection collection,
+    List<Song> songs, {
+    Rect? sharePositionOrigin,
+  });
+
+  Future<void> shareCollectionLink(
     SongCollection collection,
     List<Song> songs, {
     Rect? sharePositionOrigin,
@@ -48,6 +55,23 @@ class PlatformCollectionSharingService implements CollectionSharingService {
     await SharePlus.instance.share(
       ShareParams(
         text: buildCollectionShareText(collection, songs),
+        title: collection.name,
+        subject: collection.name,
+        sharePositionOrigin: sharePositionOrigin,
+      ),
+    );
+  }
+
+  @override
+  Future<void> shareCollectionLink(
+    SongCollection collection,
+    List<Song> songs, {
+    Rect? sharePositionOrigin,
+  }) async {
+    final link = buildCollectionLink(collection, songs);
+    await SharePlus.instance.share(
+      ShareParams(
+        text: 'Open this Praise list to add it to your app:\n$link',
         title: collection.name,
         subject: collection.name,
         sharePositionOrigin: sharePositionOrigin,

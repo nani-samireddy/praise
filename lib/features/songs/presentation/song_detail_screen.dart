@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/export/export_document_renderer.dart';
@@ -402,6 +404,11 @@ class _SongReaderState extends ConsumerState<_SongReader> {
               ),
             ],
             const SizedBox(height: 28),
+            if (widget.song.maleVideoUrl != null ||
+                widget.song.femaleVideoUrl != null) ...[
+              _PracticeVideos(song: widget.song),
+              const SizedBox(height: 32),
+            ],
             if (imagePath != null) ...[
               _SongPhoto(imagePath: imagePath),
               if (hasPrimaryLyrics || showEnglish) const SizedBox(height: 32),
@@ -432,6 +439,153 @@ class _SongReaderState extends ConsumerState<_SongReader> {
       ),
     );
   }
+}
+
+class _PracticeVideos extends StatefulWidget {
+  const _PracticeVideos({required this.song});
+
+  final Song song;
+
+  @override
+  State<_PracticeVideos> createState() => _PracticeVideosState();
+}
+
+class _PracticeVideosState extends State<_PracticeVideos> {
+  YoutubePlayerController? _controller;
+  String? _activeVideoId;
+  late final List<_PracticeVideo> _videos;
+
+  @override
+  void initState() {
+    super.initState();
+    _videos = [
+      if (widget.song.maleVideoUrl case final url?)
+        _PracticeVideo(label: 'Male version', url: url),
+      if (widget.song.femaleVideoUrl case final url?)
+        _PracticeVideo(label: 'Female version', url: url),
+    ];
+  }
+
+  @override
+  void dispose() {
+    _controller?.close();
+    super.dispose();
+  }
+
+  void _selectVideo(_PracticeVideo video) {
+    final videoId = YoutubePlayerController.convertUrlToId(video.url);
+    if (videoId == null) {
+      _openExternally(video.url);
+      return;
+    }
+    if (_activeVideoId == videoId) return;
+    _controller?.close();
+    setState(() {
+      _activeVideoId = videoId;
+      _controller = YoutubePlayerController.fromVideoId(
+        videoId: videoId,
+        autoPlay: false,
+        params: const YoutubePlayerParams(
+          showControls: true,
+          showFullscreenButton: true,
+          enableCaption: true,
+          playsInline: true,
+        ),
+      );
+    });
+  }
+
+  Future<void> _openExternally(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final controller = _controller;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'PRACTICE VIDEOS',
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: colorScheme.primary,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.1,
+          ),
+        ),
+        const SizedBox(height: 14),
+        SegmentedButton<String>(
+          segments: [
+            for (final video in _videos)
+              ButtonSegment(
+                value: video.url,
+                label: Text(video.label),
+                icon: const Icon(Icons.play_circle_outline),
+              ),
+          ],
+          selected: {
+            if (_activeVideoId == null) _videos.first.url else _activeUrl,
+          },
+          onSelectionChanged: (selection) {
+            final selected = selection.single;
+            _selectVideo(_videos.firstWhere((video) => video.url == selected));
+          },
+        ),
+        const SizedBox(height: 12),
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: controller == null
+                ? InkWell(
+                    onTap: () => _selectVideo(_videos.first),
+                    child: ColoredBox(
+                      color: colorScheme.surfaceContainerHighest,
+                      child: Center(
+                        child: Icon(
+                          Icons.play_circle_fill,
+                          size: 58,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  )
+                : YoutubePlayer(controller: controller),
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => _openExternally(_activeUrl),
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('Open YouTube'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String get _activeUrl {
+    final videoId = _activeVideoId;
+    if (videoId == null) return _videos.first.url;
+    return _videos
+        .firstWhere(
+          (video) =>
+              YoutubePlayerController.convertUrlToId(video.url) == videoId,
+          orElse: () => _videos.first,
+        )
+        .url;
+  }
+}
+
+class _PracticeVideo {
+  const _PracticeVideo({required this.label, required this.url});
+
+  final String label;
+  final String url;
 }
 
 class _SongPhoto extends StatelessWidget {

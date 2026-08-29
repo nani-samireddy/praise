@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Open Praise list</title>
+    <style>
+      body {
+        font: 16px/1.5 system-ui, sans-serif;
+        max-width: 42rem;
+        margin: 4rem auto;
+        padding: 0 1rem;
+      }
+
+      code {
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Open this list in Praise</h1>
+    <p>
+      If Praise is installed, this page will try to open the shared list in the
+      app. If nothing happens, open this link on your Android phone after
+      installing Praise.
+    </p>
+    <p><a id="open-link" href="#">Open in Praise</a></p>
+    <p id="fallback"></p>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const payload = params.get("p");
+      const openLink = document.getElementById("open-link");
+      const fallback = document.getElementById("fallback");
+
+      if (payload) {
+        const appUrl = `praise://list?p=${encodeURIComponent(payload)}`;
+        openLink.href = appUrl;
+        fallback.innerHTML = `App link: <code>${appUrl}</code>`;
+        window.location.replace(appUrl);
+      } else {
+        openLink.removeAttribute("href");
+        fallback.textContent = "This shared list link is missing its payload.";
+      }
+    </script>
+  </body>
+</html>

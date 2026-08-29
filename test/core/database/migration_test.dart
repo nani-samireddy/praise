@@ -39,6 +39,8 @@ void main() {
       final songs = await database.select(database.songs).get();
       expect(songs, hasLength(1));
       expect(songs.single.imagePath, isNull);
+      expect(songs.single.maleVideoUrl, isNull);
+      expect(songs.single.femaleVideoUrl, isNull);
       expect(await database.select(database.favorites).get(), isEmpty);
       expect(await database.select(database.collections).get(), isEmpty);
       expect(await database.select(database.collectionSongs).get(), isEmpty);

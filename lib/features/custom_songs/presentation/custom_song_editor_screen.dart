@@ -27,6 +27,8 @@ class _CustomSongEditorScreenState
   final _bodyController = TextEditingController();
   final _englishBodyController = TextEditingController();
   final _authorController = TextEditingController();
+  final _maleVideoUrlController = TextEditingController();
+  final _femaleVideoUrlController = TextEditingController();
   var _initialized = false;
   var _saving = false;
   String? _newImagePath;
@@ -57,6 +59,8 @@ class _CustomSongEditorScreenState
     _bodyController.dispose();
     _englishBodyController.dispose();
     _authorController.dispose();
+    _maleVideoUrlController.dispose();
+    _femaleVideoUrlController.dispose();
     super.dispose();
   }
 
@@ -70,6 +74,8 @@ class _CustomSongEditorScreenState
       body: _bodyController.text,
       englishBody: _englishBodyController.text,
       author: _authorController.text,
+      maleVideoUrl: _maleVideoUrlController.text,
+      femaleVideoUrl: _femaleVideoUrlController.text,
       newImagePath: _newImagePath,
       removeImage: _removeImage,
     );
@@ -107,6 +113,8 @@ class _CustomSongEditorScreenState
           _bodyController.text = value.body;
           _englishBodyController.text = value.englishBody ?? '';
           _authorController.text = value.author ?? '';
+          _maleVideoUrlController.text = value.maleVideoUrl ?? '';
+          _femaleVideoUrlController.text = value.femaleVideoUrl ?? '';
           _existingImagePath = value.imagePath;
           _initialized = true;
         }
@@ -207,7 +215,29 @@ class _CustomSongEditorScreenState
                 labelText: 'Author',
                 hintText: 'Optional',
               ),
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _maleVideoUrlController,
+              decoration: const InputDecoration(
+                labelText: 'Male practice video',
+                hintText: 'Optional YouTube URL',
+              ),
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.next,
+              validator: _optionalYoutubeValidator,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _femaleVideoUrlController,
+              decoration: const InputDecoration(
+                labelText: 'Female practice video',
+                hintText: 'Optional YouTube URL',
+              ),
+              keyboardType: TextInputType.url,
               textInputAction: TextInputAction.done,
+              validator: _optionalYoutubeValidator,
               onFieldSubmitted: (_) => _save(),
             ),
           ],
@@ -231,6 +261,22 @@ class _CustomSongEditorScreenState
 
   static String? _requiredValidator(String? value) {
     return value == null || value.trim().isEmpty ? 'Required' : null;
+  }
+
+  static String? _optionalYoutubeValidator(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    final uri = Uri.tryParse(trimmed);
+    final host = uri?.host.toLowerCase() ?? '';
+    final isYoutube =
+        host == 'youtu.be' ||
+        host == 'youtube.com' ||
+        host.endsWith('.youtube.com') ||
+        host == 'youtube-nocookie.com' ||
+        host.endsWith('.youtube-nocookie.com');
+    return uri != null && uri.hasScheme && isYoutube
+        ? null
+        : 'Use a valid YouTube URL';
   }
 
   static String _scanReviewMessage(ScannedSongDraft draft) {

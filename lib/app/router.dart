@@ -5,6 +5,7 @@ import '../features/custom_songs/presentation/custom_song_editor_screen.dart';
 import '../features/custom_songs/data/scanned_song_draft.dart';
 import '../features/custom_songs/presentation/scan_song_screen.dart';
 import '../features/collections/presentation/collection_detail_screen.dart';
+import '../features/collections/presentation/collection_link_handler.dart';
 import '../features/collections/presentation/collections_screen.dart';
 import '../features/collections/presentation/add_songs_screen.dart';
 import '../features/favorites/presentation/favorites_screen.dart';
@@ -19,7 +20,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
-          return AppShell(navigationShell: navigationShell);
+          return CollectionLinkHandler(
+            child: AppShell(navigationShell: navigationShell),
+          );
         },
         branches: [
           StatefulShellBranch(

@@ -88,4 +88,25 @@ void main() {
     expect(repository.deleteCollection('system'), throwsStateError);
     expect(repository.addSong('system', 'one'), throwsStateError);
   });
+
+  test('imports a shared list as a new editable collection', () async {
+    final id = await repository.importCollection(
+      name: 'Shared Sunday',
+      songIds: ['two', 'one', 'one'],
+    );
+
+    final collection = await repository.watchCollection(id).first;
+    final songs = await repository.watchCollectionSongs(id).first;
+
+    expect(collection?.name, 'Shared Sunday');
+    expect(collection?.isSystem, isFalse);
+    expect(songs.map((song) => song.id), ['two', 'one']);
+  });
+
+  test('rejects a shared list when a song is missing locally', () async {
+    expect(
+      repository.importCollection(name: 'Shared', songIds: ['one', 'missing']),
+      throwsStateError,
+    );
+  });
 }

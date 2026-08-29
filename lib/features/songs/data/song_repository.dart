@@ -13,6 +13,8 @@ class SongInput {
     this.englishBody,
     this.author,
     this.newImagePath,
+    this.maleVideoUrl,
+    this.femaleVideoUrl,
     this.removeImage = false,
   });
 
@@ -22,6 +24,8 @@ class SongInput {
   final String? englishBody;
   final String? author;
   final String? newImagePath;
+  final String? maleVideoUrl;
+  final String? femaleVideoUrl;
   final bool removeImage;
 }
 
@@ -82,6 +86,8 @@ class DriftSongRepository implements SongRepository {
                 englishBody: Value(_optional(input.englishBody)),
                 author: Value(_optional(input.author)),
                 imagePath: Value(imagePath),
+                maleVideoUrl: Value(_optionalVideoUrl(input.maleVideoUrl)),
+                femaleVideoUrl: Value(_optionalVideoUrl(input.femaleVideoUrl)),
                 source: const Value('custom'),
                 createdAt: now,
                 updatedAt: now,
@@ -160,6 +166,10 @@ class DriftSongRepository implements SongRepository {
                   englishBody: Value(_optional(input.englishBody)),
                   author: Value(_optional(input.author)),
                   imagePath: Value(imagePath),
+                  maleVideoUrl: Value(_optionalVideoUrl(input.maleVideoUrl)),
+                  femaleVideoUrl: Value(
+                    _optionalVideoUrl(input.femaleVideoUrl),
+                  ),
                   updatedAt: Value(DateTime.now().toUtc()),
                 ),
               );
@@ -203,6 +213,23 @@ class DriftSongRepository implements SongRepository {
   static String? _optional(String? value) {
     final trimmed = value?.trim();
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
+  }
+
+  static String? _optionalVideoUrl(String? value) {
+    final trimmed = _optional(value);
+    if (trimmed == null) return null;
+    final uri = Uri.tryParse(trimmed);
+    final host = uri?.host.toLowerCase() ?? '';
+    final isYoutube =
+        host == 'youtu.be' ||
+        host == 'youtube.com' ||
+        host.endsWith('.youtube.com') ||
+        host == 'youtube-nocookie.com' ||
+        host.endsWith('.youtube-nocookie.com');
+    if (uri == null || !uri.hasScheme || !isYoutube) {
+      throw ArgumentError('Use a valid YouTube URL.');
+    }
+    return trimmed;
   }
 
   static String _englishTitle(String? value, String title) {

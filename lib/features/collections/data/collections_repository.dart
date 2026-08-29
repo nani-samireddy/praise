@@ -30,6 +30,11 @@ abstract interface class CollectionsRepository {
   Future<void> removeSong(String collectionId, String songId);
 
   Future<void> reorderSongs(String collectionId, List<String> songIds);
+
+  Future<String> importCollection({
+    required String name,
+    required List<String> songIds,
+  });
 }
 
 class DriftCollectionsRepository implements CollectionsRepository {
@@ -212,6 +217,59 @@ class DriftCollectionsRepository implements CollectionsRepository {
             .write(CollectionSongsCompanion(sortOrder: Value(index)));
       }
     });
+  }
+
+  @override
+  Future<String> importCollection({
+    required String name,
+    required List<String> songIds,
+  }) async {
+    final cleanedIds = <String>[];
+    final seen = <String>{};
+    for (final songId in songIds.map((value) => value.trim())) {
+      if (songId.isEmpty || !seen.add(songId)) continue;
+      cleanedIds.add(songId);
+    }
+    if (cleanedIds.isEmpty) {
+      throw ArgumentError('A shared list must contain at least one song.');
+    }
+
+    final existingRows =
+        await (_database.select(_database.songs)..where(
+              (row) => row.id.isIn(cleanedIds) & row.isDeleted.equals(false),
+            ))
+            .get();
+    final existingIds = existingRows.map((song) => song.id).toSet();
+    if (existingIds.length != cleanedIds.length) {
+      throw StateError('Some shared songs are not in this catalogue.');
+    }
+
+    final now = DateTime.now().toUtc();
+    final collectionId = 'list-${_uuid.v4()}';
+    await _database.transaction(() async {
+      await _database
+          .into(_database.collections)
+          .insert(
+            CollectionsCompanion.insert(
+              id: collectionId,
+              name: _validName(name),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await _database.batch((batch) {
+        batch.insertAll(_database.collectionSongs, [
+          for (var index = 0; index < cleanedIds.length; index++)
+            CollectionSongsCompanion.insert(
+              collectionId: collectionId,
+              songId: cleanedIds[index],
+              sortOrder: index,
+              createdAt: now,
+            ),
+        ]);
+      });
+    });
+    return collectionId;
   }
 
   Future<void> _requireEditableCollection(String id) async {

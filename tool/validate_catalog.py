@@ -53,10 +53,20 @@ def main() -> None:
         if song_id in ids:
             raise ValueError(f"Duplicate song ID {song_id!r}")
         ids.add(song_id)
-        for key in ("englishTitle", "englishBody", "author"):
+        for key in (
+            "englishTitle",
+            "englishBody",
+            "author",
+            "maleVideoUrl",
+            "femaleVideoUrl",
+        ):
             value = song.get(key)
             if value is not None and not isinstance(value, str):
                 raise ValueError(f"Song {index} has invalid {key}")
+            if key.endswith("VideoUrl") and value is not None:
+                host = re.sub(r"^https?://", "", value).split("/", 1)[0].lower()
+                if host != "youtu.be" and not host.endswith("youtube.com"):
+                    raise ValueError(f"Song {index} has invalid {key}")
 
     print(f"Validated catalogue v{manifest['catalogVersion']}: {len(songs)} songs")
 

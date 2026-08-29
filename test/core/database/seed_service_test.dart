@@ -28,7 +28,9 @@ void main() {
           "englishTitle": "First Song",
           "body": "మొదటి గీతము",
           "englishBody": "First body",
-          "author": "Author One"
+          "author": "Author One",
+          "maleVideoUrl": "https://www.youtube.com/watch?v=male1234567",
+          "femaleVideoUrl": "https://youtu.be/female12345"
         },
         {
           "id": "two",
@@ -48,6 +50,10 @@ void main() {
     expect(songs, hasLength(2));
     expect(metadata, hasLength(1));
     expect(songs.map((song) => song.id), containsAll(['one', 'two']));
+    expect(
+      songs.firstWhere((song) => song.id == 'one').maleVideoUrl,
+      'https://www.youtube.com/watch?v=male1234567',
+    );
   });
 
   test(

@@ -123,6 +123,7 @@ tests alongside the behavior they protect.
   before saving.
 - Generate a readable Latin-script title locally whenever a custom song is
   saved without an English title. Never replace a non-empty user value.
+- Allow optional male and female YouTube practice video URLs on custom songs.
 - Restrict custom-song mutations to `source = custom` records.
 - Add confirmation before destructive deletion.
 - Add persistence and CRUD tests.
@@ -135,6 +136,8 @@ tests alongside the behavior they protect.
 - Body: required after trimming.
 - English body: optional.
 - Author: optional.
+- Male practice video: optional YouTube URL.
+- Female practice video: optional YouTube URL.
 
 The submit action should prevent duplicate submissions and preserve the form
 after a recoverable failure.
@@ -223,6 +226,7 @@ list sizes are small enough for a straightforward update.
 - Persist and apply lyrics font size.
 - Bundle licensed Telugu typefaces and persist the selected family.
 - Apply additional vertical separation after structural labels and repeat cues.
+- Display optional male and female YouTube practice videos inline on song detail.
 - Verify layouts with large text scale and narrow Android devices.
 - Add semantic labels and tooltips to icon actions.
 - Review empty states and error messages.
@@ -310,6 +314,13 @@ secret as described in `docs/CATALOG_SERVER_SETUP.md`. A push to the app
 repository's `main` branch then validates and updates the separate GitHub Pages
 repository automatically.
 
+Google Sheets/AppSheet catalogue editing is planned as an editorial layer above
+this same static publishing path. AppSheet should collect drafts, review state,
+and approvals in Google Sheets, then trigger a GitHub Actions workflow that
+imports approved rows, validates them, builds the catalogue, and publishes to
+the existing GitHub Pages catalogue repository. See
+`docs/APPSHEET_CATALOG_WORKFLOW.md`.
+
 ## 12. Test organization
 
 Suggested structure:
@@ -347,18 +358,16 @@ teardown. Avoid depending on test execution order or real network access.
 
 ## 14. Deferred implementation notes
 
-Do not build V1 placeholders for authentication, cloud sync, importable list
-packages, chords, audio, or presentation integration. V1 supports readable
-text, image, and PDF sharing for songs and lists through the platform share
-sheet. V2 importable lists use a versioned offline export/import package; they do
-not
-require authentication or extend the catalogue sync path. Define package
-limits, validation, duplicate handling, transactional import, and the
-custom-song lyrics policy before implementation.
+Do not build V1 placeholders for authentication, cloud sync, chords, audio, or
+presentation integration. V1 supports readable text, image, PDF, and importable
+link sharing for catalogue-song lists through the platform share sheet.
+Importable links use a versioned offline payload and do not require
+authentication or extend the catalogue sync path. Custom-song lyrics are not
+included in importable links.
 
-Continue sharing in separable V2 increments:
+Continue sharing in separable increments:
 
-1. Add the versioned Praise list package with preview and transactional import.
+1. Add clearer missing-song preview before transactional import.
 2. Add optional language and layout choices to the shared export document model.
 3. Add golden tests and text-extraction/rendering checks for representative
    Telugu, English, and bilingual exports.
@@ -377,3 +386,31 @@ categories for users who start from GitHub directly.
 If cloud collaboration is approved later, start with explicit ownership and
 conflict-resolution requirements rather than evolving the offline package into
 an implicit synchronization protocol.
+
+### AppSheet catalogue editor
+
+Implement the AppSheet path in small, reversible steps:
+
+1. Create the `Songs` sheet columns from `docs/APPSHEET_CATALOG_WORKFLOW.md`.
+2. Build AppSheet editor, review, approval, and maintainer-only deploy views.
+3. Add `tool/import_sheet_catalog.py` to convert exported sheet data into the
+   existing normalized CSV shape.
+4. Add tests for required sheet columns, status filtering, stable ID mapping,
+   and catalogue version validation.
+5. Add a manual `workflow_dispatch` GitHub Actions import workflow.
+6. Wire AppSheet's deploy switch after manual imports are reliable.
+7. Add optional sheet write-back for published version and status.
+
+The deploy switch must trigger GitHub Actions; it must not push directly from
+AppSheet to the catalogue repository.
+
+### Chords
+
+Use `docs/CHORDS_SCHEMA.md` as the source of truth before implementation.
+Chords should be stored as optional structured arrangements over canonical
+lyrics, not as padded chord text inside `body`. The mobile implementation needs
+validator tests, a catalogue parser extension, a database migration, lazy detail
+loading, chord rendering, transpose state, and export options.
+
+The first implementation should be read-only catalogue chords. Custom chord
+editing can wait until the rendering and validation model is stable.

@@ -73,6 +73,13 @@ class _FakeCollectionSharingService implements CollectionSharingService {
   }) async {}
 
   @override
+  Future<void> shareCollectionLink(
+    SongCollection collection,
+    List<Song> songs, {
+    Rect? sharePositionOrigin,
+  }) async {}
+
+  @override
   Future<void> shareCollectionImage(
     SongCollection collection,
     List<Song> songs, {
@@ -103,6 +110,12 @@ class _FakeCollectionsRepository implements CollectionsRepository {
 
   @override
   Future<String> createCollection(String name) async => collection.id;
+
+  @override
+  Future<String> importCollection({
+    required String name,
+    required List<String> songIds,
+  }) async => collection.id;
 
   @override
   Future<void> deleteCollection(String id) async {}

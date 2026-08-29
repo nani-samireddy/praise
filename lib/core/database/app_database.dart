@@ -12,6 +12,8 @@ class Songs extends Table {
   TextColumn get englishBody => text().nullable()();
   TextColumn get author => text().nullable()();
   TextColumn get imagePath => text().nullable()();
+  TextColumn get maleVideoUrl => text().nullable()();
+  TextColumn get femaleVideoUrl => text().nullable()();
 
   // Internal ownership and synchronization fields are not part of the song
   // editing form, but protect user-created songs during catalogue refreshes.
@@ -74,7 +76,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'praise'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   Stream<List<Song>> watchSongs({String search = ''}) {
     final query = select(songs)
@@ -115,9 +117,25 @@ class AppDatabase extends _$AppDatabase {
       if (from < 4) {
         await migrator.addColumn(songs, songs.imagePath);
       }
+      if (from < 5) {
+        await migrator.addColumn(songs, songs.maleVideoUrl);
+        await migrator.addColumn(songs, songs.femaleVideoUrl);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS songs_active_title_idx '
+        'ON songs (is_deleted, title)',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS songs_source_deleted_idx '
+        'ON songs (source, is_deleted)',
+      );
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS collection_songs_order_idx '
+        'ON collection_songs (collection_id, sort_order)',
+      );
     },
   );
 }

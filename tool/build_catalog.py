@@ -127,6 +127,8 @@ def read_songs(path: Path, id_map: dict[str, str]) -> list[dict[str, object]]:
                     "body": body,
                     "englishBody": optional(row.get("ENGLISH SONG")),
                     "author": optional(row.get("AUTHOR")),
+                    "maleVideoUrl": optional(row.get("MALE VIDEO URL")),
+                    "femaleVideoUrl": optional(row.get("FEMALE VIDEO URL")),
                 }
             )
 

@@ -80,6 +80,8 @@ class CatalogueSong {
     this.englishTitle,
     this.englishBody,
     this.author,
+    this.maleVideoUrl,
+    this.femaleVideoUrl,
   });
 
   factory CatalogueSong.fromJson(Object? value) {
@@ -91,6 +93,8 @@ class CatalogueSong {
       englishTitle: _optionalString(json, 'englishTitle'),
       englishBody: _optionalString(json, 'englishBody'),
       author: _optionalString(json, 'author'),
+      maleVideoUrl: _optionalYoutubeUrl(json, 'maleVideoUrl'),
+      femaleVideoUrl: _optionalYoutubeUrl(json, 'femaleVideoUrl'),
     );
   }
 
@@ -100,6 +104,8 @@ class CatalogueSong {
   final String body;
   final String? englishBody;
   final String? author;
+  final String? maleVideoUrl;
+  final String? femaleVideoUrl;
 }
 
 class CatalogueSnapshot {
@@ -187,4 +193,21 @@ String? _optionalString(Map<String, Object?> json, String key) {
   }
   final trimmed = value.trim();
   return trimmed.isEmpty ? null : trimmed;
+}
+
+String? _optionalYoutubeUrl(Map<String, Object?> json, String key) {
+  final value = _optionalString(json, key);
+  if (value == null) return null;
+  final uri = Uri.tryParse(value);
+  final host = uri?.host.toLowerCase() ?? '';
+  final isYoutube =
+      host == 'youtu.be' ||
+      host == 'youtube.com' ||
+      host.endsWith('.youtube.com') ||
+      host == 'youtube-nocookie.com' ||
+      host.endsWith('.youtube-nocookie.com');
+  if (uri == null || !uri.hasScheme || !isYoutube) {
+    throw CatalogueValidationException('$key must be a YouTube URL.');
+  }
+  return value;
 }

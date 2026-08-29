@@ -77,6 +77,28 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _maleVideoUrlMeta = const VerificationMeta(
+    'maleVideoUrl',
+  );
+  @override
+  late final GeneratedColumn<String> maleVideoUrl = GeneratedColumn<String>(
+    'male_video_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _femaleVideoUrlMeta = const VerificationMeta(
+    'femaleVideoUrl',
+  );
+  @override
+  late final GeneratedColumn<String> femaleVideoUrl = GeneratedColumn<String>(
+    'female_video_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _sourceMeta = const VerificationMeta('source');
   @override
   late final GeneratedColumn<String> source = GeneratedColumn<String>(
@@ -133,6 +155,8 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
     englishBody,
     author,
     imagePath,
+    maleVideoUrl,
+    femaleVideoUrl,
     source,
     createdAt,
     updatedAt,
@@ -201,6 +225,24 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
         imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta),
       );
     }
+    if (data.containsKey('male_video_url')) {
+      context.handle(
+        _maleVideoUrlMeta,
+        maleVideoUrl.isAcceptableOrUnknown(
+          data['male_video_url']!,
+          _maleVideoUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('female_video_url')) {
+      context.handle(
+        _femaleVideoUrlMeta,
+        femaleVideoUrl.isAcceptableOrUnknown(
+          data['female_video_url']!,
+          _femaleVideoUrlMeta,
+        ),
+      );
+    }
     if (data.containsKey('source')) {
       context.handle(
         _sourceMeta,
@@ -266,6 +308,14 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
         DriftSqlType.string,
         data['${effectivePrefix}image_path'],
       ),
+      maleVideoUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}male_video_url'],
+      ),
+      femaleVideoUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}female_video_url'],
+      ),
       source: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}source'],
@@ -299,6 +349,8 @@ class Song extends DataClass implements Insertable<Song> {
   final String? englishBody;
   final String? author;
   final String? imagePath;
+  final String? maleVideoUrl;
+  final String? femaleVideoUrl;
   final String source;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -311,6 +363,8 @@ class Song extends DataClass implements Insertable<Song> {
     this.englishBody,
     this.author,
     this.imagePath,
+    this.maleVideoUrl,
+    this.femaleVideoUrl,
     required this.source,
     required this.createdAt,
     required this.updatedAt,
@@ -333,6 +387,12 @@ class Song extends DataClass implements Insertable<Song> {
     }
     if (!nullToAbsent || imagePath != null) {
       map['image_path'] = Variable<String>(imagePath);
+    }
+    if (!nullToAbsent || maleVideoUrl != null) {
+      map['male_video_url'] = Variable<String>(maleVideoUrl);
+    }
+    if (!nullToAbsent || femaleVideoUrl != null) {
+      map['female_video_url'] = Variable<String>(femaleVideoUrl);
     }
     map['source'] = Variable<String>(source);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -358,6 +418,12 @@ class Song extends DataClass implements Insertable<Song> {
       imagePath: imagePath == null && nullToAbsent
           ? const Value.absent()
           : Value(imagePath),
+      maleVideoUrl: maleVideoUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(maleVideoUrl),
+      femaleVideoUrl: femaleVideoUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(femaleVideoUrl),
       source: Value(source),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -378,6 +444,8 @@ class Song extends DataClass implements Insertable<Song> {
       englishBody: serializer.fromJson<String?>(json['englishBody']),
       author: serializer.fromJson<String?>(json['author']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
+      maleVideoUrl: serializer.fromJson<String?>(json['maleVideoUrl']),
+      femaleVideoUrl: serializer.fromJson<String?>(json['femaleVideoUrl']),
       source: serializer.fromJson<String>(json['source']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -395,6 +463,8 @@ class Song extends DataClass implements Insertable<Song> {
       'englishBody': serializer.toJson<String?>(englishBody),
       'author': serializer.toJson<String?>(author),
       'imagePath': serializer.toJson<String?>(imagePath),
+      'maleVideoUrl': serializer.toJson<String?>(maleVideoUrl),
+      'femaleVideoUrl': serializer.toJson<String?>(femaleVideoUrl),
       'source': serializer.toJson<String>(source),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -410,6 +480,8 @@ class Song extends DataClass implements Insertable<Song> {
     Value<String?> englishBody = const Value.absent(),
     Value<String?> author = const Value.absent(),
     Value<String?> imagePath = const Value.absent(),
+    Value<String?> maleVideoUrl = const Value.absent(),
+    Value<String?> femaleVideoUrl = const Value.absent(),
     String? source,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -422,6 +494,10 @@ class Song extends DataClass implements Insertable<Song> {
     englishBody: englishBody.present ? englishBody.value : this.englishBody,
     author: author.present ? author.value : this.author,
     imagePath: imagePath.present ? imagePath.value : this.imagePath,
+    maleVideoUrl: maleVideoUrl.present ? maleVideoUrl.value : this.maleVideoUrl,
+    femaleVideoUrl: femaleVideoUrl.present
+        ? femaleVideoUrl.value
+        : this.femaleVideoUrl,
     source: source ?? this.source,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -440,6 +516,12 @@ class Song extends DataClass implements Insertable<Song> {
           : this.englishBody,
       author: data.author.present ? data.author.value : this.author,
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
+      maleVideoUrl: data.maleVideoUrl.present
+          ? data.maleVideoUrl.value
+          : this.maleVideoUrl,
+      femaleVideoUrl: data.femaleVideoUrl.present
+          ? data.femaleVideoUrl.value
+          : this.femaleVideoUrl,
       source: data.source.present ? data.source.value : this.source,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -457,6 +539,8 @@ class Song extends DataClass implements Insertable<Song> {
           ..write('englishBody: $englishBody, ')
           ..write('author: $author, ')
           ..write('imagePath: $imagePath, ')
+          ..write('maleVideoUrl: $maleVideoUrl, ')
+          ..write('femaleVideoUrl: $femaleVideoUrl, ')
           ..write('source: $source, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -474,6 +558,8 @@ class Song extends DataClass implements Insertable<Song> {
     englishBody,
     author,
     imagePath,
+    maleVideoUrl,
+    femaleVideoUrl,
     source,
     createdAt,
     updatedAt,
@@ -490,6 +576,8 @@ class Song extends DataClass implements Insertable<Song> {
           other.englishBody == this.englishBody &&
           other.author == this.author &&
           other.imagePath == this.imagePath &&
+          other.maleVideoUrl == this.maleVideoUrl &&
+          other.femaleVideoUrl == this.femaleVideoUrl &&
           other.source == this.source &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -504,6 +592,8 @@ class SongsCompanion extends UpdateCompanion<Song> {
   final Value<String?> englishBody;
   final Value<String?> author;
   final Value<String?> imagePath;
+  final Value<String?> maleVideoUrl;
+  final Value<String?> femaleVideoUrl;
   final Value<String> source;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -517,6 +607,8 @@ class SongsCompanion extends UpdateCompanion<Song> {
     this.englishBody = const Value.absent(),
     this.author = const Value.absent(),
     this.imagePath = const Value.absent(),
+    this.maleVideoUrl = const Value.absent(),
+    this.femaleVideoUrl = const Value.absent(),
     this.source = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -531,6 +623,8 @@ class SongsCompanion extends UpdateCompanion<Song> {
     this.englishBody = const Value.absent(),
     this.author = const Value.absent(),
     this.imagePath = const Value.absent(),
+    this.maleVideoUrl = const Value.absent(),
+    this.femaleVideoUrl = const Value.absent(),
     this.source = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -549,6 +643,8 @@ class SongsCompanion extends UpdateCompanion<Song> {
     Expression<String>? englishBody,
     Expression<String>? author,
     Expression<String>? imagePath,
+    Expression<String>? maleVideoUrl,
+    Expression<String>? femaleVideoUrl,
     Expression<String>? source,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -563,6 +659,8 @@ class SongsCompanion extends UpdateCompanion<Song> {
       if (englishBody != null) 'english_body': englishBody,
       if (author != null) 'author': author,
       if (imagePath != null) 'image_path': imagePath,
+      if (maleVideoUrl != null) 'male_video_url': maleVideoUrl,
+      if (femaleVideoUrl != null) 'female_video_url': femaleVideoUrl,
       if (source != null) 'source': source,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -579,6 +677,8 @@ class SongsCompanion extends UpdateCompanion<Song> {
     Value<String?>? englishBody,
     Value<String?>? author,
     Value<String?>? imagePath,
+    Value<String?>? maleVideoUrl,
+    Value<String?>? femaleVideoUrl,
     Value<String>? source,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -593,6 +693,8 @@ class SongsCompanion extends UpdateCompanion<Song> {
       englishBody: englishBody ?? this.englishBody,
       author: author ?? this.author,
       imagePath: imagePath ?? this.imagePath,
+      maleVideoUrl: maleVideoUrl ?? this.maleVideoUrl,
+      femaleVideoUrl: femaleVideoUrl ?? this.femaleVideoUrl,
       source: source ?? this.source,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -625,6 +727,12 @@ class SongsCompanion extends UpdateCompanion<Song> {
     if (imagePath.present) {
       map['image_path'] = Variable<String>(imagePath.value);
     }
+    if (maleVideoUrl.present) {
+      map['male_video_url'] = Variable<String>(maleVideoUrl.value);
+    }
+    if (femaleVideoUrl.present) {
+      map['female_video_url'] = Variable<String>(femaleVideoUrl.value);
+    }
     if (source.present) {
       map['source'] = Variable<String>(source.value);
     }
@@ -653,6 +761,8 @@ class SongsCompanion extends UpdateCompanion<Song> {
           ..write('englishBody: $englishBody, ')
           ..write('author: $author, ')
           ..write('imagePath: $imagePath, ')
+          ..write('maleVideoUrl: $maleVideoUrl, ')
+          ..write('femaleVideoUrl: $femaleVideoUrl, ')
           ..write('source: $source, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1888,6 +1998,8 @@ typedef $$SongsTableCreateCompanionBuilder = SongsCompanion Function({
   Value<String?> englishBody,
   Value<String?> author,
   Value<String?> imagePath,
+  Value<String?> maleVideoUrl,
+  Value<String?> femaleVideoUrl,
   Value<String> source,
   required DateTime createdAt,
   required DateTime updatedAt,
@@ -1902,6 +2014,8 @@ typedef $$SongsTableUpdateCompanionBuilder = SongsCompanion Function({
   Value<String?> englishBody,
   Value<String?> author,
   Value<String?> imagePath,
+  Value<String?> maleVideoUrl,
+  Value<String?> femaleVideoUrl,
   Value<String> source,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -1992,6 +2106,16 @@ class $$SongsTableFilterComposer extends Composer<_$AppDatabase, $SongsTable> {
 
   ColumnFilters<String> get imagePath => $composableBuilder(
     column: $table.imagePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get maleVideoUrl => $composableBuilder(
+    column: $table.maleVideoUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get femaleVideoUrl => $composableBuilder(
+    column: $table.femaleVideoUrl,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2110,6 +2234,16 @@ class $$SongsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get maleVideoUrl => $composableBuilder(
+    column: $table.maleVideoUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get femaleVideoUrl => $composableBuilder(
+    column: $table.femaleVideoUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get source => $composableBuilder(
     column: $table.source,
     builder: (column) => ColumnOrderings(column),
@@ -2164,6 +2298,16 @@ class $$SongsTableAnnotationComposer
 
   GeneratedColumn<String> get imagePath =>
       $composableBuilder(column: $table.imagePath, builder: (column) => column);
+
+  GeneratedColumn<String> get maleVideoUrl => $composableBuilder(
+    column: $table.maleVideoUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get femaleVideoUrl => $composableBuilder(
+    column: $table.femaleVideoUrl,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get source =>
       $composableBuilder(column: $table.source, builder: (column) => column);
@@ -2263,6 +2407,8 @@ class $$SongsTableTableManager
                 Value<String?> englishBody = const Value.absent(),
                 Value<String?> author = const Value.absent(),
                 Value<String?> imagePath = const Value.absent(),
+                Value<String?> maleVideoUrl = const Value.absent(),
+                Value<String?> femaleVideoUrl = const Value.absent(),
                 Value<String> source = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -2276,6 +2422,8 @@ class $$SongsTableTableManager
                 englishBody: englishBody,
                 author: author,
                 imagePath: imagePath,
+                maleVideoUrl: maleVideoUrl,
+                femaleVideoUrl: femaleVideoUrl,
                 source: source,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -2291,6 +2439,8 @@ class $$SongsTableTableManager
                 Value<String?> englishBody = const Value.absent(),
                 Value<String?> author = const Value.absent(),
                 Value<String?> imagePath = const Value.absent(),
+                Value<String?> maleVideoUrl = const Value.absent(),
+                Value<String?> femaleVideoUrl = const Value.absent(),
                 Value<String> source = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -2304,6 +2454,8 @@ class $$SongsTableTableManager
                 englishBody: englishBody,
                 author: author,
                 imagePath: imagePath,
+                maleVideoUrl: maleVideoUrl,
+                femaleVideoUrl: femaleVideoUrl,
                 source: source,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

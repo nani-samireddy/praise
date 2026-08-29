@@ -10,7 +10,15 @@ import '../data/collection_sharing_service.dart';
 import 'collection_dialogs.dart';
 import 'collection_providers.dart';
 
-enum _CollectionAction { copy, shareText, shareImage, sharePdf, rename, delete }
+enum _CollectionAction {
+  copy,
+  shareText,
+  shareLink,
+  shareImage,
+  sharePdf,
+  rename,
+  delete,
+}
 
 class CollectionDetailScreen extends ConsumerWidget {
   const CollectionDetailScreen({super.key, required this.collectionId});
@@ -49,6 +57,14 @@ class CollectionDetailScreen extends ConsumerWidget {
                     child: ListTile(
                       leading: Icon(Icons.share_outlined),
                       title: Text('Share as text'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: _CollectionAction.shareLink,
+                    child: ListTile(
+                      leading: Icon(Icons.link_outlined),
+                      title: Text('Share import link'),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
@@ -198,6 +214,19 @@ class CollectionDetailScreen extends ConsumerWidget {
           await ref
               .read(collectionSharingServiceProvider)
               .shareCollection(collection, songs, sharePositionOrigin: origin);
+        } catch (_) {
+          if (context.mounted) _showShareFailure(context, 'share');
+        }
+        return;
+      case _CollectionAction.shareLink:
+        try {
+          await ref
+              .read(collectionSharingServiceProvider)
+              .shareCollectionLink(
+                collection,
+                songs,
+                sharePositionOrigin: _shareOrigin(context),
+              );
         } catch (_) {
           if (context.mounted) _showShareFailure(context, 'share');
         }

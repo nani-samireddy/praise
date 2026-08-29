@@ -1,0 +1,127 @@
+name: Import catalogue from Google Sheets
+
+on:
+  workflow_dispatch:
+    inputs:
+      catalogue_version:
+        description: "Catalogue version to publish"
+        required: true
+        type: number
+      sheet_csv_url:
+        description: "Optional HTTPS CSV export URL; defaults to SONGS_SHEET_CSV_URL"
+        required: false
+        type: string
+  repository_dispatch:
+    types: [catalog_deploy]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: import-sheet-catalog
+  cancel-in-progress: false
+
+jobs:
+  import-build-publish:
+    runs-on: ubuntu-latest
+    env:
+      CATALOG_REPOSITORY: ${{ vars.CATALOG_REPOSITORY }}
+      DEFAULT_SHEET_CSV_URL: ${{ vars.SONGS_SHEET_CSV_URL }}
+      SHEET_EXPORT_TOKEN: ${{ secrets.SHEET_EXPORT_TOKEN }}
+    steps:
+      - name: Check out app repository
+        uses: actions/checkout@v6
+
+      - name: Check configuration
+        shell: bash
+        env:
+          CATALOG_DEPLOY_KEY: ${{ secrets.CATALOG_DEPLOY_KEY }}
+        run: |
+          if [[ -z "$CATALOG_REPOSITORY" ]]; then
+            echo "Set the CATALOG_REPOSITORY Actions variable to OWNER/REPOSITORY."
+            exit 1
+          fi
+          if [[ -z "$CATALOG_DEPLOY_KEY" ]]; then
+            echo "Add the catalogue repository deploy key as CATALOG_DEPLOY_KEY."
+            exit 1
+          fi
+
+      - name: Resolve import inputs
+        id: import-inputs
+        shell: bash
+        env:
+          DISPATCH_VERSION: ${{ github.event.client_payload.catalogue_version }}
+          DISPATCH_URL: ${{ github.event.client_payload.sheet_csv_url }}
+          MANUAL_VERSION: ${{ inputs.catalogue_version }}
+          MANUAL_URL: ${{ inputs.sheet_csv_url }}
+        run: |
+          version="${MANUAL_VERSION:-$DISPATCH_VERSION}"
+          sheet_url="${MANUAL_URL:-$DISPATCH_URL}"
+          sheet_url="${sheet_url:-$DEFAULT_SHEET_CSV_URL}"
+          if [[ -z "$version" ]]; then
+            echo "Provide catalogue_version through workflow input or repository_dispatch payload."
+            exit 1
+          fi
+          if [[ -z "$sheet_url" ]]; then
+            echo "Provide sheet_csv_url or set SONGS_SHEET_CSV_URL."
+            exit 1
+          fi
+          {
+            echo "catalogue_version=$version"
+            echo "sheet_csv_url=$sheet_url"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Import approved songs
+        shell: bash
+        run: |
+          args=(
+            python tool/import_sheet_catalog.py
+            --url "${{ steps.import-inputs.outputs.sheet_csv_url }}"
+            --output catalog/source/songs.normalized.csv
+          )
+          if [[ -n "$SHEET_EXPORT_TOKEN" ]]; then
+            args+=(--token "$SHEET_EXPORT_TOKEN")
+          fi
+          "${args[@]}"
+
+      - name: Build catalogue
+        run: |
+          python tool/build_catalog.py \
+            --input catalog/source/songs.normalized.csv \
+            --version "${{ steps.import-inputs.outputs.catalogue_version }}" \
+            --bundle-output assets/data/songs.json \
+            --bundle-all
+
+      - name: Validate catalogue
+        run: python tool/validate_catalog.py
+
+      - name: Check out catalogue server repository
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ vars.CATALOG_REPOSITORY }}
+          ref: main
+          ssh-key: ${{ secrets.CATALOG_DEPLOY_KEY }}
+          path: catalog-server
+
+      - name: Synchronize published files
+        shell: bash
+        run: |
+          mkdir -p catalog-server/catalog
+          rsync --archive --delete docs/catalog/ catalog-server/catalog/
+          mkdir -p catalog-server/list
+          rsync --archive --delete docs/list/ catalog-server/list/
+          touch catalog-server/.nojekyll
+
+      - name: Publish changed catalogue
+        working-directory: catalog-server
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .nojekyll catalog list
+          if git diff --cached --quiet; then
+            echo "The catalogue server is already current."
+            exit 0
+          fi
+          git commit -m "Publish sheet catalogue v${{ steps.import-inputs.outputs.catalogue_version }}"
+          git push origin HEAD:main

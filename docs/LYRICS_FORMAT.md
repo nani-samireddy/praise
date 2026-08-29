@@ -57,6 +57,18 @@ are normalized to `[Repeat: Agni]`.
 Unknown bracketed text remains visible as ordinary lyrics. The reader never
 silently discards syntax it does not understand.
 
+## Chords
+
+Chords are not written into the canonical lyrics body. The body stays one lyric
+line per physical line so search, copy, sync, and lyrics-only reading remain
+simple and fast.
+
+Future chord support uses optional structured arrangements described in
+`docs/CHORDS_SCHEMA.md`. Chords are anchored to positions inside normalized
+lyric lines and rendered above the lyrics at display time. Do not preserve
+legacy padded chord-over-lyric spacing as the canonical format; it is an input
+format that must be parsed and validated before publishing.
+
 ## Normalization workflow
 
 The original supplied CSV is never overwritten. Generate the maintained copy,

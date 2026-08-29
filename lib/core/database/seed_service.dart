@@ -59,6 +59,8 @@ class SeedService {
             body: body,
             englishBody: Value(_optionalString(value, 'englishBody')),
             author: Value(_optionalString(value, 'author')),
+            maleVideoUrl: Value(_optionalString(value, 'maleVideoUrl')),
+            femaleVideoUrl: Value(_optionalString(value, 'femaleVideoUrl')),
             source: const Value('server'),
             createdAt: now,
             updatedAt: now,

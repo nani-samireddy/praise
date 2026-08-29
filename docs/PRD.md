@@ -105,6 +105,8 @@ The song reader shall:
 - allow the complete bilingual song to be copied as readable plain text;
 - allow the complete bilingual song to be shared as text, image, or paginated
   PDF through the platform share sheet;
+- display optional male and female YouTube practice videos inline when the
+  catalogue or custom song provides them;
 - allow a server song correction to be submitted in the app; the resulting
   public GitHub issue shall include its title and catalogue ID and return a
   tracking link;
@@ -134,6 +136,7 @@ Users shall be able to:
   original song photo, optional English body, and optional author; when the
   English title is blank, the app shall save a readable offline
   transliteration of the primary title;
+- optionally add male and female YouTube practice video links;
 - take or choose a photo and recognize Telugu and English lyrics entirely on
   the Android device;
 - optionally use supported Android on-device AI to separate recognized text
@@ -305,7 +308,7 @@ spinner.
 - Community submissions and moderation
 - Transliteration
 - Chords and chord transposition
-- Audio playback or references
+- Audio file playback
 - Worship presentation integration
 - Song arrangement or version history
 - Automatic background synchronization
@@ -316,19 +319,37 @@ avoid choices that make them unnecessarily difficult later.
 
 ## 11. V2 committed scope
 
+### AppSheet catalogue editor
+
+V2 shall support a low-maintenance editorial workflow where trusted editors use
+an AppSheet app backed by Google Sheets to add, review, approve, and publish
+catalogue songs.
+
+- Editors can create draft song rows with title, English title, lyrics, English
+  lyrics, author, and review notes.
+- Reviewers can approve rows before they are eligible for publishing.
+- A maintainer-only deploy switch triggers the catalogue build workflow.
+- The deploy workflow validates approved rows, builds the static catalogue, and
+  publishes it to the existing GitHub Pages catalogue repository.
+- The mobile app continues to use manual refresh against the static catalogue
+  manifest.
+- Draft rows, review notes, editor identity, and deployment credentials are not
+  shipped to the mobile app.
+- Publishing failure leaves the previously published catalogue unchanged.
+
 ### Shareable lists
 
-V2 shall let a user share a complete song list without requiring an account or
-a maintained application server.
+V1 shall let a user share an importable song list link without requiring an
+account or a maintained application server.
 
-- A list can be exported as a versioned Praise list package.
-- The package can be sent through the platform share sheet.
-- Another Praise installation can open, preview, and import the package.
+- A list can be exported as a versioned Praise link.
+- The link can be sent through the platform share sheet.
+- Another Praise installation can open, preview, and import the list.
 - Catalogue songs are matched using stable song identifiers rather than titles.
 - Import creates local identifiers and never overwrites an existing list or
   custom song silently.
 - Duplicate and missing songs are summarized before the user confirms import.
-- Invalid or unsupported package versions fail safely with a readable message.
+- Invalid or unsupported link versions fail safely with a readable message.
 - V1 plain-text sharing remains available for recipients who do not use Praise.
 
 ### Share formats roadmap
@@ -339,7 +360,7 @@ lists. V2 adds an importable list package:
 | Content | Text | Image | PDF | Importable Praise package |
 | --- | --- | --- | --- | --- |
 | Song | V1 | V1 | V1 | No |
-| List | V1 | V1 | V1 | V2 |
+| List | V1 | V1 | V1 | V1 |
 
 - Text remains optimized for copying, messaging, and recipients without Praise.
 - Image export creates a readable share card or long image using the selected
@@ -360,6 +381,25 @@ not included unless separately approved.
 
 The package policy for custom-song lyrics, including explicit user consent and
 rights messaging, must be decided before implementation.
+
+### Chords
+
+V2 shall support optional chord arrangements for catalogue songs.
+
+- Normal lyrics remain available when a song has no chord data.
+- Chords are stored as structured arrangements over lyric lines, not as padded
+  spaces inside the lyrics body.
+- Each arrangement has a key, optional capo, sections, lyric lines, and chord
+  positions.
+- The reader can switch between Lyrics and Chords modes.
+- Transpose is applied temporarily while reading unless saved arrangement
+  editing is added later.
+- Chord data is validated before publishing and ignored safely when unsupported.
+- Image and PDF export can include chords only when the user selects a chord
+  arrangement.
+
+Custom chord editing, live band collaboration, playback sync, and automatic
+chord detection are out of scope for the first chord implementation.
 
 ## 12. V1 acceptance checklist
 
@@ -391,3 +431,6 @@ architecture:
 - The content ownership and publication approval process.
 - Minimum and maximum lyrics font sizes.
 - Whether search ignores punctuation and diacritics in V1.
+- The exact AppSheet account and maintainer permissions model.
+- Whether chord entry starts from a parsed chord-over-lyric text field or a
+  fully relational child-sheet editor.

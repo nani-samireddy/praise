@@ -99,6 +99,8 @@ class CatalogueStore {
                   body: song.body,
                   englishBody: Value(song.englishBody),
                   author: Value(song.author),
+                  maleVideoUrl: Value(song.maleVideoUrl),
+                  femaleVideoUrl: Value(song.femaleVideoUrl),
                   source: const Value('server'),
                   createdAt: snapshot.manifest.generatedAt,
                   updatedAt: snapshot.manifest.generatedAt,

@@ -71,6 +71,8 @@ void main() {
         body: '  నా గీతము  ',
         englishBody: '  My lyrics  ',
         author: '  Local Author  ',
+        maleVideoUrl: '  https://www.youtube.com/watch?v=male1234567  ',
+        femaleVideoUrl: 'https://youtu.be/female12345',
       ),
     );
 
@@ -78,6 +80,8 @@ void main() {
     expect(song?.source, 'custom');
     expect(song?.title, 'నా పాట');
     expect(song?.author, 'Local Author');
+    expect(song?.maleVideoUrl, 'https://www.youtube.com/watch?v=male1234567');
+    expect(song?.femaleVideoUrl, 'https://youtu.be/female12345');
     final mySongs = await database.select(database.collections).get();
     final membership = await database.select(database.collectionSongs).get();
     expect(mySongs.single.name, 'My Songs');
@@ -95,6 +99,19 @@ void main() {
     await repository.deleteCustomSong(id);
     expect(await repository.watchSong(id).first, isNull);
     expect(await database.select(database.collectionSongs).get(), isEmpty);
+  });
+
+  test('rejects non-YouTube custom song practice videos', () async {
+    await expectLater(
+      repository.createCustomSong(
+        const SongInput(
+          title: 'Video song',
+          body: 'Lyrics',
+          maleVideoUrl: 'https://example.com/video',
+        ),
+      ),
+      throwsArgumentError,
+    );
   });
 
   test(
