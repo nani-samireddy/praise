@@ -75,5 +75,9 @@ void main() {
       ),
       findsNWidgets(2),
     );
+    expect(
+      tester.widget<Text>(find.text('ఆరాధన')).style?.fontSize,
+      closeTo(14.4, 0.001),
+    );
   });
 }

@@ -92,6 +92,7 @@ class _LyricsBlockView extends StatelessWidget {
           child: Text(
             block.text,
             style: theme.textTheme.labelMedium?.copyWith(
+              fontSize: (fontSize * 0.72).clamp(12, 24),
               fontFamily: fontFamily,
               color: colors.onSecondaryContainer,
               fontWeight: FontWeight.w700,

@@ -320,12 +320,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 20),
           const _SectionTitle('About'),
-          const Card(
-            child: ListTile(
-              leading: Icon(Icons.info_outline),
-              title: Text('Praise'),
-              subtitle: Text('Version 1.0.0 • Offline-first lyrics'),
+          Card(
+            child: Column(
+              children: [
+                const ListTile(
+                  leading: Icon(Icons.info_outline),
+                  title: Text('Praise'),
+                  subtitle: Text('Version 1.0.0 • Offline-first lyrics'),
+                ),
+                const Divider(height: 1, indent: 56),
+                ListTile(
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: const Text('Privacy'),
+                  subtitle: const Text('Local storage, camera, and feedback'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showPrivacyDialog(context),
+                ),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showPrivacyDialog(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Privacy'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'Praise is offline-first. Songs, favorites, lists, custom lyrics, '
+            'and saved song photos are stored on this device.\n\n'
+            'Camera and photo access are used only when you choose to scan or '
+            'keep a song photo. OCR runs on the device where supported.\n\n'
+            'The app connects to the internet to refresh the public song '
+            'catalogue, open YouTube practice videos, open shared list links, '
+            'and submit feedback or song requests. Feedback submissions may '
+            'become public GitHub issues, so do not include private details.\n\n'
+            'Catalogue songs are community-provided. Praise does not intend to '
+            'use anyone\'s work without permission. If your work appears in '
+            'the catalogue without consent, report the song and it will be '
+            'reviewed for removal.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
           ),
         ],
       ),
