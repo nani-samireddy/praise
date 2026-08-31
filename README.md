@@ -117,6 +117,9 @@ Current optimisation is intentionally simple and local-first:
   transactions.
 - The UI reads from Drift streams, so screens update from local cached data
   without remote round trips.
+- The song index uses paged SQLite reads and loads lightweight index rows
+  (`id`, title, English title, author, and source) instead of full lyric bodies.
+  Song detail, sharing, and exports load full song rows only when needed.
 - Song and list screens use lazy list rendering.
 
 The explicit indexes are:

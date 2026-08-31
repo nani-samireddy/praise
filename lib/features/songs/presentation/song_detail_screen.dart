@@ -40,10 +40,9 @@ class SongDetailScreen extends ConsumerWidget {
           body: _SongReader(
             song: value,
             appBar: SliverAppBar.medium(
-              title: Text(
-                value.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              title: _SongAppBarTitle(
+                title: value.title,
+                englishTitle: value.englishTitle,
               ),
               actions: [
                 FavoriteButton(songId: value.id),
@@ -337,6 +336,39 @@ class _LyricsAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) => AppBar(title: const Text('Song'));
 }
 
+class _SongAppBarTitle extends StatelessWidget {
+  const _SongAppBarTitle({required this.title, required this.englishTitle});
+
+  final String title;
+  final String? englishTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final subtitle = englishTitle?.trim();
+    if (subtitle == null || subtitle.isEmpty) {
+      return Text(title, maxLines: 1, overflow: TextOverflow.ellipsis);
+    }
+
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        Text(
+          subtitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _SongReader extends ConsumerStatefulWidget {
   const _SongReader({required this.song, required this.appBar});
 
@@ -358,7 +390,6 @@ class _SongReaderState extends ConsumerState<_SongReader> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final englishTitle = widget.song.englishTitle;
     final englishBody = widget.song.englishBody;
     final author = widget.song.author;
     final imagePath = widget.song.imagePath;
@@ -378,8 +409,6 @@ class _SongReaderState extends ConsumerState<_SongReader> {
         displayMode != LyricsDisplayMode.english || englishBody == null;
     final showEnglish =
         englishBody != null && displayMode != LyricsDisplayMode.primary;
-    final showEnglishTitle =
-        englishTitle != null && displayMode != LyricsDisplayMode.primary;
 
     return GestureDetector(
       onScaleStart: (details) => _scaleStartFontSize = _fontSize,
@@ -430,14 +459,6 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                         ),
                       ],
                     ),
-                  if (showEnglishTitle) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      englishTitle,
-                      style: Theme.of(context).textTheme.titleLarge
-                          ?.copyWith(color: colorScheme.onSurfaceVariant),
-                    ),
-                  ],
                   if (author != null) ...[
                     const SizedBox(height: 12),
                     Row(
@@ -574,7 +595,8 @@ class _PracticeVideos extends StatefulWidget {
   State<_PracticeVideos> createState() => _PracticeVideosState();
 }
 
-class _PracticeVideosState extends State<_PracticeVideos> {
+class _PracticeVideosState extends State<_PracticeVideos>
+    with AutomaticKeepAliveClientMixin<_PracticeVideos> {
   YoutubePlayerController? _controller;
   String? _activeVideoId;
   late final List<_PracticeVideo> _videos;
@@ -596,8 +618,11 @@ class _PracticeVideosState extends State<_PracticeVideos> {
     super.dispose();
   }
 
+  @override
+  bool get wantKeepAlive => _controller != null;
+
   void _selectVideo(_PracticeVideo video) {
-    final videoId = YoutubePlayerController.convertUrlToId(video.url);
+    final videoId = _youtubeVideoId(video.url);
     if (videoId == null) {
       _openExternally(video.url);
       return;
@@ -617,6 +642,7 @@ class _PracticeVideosState extends State<_PracticeVideos> {
         ),
       );
     });
+    updateKeepAlive();
   }
 
   Future<void> _openExternally(String url) async {
@@ -627,6 +653,7 @@ class _PracticeVideosState extends State<_PracticeVideos> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final colorScheme = Theme.of(context).colorScheme;
     final controller = _controller;
     return Column(
@@ -697,11 +724,37 @@ class _PracticeVideosState extends State<_PracticeVideos> {
     if (videoId == null) return _videos.first.url;
     return _videos
         .firstWhere(
-          (video) =>
-              YoutubePlayerController.convertUrlToId(video.url) == videoId,
+          (video) => _youtubeVideoId(video.url) == videoId,
           orElse: () => _videos.first,
         )
         .url;
+  }
+
+  String? _youtubeVideoId(String url) {
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null) return null;
+
+    final host = uri.host.toLowerCase();
+    if (host == 'youtu.be') {
+      return uri.pathSegments.isEmpty ? null : uri.pathSegments.first;
+    }
+
+    final isYoutube =
+        host == 'youtube.com' ||
+        host.endsWith('.youtube.com') ||
+        host == 'youtube-nocookie.com' ||
+        host.endsWith('.youtube-nocookie.com');
+    if (!isYoutube) return null;
+
+    final watchId = uri.queryParameters['v'];
+    if (watchId != null && watchId.isNotEmpty) return watchId;
+
+    if (uri.pathSegments.length >= 2 &&
+        const {'embed', 'shorts', 'live'}.contains(uri.pathSegments.first)) {
+      return uri.pathSegments[1];
+    }
+
+    return YoutubePlayerController.convertUrlToId(url);
   }
 }
 

@@ -36,7 +36,7 @@ Use one canonical `Songs` sheet with these columns:
 | `female_video_url` | No | YouTube URL for a female practice version. |
 | `status` | Yes | `draft`, `needs_review`, `approved`, or `published`. |
 | `review_notes` | No | Editor-visible notes. Not shipped to the app. |
-| `catalogue_version` | No | Filled when published. |
+| `catalogue_version` | No | Filled after publishing. Editors do not need to set this. |
 | `updated_at` | Yes | AppSheet-maintained timestamp. |
 | `updated_by` | Yes | Editor identity from AppSheet. |
 
@@ -58,7 +58,10 @@ The AppSheet app should provide:
 
 The deploy switch should not directly edit GitHub Pages. It should trigger a
 GitHub Actions workflow in the app repository with a maintainer-scoped token.
-The workflow is the only component that converts sheets into release JSON.
+The workflow is the only component that converts sheets into release JSON. If
+the deploy request does not provide a catalogue version, the workflow publishes
+the next version after the checked-in manifest only when approved catalogue
+content changed.
 
 ## Deploy switch flow
 
@@ -79,6 +82,7 @@ sequenceDiagram
     Actions->>Sheets: Read approved rows
     Actions->>AppRepo: Normalize and validate catalogue
     Actions->>AppRepo: Build manifest and songs JSON
+    Actions->>AppRepo: Commit generated catalogue state
     Actions->>CatRepo: Push changed catalog/ files
     Mobile->>CatRepo: Refresh manifest
     Mobile->>Mobile: Apply newer snapshot locally
@@ -96,25 +100,28 @@ The workflow should:
 4. map `source_id` through the existing `tool/catalog_id_map.json`;
 5. normalize lyrics using the canonical format rules;
 6. run catalogue validation and review warning generation;
-7. require a monotonically increasing catalogue version;
+7. publish the supplied catalogue version, or automatically reuse the current
+   version for unchanged content and increment it for changed content;
 8. build `docs/catalog/songs.json` and `docs/catalog/manifest.json`;
-9. publish the static output to `nani-samireddy/praise-catalog`; and
-10. optionally write the published version back to the sheet.
+9. commit `docs/catalog`, `assets/data/songs.json`,
+   `catalog/source/songs.normalized.csv`, and `tool/catalog_id_map.json` back
+   to the app repository so source IDs stay stable; and
+10. publish the static output to `nani-samireddy/praise-catalog`.
 
 Secrets required in the app repository:
 
-| Secret or variable | Purpose |
-| --- | --- |
-| `CATALOG_REPOSITORY` | Existing target repository, for example `nani-samireddy/praise-catalog`. |
-| `CATALOG_DEPLOY_KEY` | Existing private deploy key for the catalogue repository. |
-| `SONGS_SHEET_CSV_URL` | HTTPS CSV export URL for the approved catalogue sheet. |
-| `SHEET_EXPORT_TOKEN` | Optional bearer token for a protected CSV export endpoint. |
+| Name | Type | Purpose |
+| --- | --- | --- |
+| `CATALOG_REPOSITORY` | Actions variable | Existing target repository, for example `nani-samireddy/praise-catalog`. |
+| `SONGS_SHEET_CSV_URL` | Actions variable | HTTPS CSV export URL for the approved catalogue sheet. |
+| `CATALOG_DEPLOY_KEY` | Actions secret | Existing private deploy key for the catalogue repository. |
+| `SHEET_EXPORT_TOKEN` | Actions secret | Optional bearer token for a protected CSV export endpoint. |
 
 ## Manual workflow trigger
 
 Run **Import catalogue from Google Sheets** from GitHub Actions with:
 
-- `catalogue_version`: the next catalogue version number;
+- `catalogue_version`: optional; leave blank to publish the next version;
 - `sheet_csv_url`: optional override. Leave blank to use `SONGS_SHEET_CSV_URL`.
 
 This should be the first production test because it verifies sheet import,
@@ -145,7 +152,6 @@ Body:
 {
   "event_type": "catalog_deploy",
   "client_payload": {
-    "catalogue_version": 8,
     "source": "appsheet"
   }
 }
@@ -153,12 +159,21 @@ Body:
 
 If the sheet URL needs to vary per environment, include `sheet_csv_url` in the
 payload. Otherwise store it once as the `SONGS_SHEET_CSV_URL` Actions variable.
+If a maintainer wants to force a specific version, include
+`catalogue_version`; normal AppSheet deploys should omit it and let GitHub
+Actions choose the correct version.
+
+The GitHub token used by AppSheet should be fine-grained and limited to the app
+repository. It needs permission to call repository dispatch for Actions. Do not
+store the catalogue deploy private key in AppSheet.
 
 ## Safety rules
 
 - A deploy only publishes approved rows.
 - A changed catalogue must increase `catalogueVersion`.
 - Generated app IDs remain stable through `tool/catalog_id_map.json`.
+- The import workflow commits the updated ID map back to the app repository
+  before publishing.
 - The workflow fails before publishing if validation or checksum generation
   fails.
 - Review notes, editor emails, draft rows, and AppSheet metadata are never
@@ -178,7 +193,8 @@ payload. Otherwise store it once as the `SONGS_SHEET_CSV_URL` Actions variable.
    `workflow_dispatch` first.
 5. Wire the AppSheet deploy action to the workflow's `repository_dispatch`
    trigger after manual publishing succeeds.
-6. Add optional write-back of published version and status.
+6. Add optional sheet write-back of published version and status later if
+   editors need it.
 
 The first deploy path should be manually triggered from GitHub Actions. The
 AppSheet switch becomes a convenience after the build is proven repeatable.

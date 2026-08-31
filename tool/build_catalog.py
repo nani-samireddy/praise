@@ -25,7 +25,13 @@ REQUIRED_COLUMNS = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True, type=Path, help="Master CSV file")
-    parser.add_argument("--version", required=True, type=int, help="Catalogue version")
+    version = parser.add_mutually_exclusive_group(required=True)
+    version.add_argument("--version", type=int, help="Catalogue version")
+    version.add_argument(
+        "--auto-version",
+        action="store_true",
+        help="Reuse the current version for unchanged content, otherwise increment it",
+    )
     parser.add_argument(
         "--output", type=Path, default=Path("docs/catalog"), help="Output directory"
     )
@@ -119,18 +125,21 @@ def read_songs(path: Path, id_map: dict[str, str]) -> list[dict[str, object]]:
                 number = int(candidate_id.split("-")[1]) + 1
                 candidate_id = f"csv-{number:04d}"
 
-            songs.append(
-                {
-                    "id": app_id,
-                    "title": title,
-                    "englishTitle": optional(row.get("ENGLISH TITLE")),
-                    "body": body,
-                    "englishBody": optional(row.get("ENGLISH SONG")),
-                    "author": optional(row.get("AUTHOR")),
-                    "maleVideoUrl": optional(row.get("MALE VIDEO URL")),
-                    "femaleVideoUrl": optional(row.get("FEMALE VIDEO URL")),
-                }
-            )
+            song = {
+                "id": app_id,
+                "title": title,
+                "englishTitle": optional(row.get("ENGLISH TITLE")),
+                "body": body,
+                "englishBody": optional(row.get("ENGLISH SONG")),
+                "author": optional(row.get("AUTHOR")),
+            }
+            for output_key, input_key in (
+                ("maleVideoUrl", "MALE VIDEO URL"),
+                ("femaleVideoUrl", "FEMALE VIDEO URL"),
+            ):
+                if value := optional(row.get(input_key)):
+                    song[output_key] = value
+            songs.append(song)
 
     if not songs:
         raise ValueError("CSV contains no songs")
@@ -156,7 +165,7 @@ def write_atomic(path: Path, data: bytes) -> None:
 
 def main() -> None:
     args = parse_args()
-    if args.version < 1:
+    if args.version is not None and args.version < 1:
         raise ValueError("--version must be at least 1")
 
     id_map = load_id_map(args.id_map)
@@ -171,12 +180,19 @@ def main() -> None:
         previous_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         previous_version = int(previous_manifest["catalogVersion"])
         previous_bytes = songs_path.read_bytes() if songs_path.exists() else b""
-        if songs_data != previous_bytes and args.version <= previous_version:
+        if args.auto_version:
+            args.version = previous_version + (0 if songs_data == previous_bytes else 1)
+        elif songs_data != previous_bytes and args.version <= previous_version:
             raise ValueError(
                 f"Catalogue content changed; --version must exceed {previous_version}"
             )
         if args.version < previous_version:
             raise ValueError(f"--version cannot be lower than {previous_version}")
+    elif args.auto_version:
+        args.version = 1
+
+    if args.version is None:
+        raise ValueError("--version could not be resolved")
 
     if (
         previous_manifest

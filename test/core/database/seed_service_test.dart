@@ -82,7 +82,7 @@ void main() {
       final json = await File('assets/data/songs.json').readAsString();
       final bundledSongs = jsonDecode(json) as List<Object?>;
 
-      expect(bundledSongs, hasLength(1374));
+      expect(bundledSongs.length, greaterThanOrEqualTo(1375));
 
       await SeedService(
         database,
@@ -152,7 +152,7 @@ void main() {
       songs.where((song) => song.source == 'server'),
       hasLength(bundledSongs.length),
     );
-    expect(marker.value, '4');
+    expect(marker.value, '5');
     expect(upgradedSong.title, firstSong['title']);
     expect(upgradedSong.body, firstSong['body']);
     expect(songs.map((song) => song.id), contains('custom-song'));

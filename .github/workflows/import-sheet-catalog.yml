@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       catalogue_version:
-        description: "Catalogue version to publish"
-        required: true
-        type: number
+        description: "Optional catalogue version; leave blank to publish the next version"
+        required: false
+        type: string
       sheet_csv_url:
         description: "Optional HTTPS CSV export URL; defaults to SONGS_SHEET_CSV_URL"
         required: false
@@ -15,7 +15,7 @@ on:
     types: [catalog_deploy]
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: import-sheet-catalog
@@ -58,8 +58,8 @@ jobs:
           version="${MANUAL_VERSION:-$DISPATCH_VERSION}"
           sheet_url="${MANUAL_URL:-$DISPATCH_URL}"
           sheet_url="${sheet_url:-$DEFAULT_SHEET_CSV_URL}"
-          if [[ -z "$version" ]]; then
-            echo "Provide catalogue_version through workflow input or repository_dispatch payload."
+          if [[ -n "$version" ]] && { ! [[ "$version" =~ ^[0-9]+$ ]] || [[ "$version" -lt 1 ]]; }; then
+            echo "catalogue_version must be a positive integer when provided."
             exit 1
           fi
           if [[ -z "$sheet_url" ]]; then
@@ -85,15 +85,48 @@ jobs:
           "${args[@]}"
 
       - name: Build catalogue
+        shell: bash
         run: |
-          python tool/build_catalog.py \
-            --input catalog/source/songs.normalized.csv \
-            --version "${{ steps.import-inputs.outputs.catalogue_version }}" \
-            --bundle-output assets/data/songs.json \
+          args=(
+            python tool/build_catalog.py
+            --input catalog/source/songs.normalized.csv
+            --bundle-output assets/data/songs.json
             --bundle-all
+          )
+          if [[ -n "${{ steps.import-inputs.outputs.catalogue_version }}" ]]; then
+            args+=(--version "${{ steps.import-inputs.outputs.catalogue_version }}")
+          else
+            args+=(--auto-version)
+          fi
+          "${args[@]}"
+
+      - name: Read built catalogue version
+        id: built-catalogue
+        shell: bash
+        run: |
+          version="$(python -c 'import json; print(json.load(open("docs/catalog/manifest.json", encoding="utf-8"))["catalogVersion"])')"
+          echo "catalogue_version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Validate catalogue
         run: python tool/validate_catalog.py
+
+      - name: Commit generated catalogue state
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            assets/data/songs.json \
+            catalog/source/songs.normalized.csv \
+            docs/catalog/manifest.json \
+            docs/catalog/songs.json \
+            tool/catalog_id_map.json
+          if git diff --cached --quiet; then
+            echo "Generated catalogue state is already committed."
+            exit 0
+          fi
+          git commit -m "Import sheet catalogue v${{ steps.built-catalogue.outputs.catalogue_version }}"
+          git push origin HEAD:${GITHUB_REF_NAME:-main}
 
       - name: Check out catalogue server repository
         uses: actions/checkout@v6
@@ -123,5 +156,5 @@ jobs:
             echo "The catalogue server is already current."
             exit 0
           fi
-          git commit -m "Publish sheet catalogue v${{ steps.import-inputs.outputs.catalogue_version }}"
+          git commit -m "Publish sheet catalogue v${{ steps.built-catalogue.outputs.catalogue_version }}"
           git push origin HEAD:main
