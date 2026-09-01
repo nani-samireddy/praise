@@ -17,7 +17,7 @@ the build worker, and GitHub Pages as the mobile app's static download server.
 | Google Sheets | Editorial rows, review state, draft metadata | Mobile sync state |
 | AppSheet | Editor forms, validation hints, review actions | Final JSON generation |
 | App repository | Build scripts, validators, workflow definitions | Published static hosting |
-| Catalogue repository | `catalog/manifest.json` and `catalog/songs.json` | Secrets or editorial drafts |
+| Catalogue repository | `catalog/manifest.json`, `catalog/songs.json`, and delta files | Secrets or editorial drafts |
 | Mobile app | Local cache, custom songs, favourites, lists | Editorial workflow |
 
 ## Sheet structure
@@ -44,6 +44,66 @@ Future optional columns can include `chord_chart_json`.
 Columns that are not part of the mobile schema must be stripped during the
 catalogue build.
 
+## Google Sheets setup
+
+Create one private Google Sheet for editors. Import the seed file:
+
+```text
+catalog/source/songs.appsheet.csv
+```
+
+Use a private editor tab named `Songs` with exactly these columns:
+
+```text
+source_id
+title
+english_title
+body
+english_body
+author
+male_video_url
+female_video_url
+status
+review_notes
+catalogue_version
+updated_at
+updated_by
+```
+
+Do not publish the `Songs` tab directly. It contains drafts, review notes, and
+editor metadata.
+
+Create a second tab named `PublishedSongs`. This is the only tab that should be
+exposed as CSV to GitHub Actions. It contains only approved/published rows and
+only the fields needed by the mobile catalogue import.
+
+In `PublishedSongs`, set row 1 to:
+
+```text
+source_id,title,english_title,body,english_body,author,male_video_url,female_video_url,status
+```
+
+In `PublishedSongs!A2`, use:
+
+```text
+=FILTER(
+  {Songs!A2:A, Songs!B2:B, Songs!C2:C, Songs!D2:D, Songs!E2:E, Songs!F2:F, Songs!G2:G, Songs!H2:H, Songs!I2:I},
+  (LOWER(Songs!I2:I)="approved") + (LOWER(Songs!I2:I)="published")
+)
+```
+
+Publish only `PublishedSongs` as CSV:
+
+```text
+File → Share → Publish to web → PublishedSongs → Comma-separated values (.csv)
+```
+
+Use that CSV URL as the GitHub Actions variable `SONGS_SHEET_CSV_URL`.
+
+The URL must return raw CSV. It should not be the normal Google Sheets browser
+edit URL. A valid URL usually contains either `output=csv` or comes from
+**Publish to web** as a CSV link.
+
 ## AppSheet app
 
 The AppSheet app should provide:
@@ -62,6 +122,62 @@ triggers a GitHub Actions workflow in the app repository. The workflow is the
 only component that converts sheets into release JSON. If the deploy request
 does not provide a catalogue version, the workflow publishes the next version
 after the checked-in manifest only when approved catalogue content changed.
+
+Recommended AppSheet column behavior:
+
+| Column | AppSheet type | Behavior |
+| --- | --- | --- |
+| `source_id` | Text | Initial value `UNIQUEID()`. Editable only for imported legacy rows if needed. |
+| `title` | LongText/Text | Required. |
+| `english_title` | Text | Optional. |
+| `body` | LongText | Required. Enable multi-line editing. |
+| `english_body` | LongText | Optional. Enable multi-line editing. |
+| `author` | Text | Optional. |
+| `male_video_url` | URL | Optional. |
+| `female_video_url` | URL | Optional. |
+| `status` | Enum | Values: `draft`, `needs_review`, `approved`, `published`. Initial value `draft`. |
+| `review_notes` | LongText | Editor-only. |
+| `catalogue_version` | Number | Read-only for now. |
+| `updated_at` | ChangeTimestamp | AppSheet-maintained. |
+| `updated_by` | Email | Initial value `USEREMAIL()`. |
+
+Recommended AppSheet views:
+
+| View | Filter |
+| --- | --- |
+| Drafts | `status = "draft"` |
+| Needs review | `status = "needs_review"` |
+| Approved | `status = "approved"` |
+| Published | `status = "published"` |
+
+Recommended actions:
+
+| Action | Applies to | Behavior |
+| --- | --- | --- |
+| Submit for review | `Songs` | Set `status` to `needs_review`. |
+| Approve | `Songs` | Set `status` to `approved`. |
+| Send back | `Songs` | Set `status` to `draft` and require `review_notes`. |
+| Mark published | `Songs` | Optional manual action after successful catalogue deploy. |
+
+For the deploy switch, create a small `DeployRequests` tab:
+
+```text
+deploy_id,environment,requested_at,requested_by,notes
+```
+
+Expose `DeployRequests` only to maintainers. Create an action named
+`Deploy catalogue` that adds a row to this table. A Bot should run when a new
+`DeployRequests` row is added and call the Cloudflare deploy webhook.
+
+Recommended `DeployRequests` behavior:
+
+| Column | AppSheet type | Behavior |
+| --- | --- | --- |
+| `deploy_id` | Text | Initial value `UNIQUEID()`. |
+| `environment` | Enum | Default `production`. |
+| `requested_at` | DateTime | Initial value `NOW()`. |
+| `requested_by` | Email | Initial value `USEREMAIL()`. |
+| `notes` | LongText | Optional. |
 
 ## Deploy switch flow
 
@@ -96,7 +212,7 @@ Create a workflow such as `.github/workflows/import-sheet-catalog.yml`.
 
 The workflow should:
 
-1. fetch the `Songs` sheet through a configured HTTPS CSV export endpoint;
+1. fetch the `PublishedSongs` sheet through a configured HTTPS CSV export endpoint;
 2. authenticate with an optional bearer token when the endpoint is protected;
 3. keep only rows with `status = approved` or `status = published`;
 4. map `source_id` through the existing `tool/catalog_id_map.json`;
@@ -137,6 +253,41 @@ This should be the first production test because it verifies sheet import,
 catalogue build, validation, and GitHub Pages publishing without involving
 AppSheet automation.
 
+## GitHub setup checklist
+
+In the app repository, configure:
+
+```text
+Settings → Secrets and variables → Actions
+```
+
+Repository variables:
+
+```text
+CATALOG_REPOSITORY=nani-samireddy/praise-catalog
+SONGS_SHEET_CSV_URL=<PublishedSongs CSV URL>
+```
+
+Repository secrets:
+
+```text
+CATALOG_DEPLOY_KEY=<private deploy key for praise-catalog>
+```
+
+In the catalogue repository `nani-samireddy/praise-catalog`, confirm:
+
+```text
+Settings → Pages → Deploy from a branch → main → /(root)
+Settings → Deploy keys → Praise catalogue publisher → Allow write access
+```
+
+After the first successful run, verify:
+
+```text
+https://nani-samireddy.github.io/praise-catalog/catalog/manifest.json
+https://nani-samireddy.github.io/praise-catalog/catalog/songs.json
+```
+
 ## AppSheet webhook trigger
 
 After the manual workflow is reliable, configure the AppSheet deploy action as
@@ -173,6 +324,33 @@ must be fine-grained, limited to the app repository, and granted
 `Contents: Read and write` because GitHub requires that permission for the
 repository dispatch API. Do not store the GitHub dispatch token or the
 catalogue deploy private key in AppSheet.
+
+The Worker should return:
+
+```json
+{
+  "status": "queued",
+  "eventType": "catalog_deploy"
+}
+```
+
+That means the GitHub workflow was queued. The final publish result is still
+checked in GitHub Actions.
+
+## End-to-end setup order
+
+1. Import `catalog/source/songs.appsheet.csv` into the private `Songs` tab.
+2. Create the `PublishedSongs` tab with the filtered formula.
+3. Publish only `PublishedSongs` as CSV.
+4. Add `SONGS_SHEET_CSV_URL` and `CATALOG_REPOSITORY` as app repo variables.
+5. Add `CATALOG_DEPLOY_KEY` as an app repo secret.
+6. Run **Import catalogue from Google Sheets** manually from GitHub Actions.
+7. Verify the `praise-catalog` Pages URLs.
+8. Configure `APPSHEET_DEPLOY_TOKEN` and `GITHUB_DISPATCH_TOKEN` in Cloudflare.
+9. Deploy the Worker.
+10. Configure the AppSheet deploy Bot to call `/v1/catalog/deploy`.
+11. Press the AppSheet deploy switch and confirm GitHub Actions runs.
+12. Refresh the catalogue on a physical phone.
 
 ## Safety rules
 

@@ -48,6 +48,12 @@ jobs:
       - name: Test release tooling
         run: python -m unittest discover -s test/tool -p "test_*.py"
 
+      - name: Validate AppSheet seed export
+        run: |
+          python tool/import_sheet_catalog.py \
+            --input catalog/source/songs.appsheet.csv \
+            --output /tmp/praise-songs.normalized.csv
+
       - name: Test support API
         run: python -m unittest discover -s support_api/tests -p "test_*.py"
 
