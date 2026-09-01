@@ -28,8 +28,8 @@ Praise uses network access for:
 - Opening shared list links
 - Submitting feedback, problem reports, or song requests
 
-Feedback and song requests may become public GitHub issues. Users should avoid
-including private information in those submissions.
+Feedback and song requests are sent to the Praise support workflow for review.
+Users should avoid including private information in those submissions.
 
 ## Community Catalogue
 

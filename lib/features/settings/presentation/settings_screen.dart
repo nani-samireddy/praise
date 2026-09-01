@@ -358,7 +358,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             'The app connects to the internet to refresh the public song '
             'catalogue, open YouTube practice videos, open shared list links, '
             'and submit feedback or song requests. Feedback submissions may '
-            'become public GitHub issues, so do not include private details.\n\n'
+            'become reviewer-visible support requests, so do not include private details.\n\n'
             'Catalogue songs are community-provided. Praise does not intend to '
             'use anyone\'s work without permission. If your work appears in '
             'the catalogue without consent, report the song and it will be '

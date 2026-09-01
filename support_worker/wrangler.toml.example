@@ -1,0 +1,18 @@
+name = "praise-support"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+# Optional, but recommended for production rate limiting across isolates.
+# Create with:
+#   wrangler kv namespace create PRAISE_SUPPORT_RATE_LIMIT
+#
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT"
+# id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+GITHUB_REPOSITORY = "nani-samireddy/praise"
+RATE_LIMIT_PER_HOUR = "3"
+
+# Set as secrets, never plain vars:
+#   wrangler secret put DISCORD_WEBHOOK_URL

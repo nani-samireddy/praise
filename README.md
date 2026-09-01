@@ -17,7 +17,8 @@ technical boundaries, and the proposed delivery sequence are documented here:
 - [Separate catalogue server setup](docs/CATALOG_SERVER_SETUP.md)
 - [Release process and cycles](docs/RELEASE_PROCESS.md)
 - [Android release signing setup](docs/RELEASE_SIGNING_SETUP.md)
-- [Anonymous GitHub issue relay](support_api/README.md)
+- [Cloudflare Discord support worker](support_worker/README.md)
+- [Legacy GitHub issue relay](support_api/README.md)
 
 ## Planned stack
 
@@ -30,7 +31,7 @@ technical boundaries, and the proposed delivery sequence are documented here:
 
 ## Current state
 
-The offline library seeds all 1,374 normalized songs and supports local search,
+The offline library seeds all 1,375 normalized songs and supports local search,
 favorites, custom-song CRUD, automatic My Songs membership, user-defined list
 management, song ordering, persistent reading preferences, formatted repeat
 cues, text/image/PDF sharing for songs and lists, importable list links,
@@ -41,8 +42,9 @@ automatic English-title transliteration for custom songs, pinch-to-resize lyrics
 five persistent Telugu typeface choices (system plus four bundled Google Fonts
 families). A versioned GitHub Pages catalogue provides manual snapshot
 synchronization without a maintained application server.
-An optional stateless Render relay lets users submit public GitHub song requests
-and reports without a GitHub account, returning a tracking link to the app.
+A stateless Cloudflare Worker lets users submit song requests and reports to a
+Discord review channel without a Discord or GitHub account, returning a
+tracking/reference link to the app.
 
 ## Local data model
 

@@ -1,0 +1,23 @@
+name = "praise-support"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+# Optional KV namespace for shared rate limiting across Worker isolates.
+# Create it with:
+#   npx wrangler kv namespace create PRAISE_SUPPORT_RATE_LIMIT
+#
+# Then uncomment this block and paste the generated namespace id.
+#
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT"
+# id = "replace-with-kv-namespace-id"
+
+[vars]
+GITHUB_REPOSITORY = "nani-samireddy/praise"
+RATE_LIMIT_PER_HOUR = "3"
+
+# Set secrets with:
+#   npx wrangler secret put DISCORD_WEBHOOK_URL
+#
+# Optional:
+#   npx wrangler secret put DISCORD_THREAD_ID

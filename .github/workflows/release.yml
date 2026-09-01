@@ -91,7 +91,7 @@ jobs:
 
       - name: Build signed Android artifacts
         run: |
-          flutter build apk --release
+          flutter build apk --release --target-platform android-arm,android-arm64,android-x64
           cd android
           ./gradlew :app:bundleRelease
 

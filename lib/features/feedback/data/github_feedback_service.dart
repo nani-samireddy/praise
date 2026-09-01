@@ -150,7 +150,7 @@ class ApiGithubFeedbackService implements GithubFeedbackService {
           ? responseData['message'] as String?
           : null;
       throw FeedbackSubmissionException(
-        message ?? 'Could not submit right now. The free support service may be waking up; try again in a minute.',
+        message ?? 'Could not submit right now. Try again in a minute.',
       );
     } on Object {
       throw const FeedbackSubmissionException(

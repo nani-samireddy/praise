@@ -375,13 +375,16 @@ Continue sharing in separable increments:
 All generated presentation files are temporary cache artifacts. Do not store
 them as catalogue data or require a network request to create them.
 
-V1 feedback uses a stateless Render relay rather than requiring users to own a
-GitHub account. Keep request construction and response validation in a testable
-app service. The relay owns GitHub formatting and credentials, validates size
-and required fields, rate-limits submissions, and returns a durable issue URL.
-After success, show the number and copyable link; opening GitHub is optional.
-Repository issue forms mirror song request, song correction, and app problem
-categories for users who start from GitHub directly.
+V1 feedback uses a stateless Cloudflare Worker rather than requiring users to
+own a Discord or GitHub account. Keep request construction and response
+validation in a testable app service. The Worker owns Discord formatting and
+webhook credentials, validates size and required fields, optionally rate-limits
+submissions with Cloudflare KV, and returns a durable tracking/reference URL.
+After success, show the number and copyable link.
+
+The legacy Render/GitHub issue relay remains available as a fallback, but the
+Worker is the preferred production path because it avoids free Render cold-start
+latency and puts reviewer triage directly in Discord.
 
 If cloud collaboration is approved later, start with explicit ownership and
 conflict-resolution requirements rather than evolving the offline package into

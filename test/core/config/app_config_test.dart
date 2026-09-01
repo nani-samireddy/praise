@@ -10,7 +10,7 @@ void main() {
     expect(AppConfig.isCatalogueSyncConfigured, isTrue);
     expect(
       AppConfig.feedbackApiUrl,
-      'https://praise-support-api.onrender.com/v1/issues',
+      'https://praise-support.nanisamireddy.workers.dev/v1/issues',
     );
     expect(AppConfig.isFeedbackConfigured, isTrue);
   });

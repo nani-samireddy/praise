@@ -101,7 +101,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Submit'));
     await _pumpFrames(tester);
     expect(feedbackService.reportedSong, song);
-    expect(find.text('Issue #77 created'), findsOneWidget);
+    expect(find.text('Request #77 created'), findsOneWidget);
   });
 }
 
@@ -140,7 +140,7 @@ class _FakeGithubFeedbackService implements GithubFeedbackService {
 
   static final _receipt = GithubIssueReceipt(
     number: 77,
-    url: Uri.parse('https://github.com/example/issues/77'),
+    url: Uri.parse('https://discord.com/channels/1/2/77'),
   );
 }
 

@@ -8,7 +8,7 @@ abstract final class AppConfig {
   );
 
   static const productionFeedbackApiUrl =
-      'https://praise-support-api.onrender.com/v1/issues';
+      'https://praise-support.nanisamireddy.workers.dev/v1/issues';
 
   static const feedbackApiUrl = String.fromEnvironment(
     'FEEDBACK_API_URL',

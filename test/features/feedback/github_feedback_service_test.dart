@@ -38,7 +38,7 @@ void main() {
       'notes': null,
     });
     expect(receipt.number, 42);
-    expect(receipt.url.toString(), 'https://github.com/example/issues/42');
+    expect(receipt.url.toString(), 'https://discord.com/channels/1/2/42');
   });
 
   test('includes the catalogue identity in a song correction', () async {
@@ -84,7 +84,7 @@ class _FakeHttpClientAdapter implements HttpClientAdapter {
   ) async {
     lastData = (options.data as Map).cast<String, Object?>();
     return ResponseBody.fromString(
-      jsonEncode({'number': 42, 'url': 'https://github.com/example/issues/42'}),
+      jsonEncode({'number': 42, 'url': 'https://discord.com/channels/1/2/42'}),
       201,
       headers: {
         Headers.contentTypeHeader: [Headers.jsonContentType],

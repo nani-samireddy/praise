@@ -147,7 +147,7 @@ class _FeedbackFormSheetState extends State<_FeedbackFormSheet> {
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Submitting creates a public GitHub issue through the '
+                        'Submitting creates a support request through the '
                         'Praise support service. Do not include private information.',
                       ),
                     ),
@@ -256,7 +256,7 @@ Future<void> _showReceipt(
     context: context,
     builder: (dialogContext) => AlertDialog(
       icon: const Icon(Icons.check_circle_outline),
-      title: Text('Issue #${receipt.number} created'),
+      title: Text('Request #${receipt.number} created'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,9 +277,9 @@ Future<void> _showReceipt(
               ClipboardData(text: receipt.url.toString()),
             );
             if (!dialogContext.mounted) return;
-            ScaffoldMessenger.of(
-              dialogContext,
-            ).showSnackBar(const SnackBar(content: Text('Issue link copied.')));
+            ScaffoldMessenger.of(dialogContext).showSnackBar(
+              const SnackBar(content: Text('Support link copied.')),
+            );
           },
           icon: const Icon(Icons.copy_outlined),
           label: const Text('Copy link'),
@@ -291,12 +291,14 @@ Future<void> _showReceipt(
             } catch (_) {
               if (!dialogContext.mounted) return;
               ScaffoldMessenger.of(dialogContext).showSnackBar(
-                const SnackBar(content: Text('Could not open the issue link.')),
+                const SnackBar(
+                  content: Text('Could not open the support link.'),
+                ),
               );
             }
           },
           icon: const Icon(Icons.open_in_new),
-          label: const Text('Open issue'),
+          label: const Text('Open link'),
         ),
       ],
     ),

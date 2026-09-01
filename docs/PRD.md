@@ -108,8 +108,8 @@ The song reader shall:
 - display optional male and female YouTube practice videos inline when the
   catalogue or custom song provides them;
 - allow a server song correction to be submitted in the app; the resulting
-  public GitHub issue shall include its title and catalogue ID and return a
-  tracking link;
+  support request shall include its title and catalogue ID and return a
+  tracking/reference link;
 - allow custom songs to be edited or deleted;
 - use the configured lyrics font size and Telugu typeface;
 - visually separate structural labels and repeat cues from the lyric line that
@@ -213,13 +213,14 @@ V1 settings shall include:
 - theme preference: system, light, or dark;
 - latest successful catalogue sync time; and
 - a manual catalogue refresh action;
-- an in-app song-request form that returns a GitHub issue tracking link; and
-- an in-app problem-report form that returns a GitHub issue tracking link.
+- an in-app song-request form that returns a support tracking/reference link; and
+- an in-app problem-report form that returns a support tracking/reference link.
 
-Submission is explicit: Praise shows that the content will become public,
-creates the issue through the Praise support service only after the user taps
-Submit, and displays its issue number and copyable GitHub link. The user does
-not need a GitHub account, and the app never contains GitHub credentials.
+Submission is explicit: Praise shows that the request is sent to the Praise
+support workflow, creates the request only after the user taps Submit, and
+displays its reference number and copyable tracking link. The user does not
+need a GitHub or Discord account, and the app never contains service
+credentials.
 
 ## 7. Navigation
 
