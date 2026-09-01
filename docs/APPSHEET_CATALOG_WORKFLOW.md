@@ -56,12 +56,12 @@ The AppSheet app should provide:
 - an approval action that changes `status` to `approved`; and
 - a deploy switch exposed only to maintainers.
 
-The deploy switch should not directly edit GitHub Pages. It should trigger a
-GitHub Actions workflow in the app repository with a maintainer-scoped token.
-The workflow is the only component that converts sheets into release JSON. If
-the deploy request does not provide a catalogue version, the workflow publishes
-the next version after the checked-in manifest only when approved catalogue
-content changed.
+The deploy switch should not directly edit GitHub Pages. It should call the
+Cloudflare support worker, which authenticates the AppSheet request and then
+triggers a GitHub Actions workflow in the app repository. The workflow is the
+only component that converts sheets into release JSON. If the deploy request
+does not provide a catalogue version, the workflow publishes the next version
+after the checked-in manifest only when approved catalogue content changed.
 
 ## Deploy switch flow
 
@@ -70,6 +70,7 @@ sequenceDiagram
     actor Editor
     participant AppSheet
     participant Sheets as Google Sheets
+    participant Worker as Cloudflare Worker
     participant Actions as GitHub Actions
     participant AppRepo as Praise app repo
     participant CatRepo as praise-catalog repo
@@ -78,7 +79,8 @@ sequenceDiagram
     Editor->>AppSheet: Review and approve songs
     AppSheet->>Sheets: Save approved rows
     Editor->>AppSheet: Turn on Deploy
-    AppSheet->>Actions: repository_dispatch or workflow_dispatch
+    AppSheet->>Worker: POST /v1/catalog/deploy
+    Worker->>Actions: repository_dispatch catalog_deploy
     Actions->>Sheets: Read approved rows
     Actions->>AppRepo: Normalize and validate catalogue
     Actions->>AppRepo: Build manifest and songs JSON
@@ -117,6 +119,13 @@ Secrets required in the app repository:
 | `CATALOG_DEPLOY_KEY` | Actions secret | Existing private deploy key for the catalogue repository. |
 | `SHEET_EXPORT_TOKEN` | Actions secret | Optional bearer token for a protected CSV export endpoint. |
 
+Secrets required in the Cloudflare Worker:
+
+| Name | Purpose |
+| --- | --- |
+| `APPSHEET_DEPLOY_TOKEN` | Shared secret AppSheet sends to the Worker deploy endpoint. |
+| `GITHUB_DISPATCH_TOKEN` | Fine-grained GitHub token for only the app repository with `Contents: Read and write`, used by the Worker to call repository dispatch. |
+
 ## Manual workflow trigger
 
 Run **Import catalogue from Google Sheets** from GitHub Actions with:
@@ -131,18 +140,16 @@ AppSheet automation.
 ## AppSheet webhook trigger
 
 After the manual workflow is reliable, configure the AppSheet deploy action as
-an automation webhook that calls GitHub's repository dispatch endpoint:
+an automation webhook that calls the Cloudflare Worker:
 
 ```text
-POST https://api.github.com/repos/nani-samireddy/praise/dispatches
+POST https://praise-support.nanisamireddy05.workers.dev/v1/catalog/deploy
 ```
 
 Headers:
 
 ```text
-Accept: application/vnd.github+json
-Authorization: Bearer YOUR_FINE_GRAINED_GITHUB_TOKEN
-X-GitHub-Api-Version: 2026-03-10
+Authorization: Bearer YOUR_APPSHEET_DEPLOY_TOKEN
 Content-Type: application/json
 ```
 
@@ -150,10 +157,7 @@ Body:
 
 ```json
 {
-  "event_type": "catalog_deploy",
-  "client_payload": {
-    "source": "appsheet"
-  }
+  "source": "appsheet"
 }
 ```
 
@@ -163,9 +167,12 @@ If a maintainer wants to force a specific version, include
 `catalogue_version`; normal AppSheet deploys should omit it and let GitHub
 Actions choose the correct version.
 
-The GitHub token used by AppSheet should be fine-grained and limited to the app
-repository. It needs permission to call repository dispatch for Actions. Do not
-store the catalogue deploy private key in AppSheet.
+Store `APPSHEET_DEPLOY_TOKEN` in the Cloudflare Worker and in AppSheet only.
+Store `GITHUB_DISPATCH_TOKEN` only in the Cloudflare Worker. The GitHub token
+must be fine-grained, limited to the app repository, and granted
+`Contents: Read and write` because GitHub requires that permission for the
+repository dispatch API. Do not store the GitHub dispatch token or the
+catalogue deploy private key in AppSheet.
 
 ## Safety rules
 

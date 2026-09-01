@@ -98,4 +98,93 @@ describe('Praise support worker', () => {
 
     assert.equal(response.status, 429);
   });
+
+  it('rejects catalogue deploy without the AppSheet token', async () => {
+    const request = new Request('https://support.example.test/v1/catalog/deploy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source: 'appsheet' }),
+    });
+
+    const response = await handleRequest(request, {
+      APPSHEET_DEPLOY_TOKEN: 'deploy-secret',
+      GITHUB_REPOSITORY: 'nani-samireddy/praise',
+      GITHUB_DISPATCH_TOKEN: 'github-secret',
+    });
+
+    assert.equal(response.status, 401);
+  });
+
+  it('queues a catalogue deploy through GitHub repository dispatch', async () => {
+    const calls = [];
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+      calls.push({ url: String(url), init });
+      return new Response(null, { status: 204 });
+    };
+
+    try {
+      const request = new Request('https://support.example.test/v1/catalog/deploy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer deploy-secret',
+        },
+        body: JSON.stringify({
+          source: 'appsheet',
+          catalogue_version: '12',
+          sheet_csv_url: 'https://docs.google.com/spreadsheets/d/example/export?format=csv',
+        }),
+      });
+
+      const response = await handleRequest(request, {
+        APPSHEET_DEPLOY_TOKEN: 'deploy-secret',
+        GITHUB_REPOSITORY: 'nani-samireddy/praise',
+        GITHUB_DISPATCH_TOKEN: 'github-secret',
+      });
+
+      assert.equal(response.status, 202);
+      assert.deepEqual(await response.json(), {
+        status: 'queued',
+        eventType: 'catalog_deploy',
+      });
+      assert.equal(
+        calls[0].url,
+        'https://api.github.com/repos/nani-samireddy/praise/dispatches',
+      );
+      assert.equal(calls[0].init.headers.Authorization, 'Bearer github-secret');
+      assert.deepEqual(JSON.parse(calls[0].init.body), {
+        event_type: 'catalog_deploy',
+        client_payload: {
+          source: 'appsheet',
+          catalogue_version: '12',
+          sheet_csv_url: 'https://docs.google.com/spreadsheets/d/example/export?format=csv',
+        },
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('rejects non-HTTPS sheet URLs in catalogue deploy requests', async () => {
+    const request = new Request('https://support.example.test/v1/catalog/deploy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Praise-Deploy-Token': 'deploy-secret',
+      },
+      body: JSON.stringify({ sheet_csv_url: 'http://example.test/songs.csv' }),
+    });
+
+    const response = await handleRequest(request, {
+      APPSHEET_DEPLOY_TOKEN: 'deploy-secret',
+      GITHUB_REPOSITORY: 'nani-samireddy/praise',
+      GITHUB_DISPATCH_TOKEN: 'github-secret',
+    });
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      message: 'sheet_csv_url must use HTTPS.',
+    });
+  });
 });

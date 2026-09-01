@@ -5,7 +5,7 @@ const RATE_LIMIT_TTL_SECONDS = 3600;
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Authorization,Content-Type,X-Praise-Deploy-Token',
   'Access-Control-Max-Age': '86400',
 };
 
@@ -26,10 +26,18 @@ export async function handleRequest(request, env = {}) {
     return jsonResponse({ status: 'ok' });
   }
 
-  if (request.method !== 'POST' || url.pathname !== '/v1/issues') {
-    return jsonResponse({ message: 'Not found.' }, 404);
+  if (request.method === 'POST' && url.pathname === '/v1/issues') {
+    return handleSupportSubmission(request, env);
   }
 
+  if (request.method === 'POST' && url.pathname === '/v1/catalog/deploy') {
+    return handleCatalogDeploy(request, env);
+  }
+
+  return jsonResponse({ message: 'Not found.' }, 404);
+}
+
+async function handleSupportSubmission(request, env) {
   try {
     await enforceRateLimit(request, env);
     const payload = await readJsonPayload(request);
@@ -45,6 +53,55 @@ export async function handleRequest(request, env = {}) {
     }
     return jsonResponse({ message: 'Could not submit right now. Try again later.' }, 500);
   }
+}
+
+async function handleCatalogDeploy(request, env) {
+  try {
+    assertDeployAuthorization(request, env);
+    const payload = await readOptionalJsonPayload(request);
+    const dispatch = buildCatalogDeployDispatch(payload);
+    await triggerGitHubRepositoryDispatch(dispatch, env);
+    return jsonResponse(
+      {
+        status: 'queued',
+        eventType: dispatch.event_type,
+      },
+      202,
+    );
+  } catch (error) {
+    if (error instanceof SubmissionError) {
+      return jsonResponse({ message: error.message }, error.status);
+    }
+    return jsonResponse(
+      { message: 'Could not queue the catalogue deploy workflow.' },
+      500,
+    );
+  }
+}
+
+function buildCatalogDeployDispatch(payload = {}) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new SubmissionError('The request body must be a JSON object.');
+  }
+
+  const catalogueVersion = optional(payload, 'catalogue_version', 20);
+  if (catalogueVersion && !/^[1-9]\d*$/.test(catalogueVersion)) {
+    throw new SubmissionError('catalogue_version must be a positive integer.');
+  }
+
+  const sheetCsvUrl = optional(payload, 'sheet_csv_url', 2048);
+  if (sheetCsvUrl && !sheetCsvUrl.startsWith('https://')) {
+    throw new SubmissionError('sheet_csv_url must use HTTPS.');
+  }
+
+  return {
+    event_type: 'catalog_deploy',
+    client_payload: {
+      source: optional(payload, 'source', 80) || 'appsheet',
+      ...(catalogueVersion ? { catalogue_version: catalogueVersion } : {}),
+      ...(sheetCsvUrl ? { sheet_csv_url: sheetCsvUrl } : {}),
+    },
+  };
 }
 
 export class SubmissionError extends Error {
@@ -137,6 +194,25 @@ async function readJsonPayload(request) {
   }
 }
 
+async function readOptionalJsonPayload(request) {
+  const contentLength = Number(request.headers.get('Content-Length') || '0');
+  if (contentLength > MAX_REQUEST_BYTES) {
+    throw new SubmissionError('The request is too large.');
+  }
+
+  const text = await request.text();
+  if (!text.trim()) return {};
+  if (text.length > MAX_REQUEST_BYTES) {
+    throw new SubmissionError('The request is too large.');
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new SubmissionError('Invalid JSON.');
+  }
+}
+
 async function enforceRateLimit(request, env) {
   const limit = Number(env.RATE_LIMIT_PER_HOUR || DEFAULT_RATE_LIMIT_PER_HOUR);
   if (!Number.isFinite(limit) || limit <= 0) return;
@@ -189,6 +265,51 @@ async function postDiscordSubmission(submission, env) {
         ? `https://discord.com/channels/${guildId}/${channelId}/${messageId}`
         : null,
   };
+}
+
+function assertDeployAuthorization(request, env) {
+  const expected = textValue(env.APPSHEET_DEPLOY_TOKEN);
+  if (!expected) {
+    throw new SubmissionError('The catalogue deploy service is not configured.', 503);
+  }
+
+  const authorization = request.headers.get('Authorization') || '';
+  const bearerPrefix = 'Bearer ';
+  const bearerToken = authorization.startsWith(bearerPrefix)
+    ? authorization.slice(bearerPrefix.length).trim()
+    : null;
+  const headerToken = request.headers.get('X-Praise-Deploy-Token');
+  const provided = bearerToken || headerToken;
+  if (provided !== expected) {
+    throw new SubmissionError('Unauthorized.', 401);
+  }
+}
+
+async function triggerGitHubRepositoryDispatch(dispatch, env) {
+  const repository = textValue(env.GITHUB_REPOSITORY);
+  const token = textValue(env.GITHUB_DISPATCH_TOKEN);
+  if (!repository || !token) {
+    throw new SubmissionError('The catalogue deploy service is not configured.', 503);
+  }
+
+  const response = await fetch(`https://api.github.com/repos/${repository}/dispatches`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'praise-support-worker',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify(dispatch),
+  });
+
+  if (response.status !== 204) {
+    if (response.status === 401 || response.status === 403) {
+      throw new SubmissionError('GitHub rejected the catalogue deploy token.', 502);
+    }
+    throw new SubmissionError('Could not queue the catalogue deploy workflow.', 502);
+  }
 }
 
 function discordPayload(submission) {

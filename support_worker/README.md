@@ -22,6 +22,7 @@ The app treats the returned URL as the user's tracking/reference link.
   - `song_request`
   - `song_correction`
   - `problem_report`
+- `POST /v1/catalog/deploy` queues the Google Sheets catalogue import workflow.
 
 ## Deploy from GitHub Actions
 
@@ -39,6 +40,8 @@ Then add the Discord webhook URL as a Cloudflare Worker secret:
 ```powershell
 cd support_worker
 npx wrangler secret put DISCORD_WEBHOOK_URL
+npx wrangler secret put APPSHEET_DEPLOY_TOKEN
+npx wrangler secret put GITHUB_DISPATCH_TOKEN
 ```
 
 If you want a separate deployment branch, change the workflow trigger from:
@@ -64,6 +67,8 @@ cd support_worker
 npm install
 npx wrangler login
 npx wrangler secret put DISCORD_WEBHOOK_URL
+npx wrangler secret put APPSHEET_DEPLOY_TOKEN
+npx wrangler secret put GITHUB_DISPATCH_TOKEN
 npx wrangler deploy
 ```
 
@@ -93,6 +98,47 @@ id = "..."
 Invoke-WebRequest https://YOUR_WORKER_URL/health
 ```
 
+## AppSheet deploy webhook
+
+Create a random deploy token and store the same value in AppSheet and the
+Worker secret `APPSHEET_DEPLOY_TOKEN`.
+
+Create a fine-grained GitHub token for only the app repository with
+`Contents: Read and write` permission. GitHub requires that permission for the
+repository dispatch API. Store the token only as the Worker secret
+`GITHUB_DISPATCH_TOKEN`.
+
+Configure AppSheet to call:
+
+```text
+POST https://praise-support.nanisamireddy05.workers.dev/v1/catalog/deploy
+```
+
+Headers:
+
+```text
+Authorization: Bearer YOUR_APPSHEET_DEPLOY_TOKEN
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "source": "appsheet"
+}
+```
+
+Optional body fields:
+
+```json
+{
+  "source": "appsheet",
+  "catalogue_version": "12",
+  "sheet_csv_url": "https://docs.google.com/spreadsheets/d/.../export?format=csv"
+}
+```
+
 ## App configuration
 
 The app default is configured in:
@@ -110,6 +156,5 @@ flutter build appbundle --release `
 
 ## Next step
 
-This worker is intentionally only the intake layer. Discord review buttons,
-Google Sheets writes, AI formatting, and GitHub catalogue deployment should be
-added after the basic intake path is stable.
+This worker is intentionally only the intake and deploy-trigger layer. Discord
+review buttons, Google Sheets writes, and AI formatting can be added later.

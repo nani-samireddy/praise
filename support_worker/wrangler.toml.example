@@ -16,3 +16,5 @@ RATE_LIMIT_PER_HOUR = "3"
 
 # Set as secrets, never plain vars:
 #   wrangler secret put DISCORD_WEBHOOK_URL
+#   wrangler secret put APPSHEET_DEPLOY_TOKEN
+#   wrangler secret put GITHUB_DISPATCH_TOKEN
