@@ -88,8 +88,11 @@ version.
 ## 4. Branch and commit policy
 
 - `main` is always expected to build and remain releasable.
-- Use short-lived branches for changes that require review.
+- Use short-lived branches for every app-code and release-prep change.
 - Rebase or merge only after automated checks pass.
+- Open feature, bugfix, hotfix, and release-prep PRs back to `main`.
+- Do not push release-prep commits directly to `main` unless resolving an
+  urgent production incident and PR review is impossible.
 - Keep catalogue generation and application behavior changes in separate
   commits when practical.
 - Do not commit keystores, passwords, private keys, Play credentials, or local
@@ -104,8 +107,9 @@ version.
 ### Branching and release workflow
 
 Use `main` as the only long-lived app branch. All normal app code changes branch
-from `main` and open PRs back to `main`. Release tags are created from `main`
-after the relevant staged version is committed.
+from `main` and open PRs back to `main`. Release-prep commits also use short
+`release/*` branches and PRs back to `main`. Release tags are created from
+`main` only after the release-prep PR is merged.
 
 Catalogue-only updates do not use app feature branches. They flow through
 AppSheet and the catalogue import workflow.
@@ -127,26 +131,38 @@ flowchart TD
     Main -->|checkout from current production tag if main moved too far<br/>otherwise checkout from main| Hotfix["hotfix/v1.0.1"]
     Hotfix -->|PR target: main after production fix is verified| HotfixPR["PR: hotfix/v1.0.1 → main"]
 
-    MergeFeature --> InternalCommit["on main: set pubspec<br/>1.1.0-internal.1+BUILD"]
-    MergeBugfix --> InternalCommit
-    Hotfix --> HotfixInternal["on hotfix/main: set pubspec<br/>1.0.1-internal.1+BUILD"]
+    MergeFeature --> ReleaseBranch["checkout from main<br/>release/1.1.0-internal.1"]
+    MergeBugfix --> ReleaseBranch
+    ReleaseBranch --> ReleasePrepPR["PR: release/1.1.0-internal.1 → main<br/>pubspec version bump + release notes"]
+    ReleasePrepPR --> CI
+    CI -->|pass + review| ReleasePrepMerge["merge release-prep PR into main"]
 
-    InternalCommit --> InternalTag["tag from main<br/>app-v1.1.0-internal.1"]
-    HotfixInternal --> HotfixTag["tag from hotfix branch or merged main<br/>app-v1.0.1-internal.1"]
-    InternalTag --> ReleaseWorkflow["release.yml<br/>signed APK/AAB + draft GitHub release"]
+    Hotfix --> HotfixInternal["release-prep on hotfix branch or main<br/>1.0.1-internal.1+BUILD"]
+    HotfixInternal --> HotfixPR["PR: hotfix/v1.0.1 → main"]
+    HotfixPR --> CI
+
+    ReleasePrepMerge --> InternalTag["tag from main only<br/>app-v1.1.0-internal.1"]
+    HotfixPR --> HotfixTag["tag from merged main only<br/>app-v1.0.1-internal.1"]
+    InternalTag --> ReleaseWorkflow["release.yml<br/>requires tag commit on main<br/>signed APK/AAB + draft GitHub release"]
     HotfixTag --> ReleaseWorkflow
 
     ReleaseWorkflow --> InternalTest["internal test"]
     InternalTest -->|fix required| FixBranch["checkout bugfix/* from main"]
     FixBranch --> BugfixPR
-    InternalTest -->|ready| BetaCommit["on main: set pubspec<br/>1.1.0-beta.1+BUILD"]
-    BetaCommit --> BetaTag["tag from main<br/>app-v1.1.0-beta.1"]
+    InternalTest -->|ready| BetaBranch["checkout from main<br/>release/1.1.0-beta.1"]
+    BetaBranch --> BetaPR["PR: release/1.1.0-beta.1 → main"]
+    BetaPR --> CI
+    BetaPR --> BetaMerge["merge to main"]
+    BetaMerge --> BetaTag["tag from main only<br/>app-v1.1.0-beta.1"]
     BetaTag --> ReleaseWorkflow
 
     ReleaseWorkflow --> BetaTest["beta test"]
     BetaTest -->|fix required| FixBranch
-    BetaTest -->|approved| StableCommit["on main: set pubspec<br/>1.1.0+BUILD"]
-    StableCommit --> StableTag["tag from main<br/>app-v1.1.0"]
+    BetaTest -->|approved| StableBranch["checkout from main<br/>release/1.1.0"]
+    StableBranch --> StablePR["PR: release/1.1.0 → main"]
+    StablePR --> CI
+    StablePR --> StableMerge["merge to main"]
+    StableMerge --> StableTag["tag from main only<br/>app-v1.1.0"]
     StableTag --> ReleaseWorkflow
     ReleaseWorkflow --> PlayProduction["manual Play production submission"]
 
@@ -278,21 +294,37 @@ Do not include feature cleanup, refactors, or catalogue-only changes.
 
 #### Internal, beta, and stable tags
 
-Tags are created only after the version is committed.
+Version changes are made in release-prep branches. Open a PR to `main`, merge it
+after CI passes, then tag from the updated `main`. The release workflow rejects
+tags that do not point to commits already on `main`.
 
 Internal build:
 
 ```powershell
 git checkout main
 git pull
+git checkout -b release/1.1.0-internal.1
 
 # edit pubspec.yaml
 # version: 1.1.0-internal.1+10
 
 git add pubspec.yaml
 git commit -m "Prepare internal release 1.1.0-internal.1"
+git push -u origin release/1.1.0-internal.1
+```
+
+Open PR:
+
+```text
+release/1.1.0-internal.1 → main
+```
+
+After the PR is merged:
+
+```powershell
+git checkout main
+git pull
 git tag app-v1.1.0-internal.1
-git push origin main
 git push origin app-v1.1.0-internal.1
 ```
 
@@ -301,14 +333,28 @@ Beta build:
 ```powershell
 git checkout main
 git pull
+git checkout -b release/1.1.0-beta.1
 
 # edit pubspec.yaml
 # version: 1.1.0-beta.1+11
 
 git add pubspec.yaml
 git commit -m "Prepare beta release 1.1.0-beta.1"
+git push -u origin release/1.1.0-beta.1
+```
+
+Open PR:
+
+```text
+release/1.1.0-beta.1 → main
+```
+
+After the PR is merged:
+
+```powershell
+git checkout main
+git pull
 git tag app-v1.1.0-beta.1
-git push origin main
 git push origin app-v1.1.0-beta.1
 ```
 
@@ -317,14 +363,28 @@ Stable build:
 ```powershell
 git checkout main
 git pull
+git checkout -b release/1.1.0
 
 # edit pubspec.yaml
 # version: 1.1.0+12
 
 git add pubspec.yaml
 git commit -m "Prepare stable release 1.1.0"
+git push -u origin release/1.1.0
+```
+
+Open PR:
+
+```text
+release/1.1.0 → main
+```
+
+After the PR is merged:
+
+```powershell
+git checkout main
+git pull
 git tag app-v1.1.0
-git push origin main
 git push origin app-v1.1.0
 ```
 
