@@ -60,11 +60,14 @@ critical privacy/security problems, or a release-blocking content issue.
 
 ## 3. Versioning
 
-Application versions use Flutter's `MAJOR.MINOR.PATCH+BUILD` format in
+Application versions use Flutter's `MAJOR.MINOR.PATCH+BUILD` format for stable
+builds and `MAJOR.MINOR.PATCH-STAGE.N+BUILD` for internal/beta builds in
 `pubspec.yaml`:
 
 ```yaml
 version: 1.0.0+1
+version: 1.0.0-internal.1+2
+version: 1.0.0-beta.1+3
 ```
 
 - `MAJOR`: incompatible product or data-contract change.
@@ -73,10 +76,9 @@ version: 1.0.0+1
 - `BUILD`: monotonically increasing positive integer used as Android
   `versionCode`.
 
-Every uploaded Android build receives a build number higher than all previous
-uploads, including rejected and internal-test builds. The visible version may
-remain unchanged between release candidates, but the build number must still
-increase.
+Supported application stages are `internal`, `beta`, and stable. Every uploaded
+Android build receives a build number higher than all previous uploads,
+including rejected and internal-test builds.
 
 The catalogue uses its own monotonically increasing integer
 `catalogVersion`. Never lower or reuse a published catalogue version. To undo a
@@ -92,10 +94,12 @@ version.
   commits when practical.
 - Do not commit keystores, passwords, private keys, Play credentials, or local
   `key.properties` files.
-- Tag immutable application releases as `vMAJOR.MINOR.PATCH`, for example
-  `v1.0.0`.
-- Tag release candidates as `vMAJOR.MINOR.PATCH-rc.N` only when a downloadable
-  candidate must be retained.
+- Tag internal application builds as `app-vMAJOR.MINOR.PATCH-internal.N`, for
+  example `app-v1.0.0-internal.1`.
+- Tag beta application builds as `app-vMAJOR.MINOR.PATCH-beta.N`, for example
+  `app-v1.0.0-beta.1`.
+- Tag stable application releases as `app-vMAJOR.MINOR.PATCH`, for example
+  `app-v1.0.0`.
 
 ## 5. Standard application release cycle
 
@@ -113,9 +117,9 @@ version.
 3. Keep `main` green and avoid long-lived release branches.
 4. Run catalogue validation whenever generated data changes.
 
-### Stage C — Freeze a release candidate
+### Stage C — Freeze the next staged build
 
-1. Stop adding features to the candidate.
+1. Stop adding features to the staged build.
 2. Update `pubspec.yaml` version and build number.
 3. Update release notes and catalogue version references.
 4. Build a signed release AAB and a signed tester APK from the same commit.
@@ -153,14 +157,14 @@ Run the physical-device gate on the Pixel:
 - removal or recovery of interrupted catalogue downloads; and
 - confirmation that no custom songs or local lists are changed by refresh.
 
-### Stage E — Distribute candidate
+### Stage E — Distribute internal or beta build
 
 1. Upload the AAB to the Google Play internal-test track.
 2. Install the tester build through Play, not only through ADB.
-3. Allow at least 24 hours for normal V1 candidates unless the change is an
+3. Allow at least 24 hours for normal V1 beta builds unless the change is an
    urgent hotfix.
-4. Record discovered problems against the candidate build number.
-5. Produce a new candidate build for every correction.
+4. Record discovered problems against the exact stage and build number.
+5. Produce a new internal or beta build for every correction.
 
 Google Play account-specific testing requirements must be treated as a release
 gate when shown in Play Console.
@@ -169,7 +173,7 @@ gate when shown in Play Console.
 
 1. Confirm the exact commit, version, build number, signing certificate, and
    release notes.
-2. Create and push the final `vMAJOR.MINOR.PATCH` tag.
+2. Create and push the final `app-vMAJOR.MINOR.PATCH` tag.
 3. Create a GitHub release containing release notes, checksums, and the signed
    tester APK when direct distribution is intended.
 4. Publish the AAB to production.
@@ -267,9 +271,9 @@ The first public release cannot proceed until all are complete:
 - [x] Release AAB and APK signed and verified.
 - [ ] Thirty repeat-marker review items resolved or explicitly accepted.
 - [ ] Lyrics publication rights and attribution decision recorded.
-- [ ] Full Pixel release-candidate checklist passed.
+- [ ] Full Pixel beta/stable checklist passed.
 - [ ] Store listing, privacy statement, screenshots, and release notes ready.
-- [ ] GitHub `v1.0.0` release and Play production submission completed.
+- [ ] GitHub `app-v1.0.0` release and Play production submission completed.
 
 ## 10. Decision ownership
 

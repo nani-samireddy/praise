@@ -8,9 +8,11 @@ import re
 from pathlib import Path
 
 
-SEMANTIC_TAG = re.compile(r"v(?P<version>\d+\.\d+\.\d+)")
+SEMANTIC_TAG = re.compile(
+    r"app-v(?P<version>\d+\.\d+\.\d+(?:-(?:internal|beta)\.\d+)?)"
+)
 PUBSPEC_VERSION = re.compile(
-    r"^version:\s*(?P<version>\d+\.\d+\.\d+)\+(?P<build>\d+)\s*$",
+    r"^version:\s*(?P<version>\d+\.\d+\.\d+(?:-(?:internal|beta)\.\d+)?)\+(?P<build>\d+)\s*$",
     re.MULTILINE,
 )
 
@@ -19,12 +21,16 @@ def verify(tag: str, pubspec_text: str) -> tuple[str, int]:
     tag_match = SEMANTIC_TAG.fullmatch(tag)
     if tag_match is None:
         raise ValueError(
-            f"Release tag {tag!r} must use the exact format vMAJOR.MINOR.PATCH."
+            f"Release tag {tag!r} must use app-vMAJOR.MINOR.PATCH, "
+            "app-vMAJOR.MINOR.PATCH-internal.N, or app-vMAJOR.MINOR.PATCH-beta.N."
         )
 
     version_match = PUBSPEC_VERSION.search(pubspec_text)
     if version_match is None:
-        raise ValueError("pubspec.yaml must contain version: MAJOR.MINOR.PATCH+BUILD.")
+        raise ValueError(
+            "pubspec.yaml must contain version: MAJOR.MINOR.PATCH+BUILD, "
+            "MAJOR.MINOR.PATCH-internal.N+BUILD, or MAJOR.MINOR.PATCH-beta.N+BUILD."
+        )
 
     tag_version = tag_match.group("version")
     app_version = version_match.group("version")
