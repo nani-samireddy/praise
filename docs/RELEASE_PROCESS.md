@@ -103,57 +103,255 @@ version.
 
 ### Branching and release workflow
 
-Use short-lived branches for app code and let catalogue-only updates flow
-through the AppSheet/GitHub Actions catalogue pipeline.
+Use `main` as the only long-lived app branch. All normal app code changes branch
+from `main` and open PRs back to `main`. Release tags are created from `main`
+after the relevant staged version is committed.
+
+Catalogue-only updates do not use app feature branches. They flow through
+AppSheet and the catalogue import workflow.
 
 ```mermaid
 flowchart TD
-    Main["main<br/>always releasable"] --> Feature["feature/youtube-player<br/>new feature"]
-    Main --> Bugfix["bugfix/list-create-crash<br/>non-urgent bug"]
-    Main --> Hotfix["hotfix/v1.0.1<br/>production blocker only"]
+    Main["main<br/>long-lived releasable branch"]
 
-    Feature --> FeatureChecks["local checks<br/>flutter analyze + flutter test"]
-    Bugfix --> BugfixChecks["local checks<br/>targeted test + regression"]
-    Hotfix --> HotfixChecks["smallest safe fix<br/>full gate + focused device test"]
+    Main -->|checkout from main| Feature["feature/youtube-player"]
+    Feature -->|PR target: main| FeaturePR["PR: feature/youtube-player → main"]
+    FeaturePR --> CI["GitHub CI"]
+    CI -->|pass + review| MergeFeature["merge into main"]
 
-    FeatureChecks --> PR["pull request"]
-    BugfixChecks --> PR
-    PR --> CI["GitHub CI"]
-    CI --> Merge["merge to main"]
-    HotfixChecks --> Merge
+    Main -->|checkout from main| Bugfix["bugfix/list-create-crash"]
+    Bugfix -->|PR target: main| BugfixPR["PR: bugfix/list-create-crash → main"]
+    BugfixPR --> CI
+    CI -->|pass + review| MergeBugfix["merge into main"]
 
-    Merge --> InternalVersion["set pubspec<br/>1.1.0-internal.1+BUILD"]
-    InternalVersion --> InternalTag["tag app-v1.1.0-internal.1"]
+    Main -->|checkout from current production tag if main moved too far<br/>otherwise checkout from main| Hotfix["hotfix/v1.0.1"]
+    Hotfix -->|PR target: main after production fix is verified| HotfixPR["PR: hotfix/v1.0.1 → main"]
+
+    MergeFeature --> InternalCommit["on main: set pubspec<br/>1.1.0-internal.1+BUILD"]
+    MergeBugfix --> InternalCommit
+    Hotfix --> HotfixInternal["on hotfix/main: set pubspec<br/>1.0.1-internal.1+BUILD"]
+
+    InternalCommit --> InternalTag["tag from main<br/>app-v1.1.0-internal.1"]
+    HotfixInternal --> HotfixTag["tag from hotfix branch or merged main<br/>app-v1.0.1-internal.1"]
     InternalTag --> ReleaseWorkflow["release.yml<br/>signed APK/AAB + draft GitHub release"]
-    ReleaseWorkflow --> InternalTest["install through Play internal test / APK"]
+    HotfixTag --> ReleaseWorkflow
 
-    InternalTest -->|needs fixes| Bugfix
-    InternalTest -->|ready for testers| BetaVersion["set pubspec<br/>1.1.0-beta.1+BUILD"]
-    BetaVersion --> BetaTag["tag app-v1.1.0-beta.1"]
+    ReleaseWorkflow --> InternalTest["internal test"]
+    InternalTest -->|fix required| FixBranch["checkout bugfix/* from main"]
+    FixBranch --> BugfixPR
+    InternalTest -->|ready| BetaCommit["on main: set pubspec<br/>1.1.0-beta.1+BUILD"]
+    BetaCommit --> BetaTag["tag from main<br/>app-v1.1.0-beta.1"]
     BetaTag --> ReleaseWorkflow
-    ReleaseWorkflow --> BetaTest["trusted beta testing"]
 
-    BetaTest -->|needs fixes| Bugfix
-    BetaTest -->|approved| StableVersion["set pubspec<br/>1.1.0+BUILD"]
-    StableVersion --> StableTag["tag app-v1.1.0"]
+    ReleaseWorkflow --> BetaTest["beta test"]
+    BetaTest -->|fix required| FixBranch
+    BetaTest -->|approved| StableCommit["on main: set pubspec<br/>1.1.0+BUILD"]
+    StableCommit --> StableTag["tag from main<br/>app-v1.1.0"]
     StableTag --> ReleaseWorkflow
     ReleaseWorkflow --> PlayProduction["manual Play production submission"]
-    PlayProduction --> Observe["48h observe<br/>crashes, vitals, user reports"]
 
-    Sheet["Google Sheets / AppSheet<br/>lyrics or metadata update"] --> Approve["review + approve rows"]
+    Sheet["Google Sheets / AppSheet"] --> Approve["approve catalogue rows"]
     Approve --> DeploySwitch["AppSheet deploy switch"]
     DeploySwitch --> CatalogWorkflow["import-sheet-catalog.yml"]
-    CatalogWorkflow --> CatalogRepo["praise-catalog GitHub Pages<br/>manifest + songs + deltas"]
+    CatalogWorkflow --> CatalogRepo["praise-catalog GitHub Pages"]
     CatalogRepo --> MobileRefresh["mobile manual catalogue refresh"]
 ```
 
-Examples:
+#### Normal feature branch
+
+Use this for app behavior changes, UI changes, sync changes, YouTube work,
+sharing/export changes, and database changes.
+
+Checkout from:
+
+```text
+main
+```
+
+Branch name:
+
+```text
+feature/<short-name>
+```
+
+PR target:
+
+```text
+main
+```
+
+Example:
+
+```powershell
+git checkout main
+git pull
+git checkout -b feature/youtube-player-polish
+
+# make changes
+
+git add .
+git commit -m "Polish YouTube practice player"
+git push -u origin feature/youtube-player-polish
+```
+
+Open PR:
+
+```text
+feature/youtube-player-polish → main
+```
+
+After CI passes, merge to `main`. Do not tag from the feature branch.
+
+#### Normal bugfix branch
+
+Use this for non-production-blocking bugs.
+
+Checkout from:
+
+```text
+main
+```
+
+Branch name:
+
+```text
+bugfix/<short-name>
+```
+
+PR target:
+
+```text
+main
+```
+
+Example:
+
+```powershell
+git checkout main
+git pull
+git checkout -b bugfix/list-create-disposed-controller
+
+# make fix
+
+git add .
+git commit -m "Fix list creation controller lifecycle"
+git push -u origin bugfix/list-create-disposed-controller
+```
+
+Open PR:
+
+```text
+bugfix/list-create-disposed-controller → main
+```
+
+#### Hotfix branch
+
+Use this only when the current production app has a serious issue.
+
+Default checkout source:
+
+```text
+main
+```
+
+If `main` already contains unreleased risky changes, checkout from the latest
+stable production tag instead:
+
+```powershell
+git checkout app-v1.0.0
+git checkout -b hotfix/v1.0.1
+```
+
+PR target after verification:
+
+```text
+main
+```
+
+Hotfix rule:
+
+```text
+fix only the production blocker
+```
+
+Do not include feature cleanup, refactors, or catalogue-only changes.
+
+#### Internal, beta, and stable tags
+
+Tags are created only after the version is committed.
+
+Internal build:
+
+```powershell
+git checkout main
+git pull
+
+# edit pubspec.yaml
+# version: 1.1.0-internal.1+10
+
+git add pubspec.yaml
+git commit -m "Prepare internal release 1.1.0-internal.1"
+git tag app-v1.1.0-internal.1
+git push origin main
+git push origin app-v1.1.0-internal.1
+```
+
+Beta build:
+
+```powershell
+git checkout main
+git pull
+
+# edit pubspec.yaml
+# version: 1.1.0-beta.1+11
+
+git add pubspec.yaml
+git commit -m "Prepare beta release 1.1.0-beta.1"
+git tag app-v1.1.0-beta.1
+git push origin main
+git push origin app-v1.1.0-beta.1
+```
+
+Stable build:
+
+```powershell
+git checkout main
+git pull
+
+# edit pubspec.yaml
+# version: 1.1.0+12
+
+git add pubspec.yaml
+git commit -m "Prepare stable release 1.1.0"
+git tag app-v1.1.0
+git push origin main
+git push origin app-v1.1.0
+```
+
+#### Catalogue-only update
+
+Use this for lyric text, spacing, author/source, YouTube URL, add song, or
+remove song changes that do not require app code changes.
+
+Do not create an app release branch.
+
+Flow:
+
+```text
+AppSheet → approve rows → deploy switch → import-sheet-catalog.yml → main commit → praise-catalog
+```
+
+The catalogue workflow commits generated catalogue files back to `main` and
+publishes `manifest.json`, `songs.json`, and delta files to the separate
+catalogue repository.
+
+#### Examples
 
 | Change | Branch | Version/tag path | Notes |
 | --- | --- | --- | --- |
-| Add YouTube player improvements | `feature/youtube-player` | `app-v1.1.0-internal.1` → `app-v1.1.0-beta.1` → `app-v1.1.0` | Feature release; test through internal and beta. |
-| Fix list creation crash before launch | `bugfix/list-create-crash` | Usually next internal/beta build | Merge through PR unless it blocks production. |
-| Fix production crash in `1.0.0` | `hotfix/v1.0.1` | `app-v1.0.1-internal.1` → `app-v1.0.1` | No unrelated cleanup or features. |
+| Add YouTube player improvements | checkout from `main`, PR `feature/youtube-player` → `main` | `app-v1.1.0-internal.1` → `app-v1.1.0-beta.1` → `app-v1.1.0` | Feature release; test through internal and beta. |
+| Fix list creation crash before launch | checkout from `main`, PR `bugfix/list-create-crash` → `main` | Usually next internal/beta build | Merge through PR unless it blocks production. |
+| Fix production crash in `1.0.0` | checkout from `app-v1.0.0` if `main` is risky; otherwise `main`; PR `hotfix/v1.0.1` → `main` | `app-v1.0.1-internal.1` → `app-v1.0.1` | No unrelated cleanup or features. |
 | Correct one lyric line | AppSheet row update | `catalogVersion` only | No app tag or APK release. |
 
 ## 5. Standard application release cycle
