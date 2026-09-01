@@ -101,6 +101,61 @@ version.
 - Tag stable application releases as `app-vMAJOR.MINOR.PATCH`, for example
   `app-v1.0.0`.
 
+### Branching and release workflow
+
+Use short-lived branches for app code and let catalogue-only updates flow
+through the AppSheet/GitHub Actions catalogue pipeline.
+
+```mermaid
+flowchart TD
+    Main["main<br/>always releasable"] --> Feature["feature/youtube-player<br/>new feature"]
+    Main --> Bugfix["bugfix/list-create-crash<br/>non-urgent bug"]
+    Main --> Hotfix["hotfix/v1.0.1<br/>production blocker only"]
+
+    Feature --> FeatureChecks["local checks<br/>flutter analyze + flutter test"]
+    Bugfix --> BugfixChecks["local checks<br/>targeted test + regression"]
+    Hotfix --> HotfixChecks["smallest safe fix<br/>full gate + focused device test"]
+
+    FeatureChecks --> PR["pull request"]
+    BugfixChecks --> PR
+    PR --> CI["GitHub CI"]
+    CI --> Merge["merge to main"]
+    HotfixChecks --> Merge
+
+    Merge --> InternalVersion["set pubspec<br/>1.1.0-internal.1+BUILD"]
+    InternalVersion --> InternalTag["tag app-v1.1.0-internal.1"]
+    InternalTag --> ReleaseWorkflow["release.yml<br/>signed APK/AAB + draft GitHub release"]
+    ReleaseWorkflow --> InternalTest["install through Play internal test / APK"]
+
+    InternalTest -->|needs fixes| Bugfix
+    InternalTest -->|ready for testers| BetaVersion["set pubspec<br/>1.1.0-beta.1+BUILD"]
+    BetaVersion --> BetaTag["tag app-v1.1.0-beta.1"]
+    BetaTag --> ReleaseWorkflow
+    ReleaseWorkflow --> BetaTest["trusted beta testing"]
+
+    BetaTest -->|needs fixes| Bugfix
+    BetaTest -->|approved| StableVersion["set pubspec<br/>1.1.0+BUILD"]
+    StableVersion --> StableTag["tag app-v1.1.0"]
+    StableTag --> ReleaseWorkflow
+    ReleaseWorkflow --> PlayProduction["manual Play production submission"]
+    PlayProduction --> Observe["48h observe<br/>crashes, vitals, user reports"]
+
+    Sheet["Google Sheets / AppSheet<br/>lyrics or metadata update"] --> Approve["review + approve rows"]
+    Approve --> DeploySwitch["AppSheet deploy switch"]
+    DeploySwitch --> CatalogWorkflow["import-sheet-catalog.yml"]
+    CatalogWorkflow --> CatalogRepo["praise-catalog GitHub Pages<br/>manifest + songs + deltas"]
+    CatalogRepo --> MobileRefresh["mobile manual catalogue refresh"]
+```
+
+Examples:
+
+| Change | Branch | Version/tag path | Notes |
+| --- | --- | --- | --- |
+| Add YouTube player improvements | `feature/youtube-player` | `app-v1.1.0-internal.1` → `app-v1.1.0-beta.1` → `app-v1.1.0` | Feature release; test through internal and beta. |
+| Fix list creation crash before launch | `bugfix/list-create-crash` | Usually next internal/beta build | Merge through PR unless it blocks production. |
+| Fix production crash in `1.0.0` | `hotfix/v1.0.1` | `app-v1.0.1-internal.1` → `app-v1.0.1` | No unrelated cleanup or features. |
+| Correct one lyric line | AppSheet row update | `catalogVersion` only | No app tag or APK release. |
+
 ## 5. Standard application release cycle
 
 ### Stage A — Plan
