@@ -74,6 +74,29 @@ class CatalogueSyncService {
         );
       }
 
+      final deltaChain = manifest.deltaChainFrom(localVersion);
+      if (deltaChain != null) {
+        try {
+          final deltas = <CatalogueDelta>[];
+          for (final reference in deltaChain) {
+            deltas.add(await remote.fetchDelta(manifestUri, reference));
+          }
+          final applied = await store.applyDeltas(manifest, deltas);
+          return CatalogueSyncResult(
+            outcome: CatalogueSyncOutcome.updated,
+            catalogueVersion: manifest.catalogueVersion,
+            songCount: applied.activeSongCount,
+            skippedCustomConflicts: applied.skippedCustomConflicts,
+          );
+        } on CatalogueValidationException {
+          // A bad or stale delta must not block refresh when the full snapshot
+          // is still available and checksum-protected.
+        } on DioException {
+          // Fall back to the full snapshot. If the network is actually down,
+          // the full fetch below will surface the normal sync error.
+        }
+      }
+
       final snapshot = await remote.fetchCatalogue(manifestUri, manifest);
       final applied = await store.apply(snapshot);
       return CatalogueSyncResult(

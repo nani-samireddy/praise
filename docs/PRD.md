@@ -184,12 +184,16 @@ The refresh workflow shall:
 
 1. Read the locally stored catalogue version.
 2. Download the static catalogue manifest.
-3. Download the complete snapshot only when its version is newer.
-4. Validate the checksum, count, identifiers, and complete response.
-5. Apply server-song upserts and soft deletions in a database transaction.
-6. Preserve custom songs and locally managed relationships.
-7. Record the version and successful refresh time only after success.
-8. Let database streams update visible screens.
+3. Skip content download when the remote version is not newer.
+4. Prefer checksum-verified deltas when the manifest contains a continuous
+   chain from the local version to the remote version.
+5. Fall back to the complete snapshot when no matching delta exists or delta
+   validation fails.
+6. Validate the checksum, count, identifiers, and complete response.
+7. Apply server-song upserts and soft deletions in a database transaction.
+8. Preserve custom songs and locally managed relationships.
+9. Record the version and successful refresh time only after success.
+10. Let database streams update visible screens.
 
 During refresh, cached data shall remain visible. Failure shall produce a
 non-blocking, understandable message and shall not change the last-successful
@@ -270,6 +274,8 @@ spinner.
 - All core reading and organization workflows must function offline.
 - Catalogue changes must be applied atomically.
 - Failed sync and malformed responses must not corrupt cached data.
+- Catalogue updates should avoid downloading the full lyrics snapshot when a
+  valid manifest delta chain is available.
 
 ### Performance
 

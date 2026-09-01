@@ -12,6 +12,11 @@ abstract interface class CatalogueRemoteDataSource {
     Uri manifestUri,
     CatalogueManifest manifest,
   );
+
+  Future<CatalogueDelta> fetchDelta(
+    Uri manifestUri,
+    CatalogueDeltaReference reference,
+  );
 }
 
 class DioCatalogueRemoteDataSource implements CatalogueRemoteDataSource {
@@ -53,6 +58,27 @@ class DioCatalogueRemoteDataSource implements CatalogueRemoteDataSource {
       );
     }
     return CatalogueSnapshot.fromBytes(manifest: manifest, bytes: bytes);
+  }
+
+  @override
+  Future<CatalogueDelta> fetchDelta(
+    Uri manifestUri,
+    CatalogueDeltaReference reference,
+  ) async {
+    final deltaUri = manifestUri.resolve(reference.url);
+    if (deltaUri.scheme != 'https' && deltaUri.scheme != 'http') {
+      throw const CatalogueValidationException(
+        'Resolved catalogue delta URL must use HTTP or HTTPS.',
+      );
+    }
+    final bytes = await _getBytes(deltaUri);
+    final checksum = sha256.convert(bytes).toString();
+    if (checksum != reference.sha256) {
+      throw const CatalogueValidationException(
+        'Catalogue delta checksum does not match the manifest.',
+      );
+    }
+    return CatalogueDelta.fromBytes(reference: reference, bytes: bytes);
   }
 
   Future<List<int>> _getBytes(Uri uri) async {

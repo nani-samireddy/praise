@@ -146,6 +146,56 @@ def read_songs(path: Path, id_map: dict[str, str]) -> list[dict[str, object]]:
     return songs
 
 
+def song_map(songs: list[dict[str, object]]) -> dict[str, dict[str, object]]:
+    return {str(song["id"]): song for song in songs}
+
+
+def build_delta(
+    previous_songs: list[dict[str, object]],
+    current_songs: list[dict[str, object]],
+    *,
+    from_version: int,
+    to_version: int,
+) -> dict[str, object]:
+    previous = song_map(previous_songs)
+    current = song_map(current_songs)
+    upserts = [
+        song
+        for song_id, song in current.items()
+        if previous.get(song_id) != song
+    ]
+    deletes = sorted(set(previous) - set(current))
+    upserts.sort(key=lambda song: str(song["id"]))
+    return {
+        "fromVersion": from_version,
+        "toVersion": to_version,
+        "upserts": upserts,
+        "deletes": deletes,
+    }
+
+
+def delta_metadata(folder: Path) -> list[dict[str, object]]:
+    references = []
+    for path in folder.glob("delta-v*-v*.json"):
+        match = re.fullmatch(r"delta-v(\d+)-v(\d+)\.json", path.name)
+        if not match:
+            continue
+        from_version = int(match.group(1))
+        to_version = int(match.group(2))
+        if from_version >= to_version:
+            continue
+        references.append(
+            {
+                "fromVersion": from_version,
+                "toVersion": to_version,
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "url": path.name,
+            }
+        )
+    references.sort(key=lambda item: (item["fromVersion"], item["toVersion"]))
+    return references
+
+
 def json_bytes(value: object, *, pretty: bool = False) -> bytes:
     text = json.dumps(
         value,
@@ -176,10 +226,13 @@ def main() -> None:
     manifest_path = args.output / "manifest.json"
     songs_path = args.output / "songs.json"
     previous_manifest = None
+    previous_songs = None
     if manifest_path.exists():
         previous_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         previous_version = int(previous_manifest["catalogVersion"])
         previous_bytes = songs_path.read_bytes() if songs_path.exists() else b""
+        if previous_bytes:
+            previous_songs = json.loads(previous_bytes.decode("utf-8"))
         if args.auto_version:
             args.version = previous_version + (0 if songs_data == previous_bytes else 1)
         elif songs_data != previous_bytes and args.version <= previous_version:
@@ -212,6 +265,38 @@ def main() -> None:
         "sha256": checksum,
         "catalogUrl": "songs.json",
     }
+
+    if (
+        previous_manifest
+        and previous_songs is not None
+        and args.version > int(previous_manifest["catalogVersion"])
+    ):
+        previous_version = int(previous_manifest["catalogVersion"])
+        delta_name = f"delta-v{previous_version}-v{args.version}.json"
+        delta_path = args.output / delta_name
+        delta = build_delta(
+            previous_songs,
+            songs,
+            from_version=previous_version,
+            to_version=args.version,
+        )
+        delta_data = json_bytes(delta)
+        write_atomic(delta_path, delta_data)
+        manifest.update(
+            {
+                "deltaFromVersion": previous_version,
+                "deltaSha256": hashlib.sha256(delta_data).hexdigest(),
+                "deltaUrl": delta_name,
+            }
+        )
+
+    deltas = [
+        item
+        for item in delta_metadata(args.output)
+        if int(item["toVersion"]) <= args.version
+    ]
+    if deltas:
+        manifest["deltas"] = deltas
 
     write_atomic(songs_path, songs_data)
     write_atomic(manifest_path, json_bytes(manifest, pretty=True))

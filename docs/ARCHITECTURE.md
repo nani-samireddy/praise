@@ -252,12 +252,19 @@ This production URL is the default application configuration. A
 or staging builds.
 
 `manifest.json` contains the schema version, monotonically increasing catalogue
-version, generation timestamp, song count, SHA-256 checksum, and a relative URL
-to `songs.json`. The application downloads the large snapshot only when the
-remote version exceeds the locally stored version.
+version, generation timestamp, song count, full snapshot SHA-256 checksum, and a
+relative URL to `songs.json`. When catalogue deltas have been published, the
+manifest also contains their version ranges, URLs, and SHA-256 checksums. The
+application downloads the large snapshot only when the remote version exceeds
+the locally stored version and no continuous valid delta chain is available.
 
-The complete snapshot is decoded as UTF-8, checksum-verified, shape-validated,
-counted, and checked for duplicate IDs before a database transaction begins.
+Deltas contain changed song rows and deleted server song IDs. A device on v7 can
+sync to v10 by downloading and applying `v7→v8`, `v8→v9`, and `v9→v10`, as long
+as the manifest lists that complete chain and every delta verifies against its
+checksum. Devices without a complete chain, or devices that receive an invalid
+delta, fall back to the full snapshot. The complete snapshot is decoded as
+UTF-8, checksum-verified, shape-validated, counted, and checked for duplicate
+IDs before a database transaction begins.
 No API key, user account, server process, or remote database exists in V1.
 Cross-repository publishing uses a write-enabled deploy key scoped only to the
 catalogue server repository. The private key is stored as an Actions secret in
@@ -277,8 +284,14 @@ sequenceDiagram
     UI->>Sync: syncSongs()
     Sync->>DB: Read local catalogue version
     Sync->>Pages: GET manifest.json
-    Pages-->>Sync: Version, count, checksum, snapshot URL
-    alt Remote version is newer
+    Pages-->>Sync: Version, count, checksum, snapshot URL, delta references
+    alt Remote version is newer and continuous delta chain exists
+        loop For each delta in chain
+            Sync->>Pages: GET delta-vX-vY.json
+            Pages-->>Sync: Changed songs and deleted IDs
+            Sync->>Sync: Verify delta checksum and validate changed rows
+        end
+    else Remote version is newer and no valid delta chain exists
         Sync->>Pages: GET songs.json
         Pages-->>Sync: Complete song snapshot
         Sync->>Sync: Verify checksum and validate all songs
@@ -296,8 +309,8 @@ Required invariants:
 
 1. Custom rows are never targets of server upsert or deletion.
 2. Catalogue metadata changes in the same successful transaction as catalogue
-   data. An already-current manifest records a successful check without a
-   snapshot download.
+   data. An already-current manifest records a successful check without a delta
+   or snapshot download.
 3. An invalid response produces zero database changes.
 4. Only one catalogue synchronization runs at a time.
 5. UI content remains backed by local streams during network activity.

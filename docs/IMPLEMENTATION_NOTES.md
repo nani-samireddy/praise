@@ -187,7 +187,7 @@ list sizes are small enough for a straightforward update.
 ### Work
 
 - Configure one Dio client with connect and receive timeouts.
-- Create strict manifest and snapshot parsers with SHA-256 validation.
+- Create strict manifest, delta, and snapshot parsers with SHA-256 validation.
 - Implement a remote catalogue data source.
 - Implement `SyncService` with a single-flight guard.
 - Apply validated changes in one Drift transaction.
@@ -203,6 +203,9 @@ list sizes are small enough for a straightforward update.
 | New server song | Inserted and emitted by local stream |
 | Existing server song | Updated from server values |
 | Server song absent from snapshot | Soft-deleted |
+| Device has continuous delta chain to latest version | Deltas are downloaded and applied |
+| Device has no continuous delta chain to latest version | Full snapshot is downloaded |
+| Invalid delta | Full snapshot fallback is attempted |
 | Deleted ID matching custom song | Custom song unchanged |
 | Server song ID matching custom row | Custom song unchanged; conflict reported or skipped |
 | Malformed response | No database changes |

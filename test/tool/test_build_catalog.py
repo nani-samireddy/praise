@@ -41,9 +41,47 @@ class BuildCatalogTest(unittest.TestCase):
 
             manifest = json.loads((output / "manifest.json").read_text())
             self.assertEqual(manifest["catalogVersion"], 6)
+            self.assertEqual(manifest["deltaFromVersion"], 5)
+            self.assertEqual(manifest["deltaUrl"], "delta-v5-v6.json")
+
+            delta = json.loads((output / manifest["deltaUrl"]).read_text())
+            self.assertEqual(delta["fromVersion"], 5)
+            self.assertEqual(delta["toVersion"], 6)
+            self.assertEqual(delta["deletes"], [])
+            self.assertEqual(
+                delta["upserts"],
+                [
+                    {
+                        "id": "csv-0001",
+                        "title": "Title One",
+                        "englishTitle": None,
+                        "body": "Body Two",
+                        "englishBody": None,
+                        "author": None,
+                    }
+                ],
+            )
+
+    def test_delta_records_deleted_songs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            source = workspace / "songs.csv"
+            output = workspace / "catalog"
+            id_map = workspace / "catalog_id_map.json"
+            bundle = workspace / "songs.bundle.json"
+
+            _write_csv(source, body="Body One", second_song=True)
+            _run_build(source, output, id_map, bundle, "--version", "5")
+            _write_csv(source, body="Body One", second_song=False)
+            _run_build(source, output, id_map, bundle, "--auto-version")
+
+            manifest = json.loads((output / "manifest.json").read_text())
+            delta = json.loads((output / manifest["deltaUrl"]).read_text())
+            self.assertEqual(delta["upserts"], [])
+            self.assertEqual(delta["deletes"], ["csv-0002"])
 
 
-def _write_csv(path: Path, *, body: str) -> None:
+def _write_csv(path: Path, *, body: str, second_song: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
@@ -66,6 +104,16 @@ def _write_csv(path: Path, *, body: str) -> None:
                 "ENGLISH SONG": "",
             }
         )
+        if second_song:
+            writer.writerow(
+                {
+                    "ID": "song-2",
+                    "TELUGU TITLE": "Title Two",
+                    "TELUGU SONG": "Body Two",
+                    "ENGLISH TITLE": "",
+                    "ENGLISH SONG": "",
+                }
+            )
 
 
 def _run_build(

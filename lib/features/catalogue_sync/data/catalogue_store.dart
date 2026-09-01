@@ -126,6 +126,92 @@ class CatalogueStore {
     });
   }
 
+  Future<CatalogueApplyResult> applyDelta(
+    CatalogueManifest manifest,
+    CatalogueDelta delta,
+  ) {
+    return applyDeltas(manifest, [delta]);
+  }
+
+  Future<CatalogueApplyResult> applyDeltas(
+    CatalogueManifest manifest,
+    List<CatalogueDelta> deltas,
+  ) async {
+    final now = DateTime.now().toUtc();
+    return _database.transaction(() async {
+      final customRows =
+          await (_database.selectOnly(_database.songs)
+                ..addColumns([_database.songs.id])
+                ..where(_database.songs.source.equals('custom')))
+              .get();
+      final customIds = customRows
+          .map((row) => row.read(_database.songs.id))
+          .whereType<String>()
+          .toSet();
+      var skippedCustomConflicts = 0;
+
+      for (final delta in deltas) {
+        final safeUpserts = delta.upserts
+            .where((song) => !customIds.contains(song.id))
+            .toList(growable: false);
+        final safeDeletes = delta.deletes
+            .where((id) => !customIds.contains(id))
+            .toList(growable: false);
+        skippedCustomConflicts +=
+            delta.upserts.length +
+            delta.deletes.length -
+            safeUpserts.length -
+            safeDeletes.length;
+
+        if (safeDeletes.isNotEmpty) {
+          await (_database.update(_database.songs)..where(
+                (row) => row.source.equals('server') & row.id.isIn(safeDeletes),
+              ))
+              .write(
+                SongsCompanion(
+                  isDeleted: const Value(true),
+                  updatedAt: Value(manifest.generatedAt),
+                ),
+              );
+        }
+
+        await _database.batch((batch) {
+          batch.insertAllOnConflictUpdate(
+            _database.songs,
+            safeUpserts
+                .map(
+                  (song) => SongsCompanion.insert(
+                    id: song.id,
+                    title: song.title,
+                    englishTitle: Value(song.englishTitle),
+                    body: song.body,
+                    englishBody: Value(song.englishBody),
+                    author: Value(song.author),
+                    maleVideoUrl: Value(song.maleVideoUrl),
+                    femaleVideoUrl: Value(song.femaleVideoUrl),
+                    source: const Value('server'),
+                    createdAt: manifest.generatedAt,
+                    updatedAt: manifest.generatedAt,
+                    isDeleted: const Value(false),
+                  ),
+                )
+                .toList(growable: false),
+          );
+        });
+      }
+
+      await _writeMetadata(catalogueVersionKey, manifest.catalogueVersion, now);
+      await _writeMetadata(catalogueHashKey, manifest.sha256, now);
+      await _writeMetadata(lastSuccessfulSyncKey, now.toIso8601String(), now);
+
+      final activeSongCount = await _activeServerSongCount();
+      return CatalogueApplyResult(
+        activeSongCount: activeSongCount,
+        skippedCustomConflicts: skippedCustomConflicts,
+      );
+    });
+  }
+
   Future<String?> _readValue(String key) async {
     final row = await (_database.select(
       _database.appMetadata,
@@ -144,5 +230,16 @@ class CatalogueStore {
           ),
           mode: InsertMode.insertOrReplace,
         );
+  }
+
+  Future<int> _activeServerSongCount() {
+    final count = _database.songs.id.count();
+    final query = _database.selectOnly(_database.songs)
+      ..addColumns([count])
+      ..where(
+        _database.songs.source.equals('server') &
+            _database.songs.isDeleted.equals(false),
+      );
+    return query.map((row) => row.read(count) ?? 0).getSingle();
   }
 }
