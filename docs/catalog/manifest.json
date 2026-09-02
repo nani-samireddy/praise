@@ -1,8 +1,19 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 9,
-  "generatedAt": "2026-08-31T13:14:21.831481Z",
-  "songCount": 1375,
-  "sha256": "4d4b957a2785d12369b80d407bfdc5385d170dee648501f1cfd81a9002f4539e",
-  "catalogUrl": "songs.json"
+  "catalogVersion": 10,
+  "generatedAt": "2026-09-02T18:12:37.969319Z",
+  "songCount": 1374,
+  "sha256": "4916f327cbac802a9e0be791c5e54ba13dc64684dd2cbb371290ffcb3547d3bf",
+  "catalogUrl": "songs.json",
+  "deltaFromVersion": 9,
+  "deltaSha256": "a7fa500bda0e928e18b94807eec8e44dffa0e43985a82e21597752c9d1d0a250",
+  "deltaUrl": "delta-v9-v10.json",
+  "deltas": [
+    {
+      "fromVersion": 9,
+      "toVersion": 10,
+      "sha256": "a7fa500bda0e928e18b94807eec8e44dffa0e43985a82e21597752c9d1d0a250",
+      "url": "delta-v9-v10.json"
+    }
+  ]
 }
