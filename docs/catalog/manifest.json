@@ -5,9 +5,6 @@
   "songCount": 1375,
   "sha256": "d7cff5801b1095b09e9321fcc0df88d257349c70cd77cb9c6b16d5f5516b59f6",
   "catalogUrl": "songs.json",
-  "deltaFromVersion": 10,
-  "deltaSha256": "0fe07c7892d1a01a0c43e631e95406a9ccc6a8cec8241c2291203ad89583bb40",
-  "deltaUrl": "delta-v10-v11.json",
   "deltas": [
     {
       "fromVersion": 9,
