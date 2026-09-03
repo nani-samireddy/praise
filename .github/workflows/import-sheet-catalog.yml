@@ -142,6 +142,7 @@ jobs:
           rsync --archive --delete docs/catalog/ catalog-server/catalog/
           mkdir -p catalog-server/list
           rsync --archive --delete docs/list/ catalog-server/list/
+          cp docs/privacy.html catalog-server/privacy.html
           touch catalog-server/.nojekyll
 
       - name: Publish changed catalogue
@@ -150,7 +151,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .nojekyll catalog list
+          git add .nojekyll catalog list privacy.html
           if git diff --cached --quiet; then
             echo "The catalogue server is already current."
             exit 0
