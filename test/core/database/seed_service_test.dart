@@ -81,8 +81,12 @@ void main() {
       });
       final json = await File('assets/data/songs.json').readAsString();
       final bundledSongs = jsonDecode(json) as List<Object?>;
+      final manifest = jsonDecode(
+        await File('docs/catalog/manifest.json').readAsString(),
+      ) as Map<String, Object?>;
 
-      expect(bundledSongs.length, greaterThanOrEqualTo(1375));
+      expect(bundledSongs.length, manifest['songCount']);
+      expect(bundledSongs.length, greaterThan(1000));
 
       await SeedService(
         database,
