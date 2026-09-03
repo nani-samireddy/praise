@@ -234,6 +234,7 @@ Secrets required in the app repository:
 | `SONGS_SHEET_CSV_URL` | Actions variable | HTTPS CSV export URL for the approved catalogue sheet. |
 | `CATALOG_DEPLOY_KEY` | Actions secret | Existing private deploy key for the catalogue repository. |
 | `SHEET_EXPORT_TOKEN` | Actions secret | Optional bearer token for a protected CSV export endpoint. |
+| `DISCORD_CATALOG_DEPLOYMENTS_WEBHOOK_URL` | Actions secret | Optional Discord webhook for catalogue deployment success/failure notifications. |
 
 Secrets required in the Cloudflare Worker:
 

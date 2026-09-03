@@ -568,6 +568,14 @@ Configure the four signing secrets documented in
 `docs/RELEASE_SIGNING_SETUP.md` before pushing a version tag. Create a GitHub
 Actions environment named `production` for the release job.
 
+Optionally add these Discord webhook secrets in the app repository to receive
+release pipeline notifications:
+
+| Name | Purpose |
+| --- | --- |
+| `DISCORD_CATALOG_DEPLOYMENTS_WEBHOOK_URL` | Posts catalogue import/deploy workflow success or failure to the catalogue deployments channel. |
+| `DISCORD_APP_RELEASES_WEBHOOK_URL` | Posts app release workflow success or failure to the app releases channel. |
+
 Production Play submission remains manually approved for V1. Fully automatic
 production rollout is intentionally deferred until multiple releases prove the
 pipeline reliable.
