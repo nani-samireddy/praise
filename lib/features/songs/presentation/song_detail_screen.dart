@@ -58,7 +58,7 @@ class SongDetailScreen extends ConsumerWidget {
                 ),
                 Builder(
                   builder: (actionContext) => IconButton(
-                    tooltip: 'Share song',
+                    tooltip: 'Share',
                     icon: const Icon(Icons.ios_share_outlined),
                     onPressed: () async {
                       ScaffoldMessenger.of(actionContext).hideCurrentSnackBar();
@@ -77,7 +77,7 @@ class SongDetailScreen extends ConsumerWidget {
                   ),
                 ),
                 PopupMenuButton<_SongAction>(
-                  tooltip: 'More options',
+                  tooltip: 'More',
                   icon: const Icon(Icons.more_vert),
                   onSelected: (action) =>
                       _handleSongAction(context, ref, value, action),
@@ -88,7 +88,7 @@ class SongDetailScreen extends ConsumerWidget {
                         child: ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(Icons.flag_outlined),
-                          title: Text('Report this song'),
+                          title: Text('Report issue'),
                         ),
                       ),
                     if (value.source == 'custom') ...[
@@ -97,7 +97,7 @@ class SongDetailScreen extends ConsumerWidget {
                         child: ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(Icons.edit_outlined),
-                          title: Text('Edit song'),
+                          title: Text('Edit'),
                         ),
                       ),
                       const PopupMenuItem(
@@ -105,7 +105,7 @@ class SongDetailScreen extends ConsumerWidget {
                         child: ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(Icons.delete_outline),
-                          title: Text('Delete song'),
+                          title: Text('Delete'),
                         ),
                       ),
                     ],
@@ -130,35 +130,33 @@ class SongDetailScreen extends ConsumerWidget {
   Future<_SongAction?> _showSongShareSheet(BuildContext context, Song song) {
     return showActionSheet<_SongAction>(
       context: context,
-      title: 'Share song',
+      title: 'Share',
       items: [
         const ActionSheetItem(
           value: _SongAction.copy,
           icon: Icons.copy_outlined,
-          title: 'Copy text',
-          subtitle: 'Copy the full song to your clipboard',
+          title: 'Copy lyrics',
+          subtitle: 'Save the lyrics to your clipboard',
         ),
         const ActionSheetItem(
           value: _SongAction.shareText,
           icon: Icons.share_outlined,
-          title: 'Share text',
-          subtitle: 'Best for messages and WhatsApp',
+          title: 'Send as text',
+          subtitle: 'Best for WhatsApp and messages',
         ),
         ActionSheetItem(
           value: _SongAction.shareImage,
           icon: Icons.image_outlined,
-          title: song.imagePath == null
-              ? 'Share image'
-              : 'Share original photo',
+          title: song.imagePath == null ? 'Send as image' : 'Send photo',
           subtitle: song.imagePath == null
-              ? 'Create a visual lyric card'
-              : 'Share the saved source photo',
+              ? 'Create a clean lyrics image'
+              : 'Share the saved song photo',
         ),
         const ActionSheetItem(
           value: _SongAction.sharePdf,
           icon: Icons.picture_as_pdf_outlined,
-          title: 'Share PDF',
-          subtitle: 'Best for printing or long songs',
+          title: 'Send as PDF',
+          subtitle: 'Best for printing and long songs',
         ),
       ],
     );
@@ -297,7 +295,7 @@ class SongDetailScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete custom song?'),
+        title: const Text('Delete song?'),
         content: Text('"${song.title}" will be permanently removed.'),
         actions: [
           TextButton(
@@ -452,7 +450,7 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                           label: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 160),
                             child: Text(
-                              _expandCounts ? 'Compact' : 'Expand ×N',
+                              _expandCounts ? 'Short lyrics' : 'Full lyrics',
                               key: ValueKey(_expandCounts),
                             ),
                           ),
@@ -492,7 +490,7 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                   ],
                   if (showPrimary && hasPrimaryLyrics)
                     _LyricsSection(
-                      label: showEnglish ? 'Original lyrics' : 'Lyrics',
+                      label: showEnglish ? 'Telugu lyrics' : 'Lyrics',
                       body: widget.song.body,
                       fontSize: _fontSize,
                       fontFamily: teluguFont.fontFamily,
@@ -606,9 +604,9 @@ class _PracticeVideosState extends State<_PracticeVideos>
     super.initState();
     _videos = [
       if (widget.song.maleVideoUrl case final url?)
-        _PracticeVideo(label: 'Male version', url: url),
+        _PracticeVideo(label: 'Male', url: url),
       if (widget.song.femaleVideoUrl case final url?)
-        _PracticeVideo(label: 'Female version', url: url),
+        _PracticeVideo(label: 'Female', url: url),
     ];
   }
 
@@ -660,7 +658,7 @@ class _PracticeVideosState extends State<_PracticeVideos>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'PRACTICE VIDEOS',
+          'LISTEN',
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: colorScheme.primary,
             fontWeight: FontWeight.w800,
@@ -712,7 +710,7 @@ class _PracticeVideosState extends State<_PracticeVideos>
           child: TextButton.icon(
             onPressed: () => _openExternally(_activeUrl),
             icon: const Icon(Icons.open_in_new),
-            label: const Text('Open YouTube'),
+            label: const Text('Open in YouTube'),
           ),
         ),
       ],
@@ -777,7 +775,7 @@ class _SongPhoto extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'ORIGINAL PHOTO',
+          'SAVED PHOTO',
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: colorScheme.primary,
             fontWeight: FontWeight.w800,
