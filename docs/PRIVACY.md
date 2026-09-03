@@ -41,3 +41,16 @@ please report the song so it can be reviewed for removal.
 
 Praise does not require a user account for the offline lyrics, favorites, lists,
 custom songs, or local scan flow.
+
+## Data Deletion Requests
+
+Users can delete local app data from their device by deleting songs, lists, saved
+photos, or the app itself.
+
+For submitted feedback, problem reports, song requests, or song removal requests,
+users can request deletion by using the report option inside the app or by
+contacting the app publisher. Include enough detail to identify the submission,
+such as the issue link, song title, or approximate submission date. Praise will
+delete eligible support records that are still under its control. Some records may
+be retained when required for security, abuse prevention, legal compliance, or
+catalogue integrity.
