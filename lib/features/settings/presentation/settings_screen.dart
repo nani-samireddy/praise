@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../catalogue_sync/presentation/catalogue_sync_feedback.dart';
+import '../../catalogue_sync/presentation/catalogue_sync_progress_view.dart';
 import '../../catalogue_sync/presentation/catalogue_sync_providers.dart';
 import '../../feedback/data/github_feedback_service.dart';
 import '../../feedback/presentation/feedback_dialogs.dart';
@@ -49,6 +50,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final teluguFont =
         ref.watch(teluguFontProvider).valueOrNull ?? TeluguFont.system;
     final syncState = ref.watch(catalogueSyncControllerProvider);
+    final syncProgress = ref.watch(catalogueSyncProgressProvider);
     final catalogueStatus = ref.watch(catalogueStatusProvider).valueOrNull;
 
     return Scaffold(
@@ -263,6 +265,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
+                        if (syncProgress != null)
+                          CatalogueSyncProgressView(
+                            progress: syncProgress,
+                            compact: true,
+                          ),
                       ],
                     ),
                   ),

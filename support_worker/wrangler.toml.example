@@ -15,6 +15,10 @@ GITHUB_REPOSITORY = "nani-samireddy/praise"
 RATE_LIMIT_PER_HOUR = "3"
 
 # Set as secrets, never plain vars:
-#   wrangler secret put DISCORD_WEBHOOK_URL
+#   wrangler secret put DISCORD_SONG_REQUESTS_WEBHOOK_URL
+#   wrangler secret put DISCORD_APP_REPORTS_WEBHOOK_URL
 #   wrangler secret put APPSHEET_DEPLOY_TOKEN
 #   wrangler secret put GITHUB_DISPATCH_TOKEN
+#
+# Optional fallback for older single-channel deployments:
+#   wrangler secret put DISCORD_WEBHOOK_URL

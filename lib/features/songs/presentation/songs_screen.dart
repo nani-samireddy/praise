@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../catalogue_sync/presentation/catalogue_sync_feedback.dart';
+import '../../catalogue_sync/presentation/catalogue_sync_progress_view.dart';
 import '../../catalogue_sync/presentation/catalogue_sync_providers.dart';
 import 'song_list_card.dart';
 import 'song_providers.dart';
@@ -92,6 +93,7 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
   Widget build(BuildContext context) {
     final songs = ref.watch(pagedSongsProvider);
     final search = ref.watch(songSearchProvider);
+    final syncProgress = ref.watch(catalogueSyncProgressProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -133,6 +135,8 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
                 ),
               ),
             ),
+            if (syncProgress != null)
+              CatalogueSyncProgressView(progress: syncProgress),
             Expanded(
               child: songs.when(
                 data: (state) => _SongList(

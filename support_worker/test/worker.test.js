@@ -74,6 +74,92 @@ describe('Praise support worker', () => {
     }
   });
 
+  it('routes song submissions to the song requests webhook', async () => {
+    const calls = [];
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+      calls.push({ url: String(url), init });
+      return Response.json(
+        {
+          id: '1199999999999999999',
+          channel_id: '222',
+          guild_id: '111',
+        },
+        { status: 200 },
+      );
+    };
+
+    try {
+      const request = new Request('https://support.example.test/v1/issues', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'song_request',
+          title: 'New song',
+          lyricsOrSource: 'Lyrics',
+        }),
+      });
+
+      const response = await handleRequest(request, {
+        DISCORD_SONG_REQUESTS_WEBHOOK_URL:
+          'https://discord.com/api/webhooks/song-requests/token',
+        DISCORD_APP_REPORTS_WEBHOOK_URL:
+          'https://discord.com/api/webhooks/app-reports/token',
+      });
+
+      assert.equal(response.status, 201);
+      assert.equal(
+        calls[0].url,
+        'https://discord.com/api/webhooks/song-requests/token?wait=true',
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('routes app reports to the app reports webhook', async () => {
+    const calls = [];
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+      calls.push({ url: String(url), init });
+      return Response.json(
+        {
+          id: '1199999999999999999',
+          channel_id: '333',
+          guild_id: '111',
+        },
+        { status: 200 },
+      );
+    };
+
+    try {
+      const request = new Request('https://support.example.test/v1/issues', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'problem_report',
+          summary: 'Crash',
+          description: 'App closes',
+        }),
+      });
+
+      const response = await handleRequest(request, {
+        DISCORD_SONG_REQUESTS_WEBHOOK_URL:
+          'https://discord.com/api/webhooks/song-requests/token',
+        DISCORD_APP_REPORTS_WEBHOOK_URL:
+          'https://discord.com/api/webhooks/app-reports/token',
+      });
+
+      assert.equal(response.status, 201);
+      assert.equal(
+        calls[0].url,
+        'https://discord.com/api/webhooks/app-reports/token?wait=true',
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it('uses KV rate limiting when configured', async () => {
     const kv = {
       value: '3',

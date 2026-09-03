@@ -6,6 +6,18 @@ import 'catalogue_store.dart';
 
 enum CatalogueSyncOutcome { updated, upToDate }
 
+class CatalogueSyncProgress {
+  const CatalogueSyncProgress({required this.message, required this.progress})
+    : assert(progress >= 0 && progress <= 1);
+
+  final String message;
+  final double progress;
+}
+
+typedef CatalogueSyncProgressCallback = void Function(
+  CatalogueSyncProgress progress,
+);
+
 class CatalogueSyncResult {
   const CatalogueSyncResult({
     required this.outcome,
@@ -42,13 +54,16 @@ class CatalogueSyncService {
   final CatalogueStore store;
   Future<CatalogueSyncResult>? _activeSync;
 
-  Future<CatalogueSyncResult> sync() {
-    return _activeSync ??= _performSync().whenComplete(
-      () => _activeSync = null,
-    );
+  Future<CatalogueSyncResult> sync({
+    CatalogueSyncProgressCallback? onProgress,
+  }) {
+    return _activeSync ??= _performSync(onProgress: onProgress)
+        .whenComplete(() => _activeSync = null);
   }
 
-  Future<CatalogueSyncResult> _performSync() async {
+  Future<CatalogueSyncResult> _performSync({
+    CatalogueSyncProgressCallback? onProgress,
+  }) async {
     if (_manifestUrl.isEmpty) {
       throw const CatalogueSyncException(
         'Catalogue sync is not configured for this build.',
@@ -63,9 +78,21 @@ class CatalogueSyncService {
     }
 
     try {
+      onProgress?.call(
+        const CatalogueSyncProgress(
+          message: 'Checking catalogue version…',
+          progress: 0.08,
+        ),
+      );
       final manifest = await remote.fetchManifest(manifestUri);
       final localVersion = await store.readCatalogueVersion() ?? 0;
       if (manifest.catalogueVersion <= localVersion) {
+        onProgress?.call(
+          const CatalogueSyncProgress(
+            message: 'Catalogue is already current…',
+            progress: 0.92,
+          ),
+        );
         await store.recordSuccessfulCheck(manifest);
         return CatalogueSyncResult(
           outcome: CatalogueSyncOutcome.upToDate,
@@ -78,9 +105,26 @@ class CatalogueSyncService {
       if (deltaChain != null) {
         try {
           final deltas = <CatalogueDelta>[];
-          for (final reference in deltaChain) {
+          for (final (index, reference) in deltaChain.indexed) {
+            final current = index + 1;
+            final total = deltaChain.length;
+            final downloadProgress = 0.18 + (0.48 * (index / total));
+            onProgress?.call(
+              CatalogueSyncProgress(
+                message: total == 1
+                    ? 'Downloading catalogue changes…'
+                    : 'Downloading catalogue changes $current of $total…',
+                progress: downloadProgress,
+              ),
+            );
             deltas.add(await remote.fetchDelta(manifestUri, reference));
           }
+          onProgress?.call(
+            const CatalogueSyncProgress(
+              message: 'Applying catalogue changes…',
+              progress: 0.78,
+            ),
+          );
           final applied = await store.applyDeltas(manifest, deltas);
           return CatalogueSyncResult(
             outcome: CatalogueSyncOutcome.updated,
@@ -97,7 +141,19 @@ class CatalogueSyncService {
         }
       }
 
+      onProgress?.call(
+        const CatalogueSyncProgress(
+          message: 'Downloading full catalogue…',
+          progress: 0.32,
+        ),
+      );
       final snapshot = await remote.fetchCatalogue(manifestUri, manifest);
+      onProgress?.call(
+        const CatalogueSyncProgress(
+          message: 'Applying catalogue update…',
+          progress: 0.78,
+        ),
+      );
       final applied = await store.apply(snapshot);
       return CatalogueSyncResult(
         outcome: CatalogueSyncOutcome.updated,
