@@ -230,7 +230,7 @@ async function enforceRateLimit(request, env) {
 }
 
 async function postDiscordSubmission(submission, env) {
-  const webhookUrl = env.DISCORD_WEBHOOK_URL;
+  const webhookUrl = discordWebhookUrlFor(submission, env);
   if (!webhookUrl || !String(webhookUrl).startsWith('https://discord.com/api/webhooks/')) {
     throw new SubmissionError('The support service is not configured.', 503);
   }
@@ -265,6 +265,18 @@ async function postDiscordSubmission(submission, env) {
         ? `https://discord.com/channels/${guildId}/${channelId}/${messageId}`
         : null,
   };
+}
+
+function discordWebhookUrlFor(submission, env) {
+  if (submission.kind === 'problem_report') {
+    return env.DISCORD_APP_REPORTS_WEBHOOK_URL || env.DISCORD_WEBHOOK_URL;
+  }
+
+  if (submission.kind === 'song_request' || submission.kind === 'song_correction') {
+    return env.DISCORD_SONG_REQUESTS_WEBHOOK_URL || env.DISCORD_WEBHOOK_URL;
+  }
+
+  return env.DISCORD_WEBHOOK_URL;
 }
 
 function assertDeployAuthorization(request, env) {

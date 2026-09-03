@@ -35,14 +35,19 @@ Add these repository secrets in GitHub:
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-Then add the Discord webhook URL as a Cloudflare Worker secret:
+Then add the Discord webhook URLs as Cloudflare Worker secrets:
 
 ```powershell
 cd support_worker
-npx wrangler secret put DISCORD_WEBHOOK_URL
+npx wrangler secret put DISCORD_SONG_REQUESTS_WEBHOOK_URL
+npx wrangler secret put DISCORD_APP_REPORTS_WEBHOOK_URL
 npx wrangler secret put APPSHEET_DEPLOY_TOKEN
 npx wrangler secret put GITHUB_DISPATCH_TOKEN
 ```
+
+`DISCORD_SONG_REQUESTS_WEBHOOK_URL` receives song requests and song
+corrections. `DISCORD_APP_REPORTS_WEBHOOK_URL` receives app problem reports.
+`DISCORD_WEBHOOK_URL` is still supported as a fallback for older deployments.
 
 If you want a separate deployment branch, change the workflow trigger from:
 
@@ -66,7 +71,8 @@ because only support worker changes trigger the Worker deployment.
 cd support_worker
 npm install
 npx wrangler login
-npx wrangler secret put DISCORD_WEBHOOK_URL
+npx wrangler secret put DISCORD_SONG_REQUESTS_WEBHOOK_URL
+npx wrangler secret put DISCORD_APP_REPORTS_WEBHOOK_URL
 npx wrangler secret put APPSHEET_DEPLOY_TOKEN
 npx wrangler secret put GITHUB_DISPATCH_TOKEN
 npx wrangler deploy
@@ -88,11 +94,15 @@ id = "..."
 
 ## Discord setup
 
-1. Create a private `#praise-support` or forum channel.
-2. Create a webhook for that channel.
-3. Store the webhook URL as the Worker secret `DISCORD_WEBHOOK_URL`.
-4. Deploy the Worker.
-5. Confirm:
+1. Create private `#song-requests` and `#app-reports` channels.
+2. Create one webhook for each channel.
+3. Store the `#song-requests` webhook URL as
+   `DISCORD_SONG_REQUESTS_WEBHOOK_URL`.
+4. Store the `#app-reports` webhook URL as
+   `DISCORD_APP_REPORTS_WEBHOOK_URL`.
+5. Optionally keep `DISCORD_WEBHOOK_URL` only as a fallback.
+6. Deploy the Worker.
+7. Confirm:
 
 ```powershell
 Invoke-WebRequest https://YOUR_WORKER_URL/health

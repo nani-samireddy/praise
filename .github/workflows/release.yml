@@ -154,6 +154,56 @@ jobs:
               --title "Praise ${GITHUB_REF_NAME#v}"
           fi
 
+      - name: Notify app releases channel
+        if: always()
+        shell: bash
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_APP_RELEASES_WEBHOOK_URL }}
+          JOB_STATUS: ${{ job.status }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RELEASE_URL: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
+        run: |
+          if [[ -z "$DISCORD_WEBHOOK_URL" ]]; then
+            echo "DISCORD_APP_RELEASES_WEBHOOK_URL is not configured; skipping Discord notification."
+            exit 0
+          fi
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          status = os.environ.get("JOB_STATUS", "unknown")
+          tag = os.environ["RELEASE_TAG"]
+          run_url = os.environ["RUN_URL"]
+          release_url = os.environ["RELEASE_URL"]
+          color = 0x2EA043 if status == "success" else 0xD1242F
+          payload = {
+              "username": "Praise Releases",
+              "allowed_mentions": {"parse": []},
+              "embeds": [
+                  {
+                      "title": f"App release {tag} {status}",
+                      "color": color,
+                      "fields": [
+                          {"name": "GitHub release", "value": f"[Open release]({release_url})", "inline": True},
+                          {"name": "Workflow", "value": f"[Open run]({run_url})", "inline": True},
+                      ],
+                  }
+              ],
+          }
+          request = urllib.request.Request(
+              os.environ["DISCORD_WEBHOOK_URL"],
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          try:
+              urllib.request.urlopen(request, timeout=10).read()
+          except Exception as error:
+              print(f"Discord notification failed: {error}")
+          PY
+
       - name: Remove signing files
         if: always()
         shell: bash
