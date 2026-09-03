@@ -24,9 +24,11 @@ class ImportSheetCatalogTest(unittest.TestCase):
                 {
                     "ID": "song-1",
                     "TELUGU TITLE": "Title One",
-                    "TELUGU SONG": "Body One",
+                    "TELUGU ORIGINAL SONG": "Body One",
+                    "TELUGU STRUCTURED SONG": "Body One",
                     "ENGLISH TITLE": "English One",
-                    "ENGLISH SONG": "English Body",
+                    "ENGLISH ORIGINAL SONG": "English Body",
+                    "ENGLISH STRUCTURED SONG": "English Body",
                     "AUTHOR": "Author",
                     "MALE VIDEO URL": "",
                     "FEMALE VIDEO URL": "",
@@ -34,9 +36,11 @@ class ImportSheetCatalogTest(unittest.TestCase):
                 {
                     "ID": "song-3",
                     "TELUGU TITLE": "Title Three",
-                    "TELUGU SONG": "Body Three",
+                    "TELUGU ORIGINAL SONG": "Body Three",
+                    "TELUGU STRUCTURED SONG": "Body Three",
                     "ENGLISH TITLE": "",
-                    "ENGLISH SONG": "",
+                    "ENGLISH ORIGINAL SONG": "",
+                    "ENGLISH STRUCTURED SONG": "",
                     "AUTHOR": "",
                     "MALE VIDEO URL": "",
                     "FEMALE VIDEO URL": "",
@@ -51,6 +55,17 @@ class ImportSheetCatalogTest(unittest.TestCase):
         )
 
         self.assertEqual(rows[0]["ID"], "song-1")
+
+    def test_prefers_structured_lyrics_and_preserves_original_lyrics(self):
+        rows = convert_rows(
+            "source_id,title,english_title,original_song,structured_song,original_english_song,structured_english_song,author,status\n"
+            "song-1,Title One,,Original,\"[Repeat ×2]\nLine\n[/Repeat]\",,,Author,approved\n"
+        )
+
+        self.assertEqual(rows[0]["TELUGU ORIGINAL SONG"], "Original")
+        self.assertEqual(
+            rows[0]["TELUGU STRUCTURED SONG"], "[Repeat ×2]\nLine\n[/Repeat]"
+        )
 
     def test_rejects_missing_required_columns(self):
         with self.assertRaisesRegex(ValueError, "missing columns"):
@@ -73,9 +88,11 @@ class ImportSheetCatalogTest(unittest.TestCase):
                     {
                         "ID": "song-1",
                         "TELUGU TITLE": "Title",
-                        "TELUGU SONG": "Body",
+                        "TELUGU ORIGINAL SONG": "Body",
+                        "TELUGU STRUCTURED SONG": "Body",
                         "ENGLISH TITLE": "",
-                        "ENGLISH SONG": "",
+                        "ENGLISH ORIGINAL SONG": "",
+                        "ENGLISH STRUCTURED SONG": "",
                         "AUTHOR": "",
                         "MALE VIDEO URL": "",
                         "FEMALE VIDEO URL": "",
@@ -90,9 +107,11 @@ class ImportSheetCatalogTest(unittest.TestCase):
                     [
                         "ID",
                         "TELUGU TITLE",
-                        "TELUGU SONG",
+                        "TELUGU ORIGINAL SONG",
+                        "TELUGU STRUCTURED SONG",
                         "ENGLISH TITLE",
-                        "ENGLISH SONG",
+                        "ENGLISH ORIGINAL SONG",
+                        "ENGLISH STRUCTURED SONG",
                         "AUTHOR",
                         "MALE VIDEO URL",
                         "FEMALE VIDEO URL",

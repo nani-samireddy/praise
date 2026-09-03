@@ -80,6 +80,43 @@ class BuildCatalogTest(unittest.TestCase):
             self.assertEqual(delta["upserts"], [])
             self.assertEqual(delta["deletes"], ["csv-0002"])
 
+    def test_prefers_structured_lyrics_over_original_lyrics(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            source = workspace / "songs.csv"
+            output = workspace / "catalog"
+            id_map = workspace / "catalog_id_map.json"
+            bundle = workspace / "songs.bundle.json"
+            structured_body = "[Repeat x2]\\nLine\\n[/Repeat]"
+            with source.open("w", encoding="utf-8", newline="") as handle:
+                writer = csv.DictWriter(
+                    handle,
+                    fieldnames=[
+                        "ID",
+                        "TELUGU TITLE",
+                        "TELUGU ORIGINAL SONG",
+                        "TELUGU STRUCTURED SONG",
+                        "ENGLISH TITLE",
+                        "ENGLISH ORIGINAL SONG",
+                        "ENGLISH STRUCTURED SONG",
+                    ],
+                )
+                writer.writeheader()
+                writer.writerow(
+                    {
+                        "ID": "song-1",
+                        "TELUGU TITLE": "Title One",
+                        "TELUGU ORIGINAL SONG": "Original",
+                        "TELUGU STRUCTURED SONG": structured_body,
+                        "ENGLISH TITLE": "",
+                        "ENGLISH ORIGINAL SONG": "",
+                        "ENGLISH STRUCTURED SONG": "",
+                    }
+                )
+            _run_build(source, output, id_map, bundle, "--version", "5")
+            songs = json.loads((output / "songs.json").read_text())
+            self.assertEqual(songs[0]["body"], structured_body)
+
 
 def _write_csv(path: Path, *, body: str, second_song: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)

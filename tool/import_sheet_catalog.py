@@ -16,8 +16,6 @@ SOURCE_COLUMNS = {
     "source_id",
     "title",
     "english_title",
-    "body",
-    "english_body",
     "author",
     "status",
 }
@@ -25,9 +23,11 @@ SOURCE_COLUMNS = {
 OUTPUT_COLUMNS = [
     "ID",
     "TELUGU TITLE",
-    "TELUGU SONG",
+    "TELUGU ORIGINAL SONG",
+    "TELUGU STRUCTURED SONG",
     "ENGLISH TITLE",
-    "ENGLISH SONG",
+    "ENGLISH ORIGINAL SONG",
+    "ENGLISH STRUCTURED SONG",
     "AUTHOR",
     "MALE VIDEO URL",
     "FEMALE VIDEO URL",
@@ -92,6 +92,15 @@ def optional(row: dict[str, str], key: str) -> str:
     return (row.get(key) or "").strip()
 
 
+def first_present(row: dict[str, str], *keys: str) -> str:
+    """Read a new schema value, with legacy sheet columns as a safe fallback."""
+    for key in keys:
+        value = optional(row, key)
+        if value:
+            return value
+    return ""
+
+
 def convert_rows(text: str) -> list[dict[str, str]]:
     reader = csv.DictReader(io.StringIO(text))
     if not reader.fieldnames:
@@ -102,6 +111,11 @@ def convert_rows(text: str) -> list[dict[str, str]]:
     missing = sorted(SOURCE_COLUMNS - normalized_fields)
     if missing:
         raise ValueError(f"Sheet CSV is missing columns: {', '.join(missing)}")
+    if not ({"original_song", "structured_song", "body"} & normalized_fields):
+        raise ValueError(
+            "Sheet CSV requires original_song and/or structured_song "
+            "(legacy body is accepted during migration)"
+        )
 
     output: list[dict[str, str]] = []
     source_ids: set[str] = set()
@@ -120,13 +134,25 @@ def convert_rows(text: str) -> list[dict[str, str]]:
             raise ValueError(f"Row {line_number} repeats source_id {source_id!r}")
         source_ids.add(source_id)
 
+        original_song = first_present(row, "original_song", "body")
+        structured_song = first_present(row, "structured_song") or original_song
+        if not original_song:
+            raise ValueError(f"Row {line_number} requires original_song")
+
+        original_english_song = first_present(row, "original_english_song", "english_body")
+        structured_english_song = (
+            first_present(row, "structured_english_song") or original_english_song
+        )
+
         output.append(
             {
                 "ID": source_id,
                 "TELUGU TITLE": required(row, "title", line_number),
-                "TELUGU SONG": required(row, "body", line_number),
+                "TELUGU ORIGINAL SONG": original_song,
+                "TELUGU STRUCTURED SONG": structured_song,
                 "ENGLISH TITLE": optional(row, "english_title"),
-                "ENGLISH SONG": optional(row, "english_body"),
+                "ENGLISH ORIGINAL SONG": original_english_song,
+                "ENGLISH STRUCTURED SONG": structured_english_song,
                 "AUTHOR": optional(row, "author"),
                 "MALE VIDEO URL": optional(row, "male_video_url"),
                 "FEMALE VIDEO URL": optional(row, "female_video_url"),
