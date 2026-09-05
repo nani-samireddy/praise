@@ -1,0 +1,64 @@
+name: Validate Praise app
+description: Run shared formatting, analysis, test, and catalogue validation checks.
+
+inputs:
+  build-debug-apk:
+    description: Build a debug APK as part of validation.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Flutter project
+      uses: ./.github/actions/setup-flutter
+
+    - name: Verify formatting
+      shell: bash
+      run: dart format --output=none --set-exit-if-changed lib test
+
+    - name: Analyze
+      shell: bash
+      run: flutter analyze
+
+    - name: Test Flutter app
+      shell: bash
+      run: flutter test
+
+    - name: Test release tooling
+      shell: bash
+      run: python -m unittest discover -s test/tool -p "test_*.py"
+
+    - name: Validate AppSheet seed export
+      shell: bash
+      run: |
+        python tool/import_sheet_catalog.py \
+          --input catalog/source/songs.appsheet.csv \
+          --output /tmp/praise-songs.normalized.csv
+
+    - name: Test support API
+      shell: bash
+      run: python -m unittest discover -s support_api/tests -p "test_*.py"
+
+    - name: Set up Node
+      uses: actions/setup-node@v5
+      with:
+        node-version: "22"
+        cache: npm
+        cache-dependency-path: support_worker/package-lock.json
+
+    - name: Test support worker
+      shell: bash
+      working-directory: support_worker
+      run: |
+        npm ci
+        npm test
+
+    - name: Validate catalogue
+      shell: bash
+      run: python tool/validate_catalog.py
+
+    - name: Build debug APK
+      if: inputs.build-debug-apk == 'true'
+      shell: bash
+      run: flutter build apk --debug
