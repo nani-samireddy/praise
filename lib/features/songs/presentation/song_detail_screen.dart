@@ -18,18 +18,47 @@ import '../../settings/presentation/settings_providers.dart';
 import '../../../shared/presentation/action_sheet.dart';
 import '../data/song_sharing_service.dart';
 import 'formatted_lyrics.dart';
+import 'metronome_controller.dart';
 import 'song_providers.dart';
 
-enum _SongAction { copy, shareText, shareImage, sharePdf, report, edit, delete }
+enum _SongAction {
+  copy,
+  shareText,
+  shareImage,
+  sharePdf,
+  metronome,
+  report,
+  edit,
+  delete,
+}
 
-class SongDetailScreen extends ConsumerWidget {
+class SongDetailScreen extends ConsumerStatefulWidget {
   const SongDetailScreen({super.key, required this.songId});
 
   final String songId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final song = ref.watch(songProvider(songId));
+  ConsumerState<SongDetailScreen> createState() => _SongDetailScreenState();
+}
+
+class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
+  late final MetronomeController _metronomeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _metronomeController = MetronomeController();
+  }
+
+  @override
+  void dispose() {
+    _metronomeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final song = ref.watch(songProvider(widget.songId));
 
     return song.when(
       data: (value) {
@@ -82,6 +111,14 @@ class SongDetailScreen extends ConsumerWidget {
                   onSelected: (action) =>
                       _handleSongAction(context, ref, value, action),
                   itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: _SongAction.metronome,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.av_timer_outlined),
+                        title: Text('Metronome'),
+                      ),
+                    ),
                     if (value.source == 'server')
                       const PopupMenuItem(
                         value: _SongAction.report,
@@ -122,7 +159,9 @@ class SongDetailScreen extends ConsumerWidget {
       ),
       error: (error, stackTrace) => Scaffold(
         appBar: const _LyricsAppBar(),
-        body: _DetailError(onRetry: () => ref.invalidate(songProvider(songId))),
+        body: _DetailError(
+          onRetry: () => ref.invalidate(songProvider(widget.songId)),
+        ),
       ),
     );
   }
@@ -243,6 +282,9 @@ class SongDetailScreen extends ConsumerWidget {
           }
         }
         return;
+      case _SongAction.metronome:
+        await _showMetronomeSheet(context);
+        return;
       case _SongAction.report:
         await showFeedbackForm(
           context: context,
@@ -287,6 +329,15 @@ class SongDetailScreen extends ConsumerWidget {
       );
   }
 
+  Future<void> _showMetronomeSheet(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) =>
+          _MetronomeSheet(controller: _metronomeController),
+    );
+  }
+
   Future<void> _deleteSong(
     BuildContext context,
     WidgetRef ref,
@@ -321,6 +372,192 @@ class SongDetailScreen extends ConsumerWidget {
         const SnackBar(content: Text('Could not delete the song.')),
       );
     }
+  }
+}
+
+class _MetronomeSheet extends StatelessWidget {
+  const _MetronomeSheet({required this.controller});
+
+  final MetronomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final bpm = controller.bpm.toDouble();
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Metronome',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            controller.isRunning
+                                ? 'Playing ${controller.bpm} BPM'
+                                : 'Set a steady practice tempo',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    ),
+                    FilledButton.icon(
+                      onPressed: controller.toggle,
+                      icon: Icon(
+                        controller.isRunning
+                            ? Icons.stop_rounded
+                            : Icons.play_arrow_rounded,
+                      ),
+                      label: Text(controller.isRunning ? 'Stop' : 'Start'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Center(
+                  child: _BeatIndicator(
+                    currentBeat: controller.currentBeat,
+                    beatsPerBar: controller.beatsPerBar,
+                    isRunning: controller.isRunning,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Text(
+                      '${controller.bpm}',
+                      style: Theme.of(context).textTheme.displaySmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'BPM',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: bpm,
+                  min: MetronomeController.minBpm.toDouble(),
+                  max: MetronomeController.maxBpm.toDouble(),
+                  divisions:
+                      MetronomeController.maxBpm - MetronomeController.minBpm,
+                  label: '${controller.bpm} BPM',
+                  onChanged: (value) => controller.setBpm(value.round()),
+                ),
+                Row(
+                  children: [
+                    OutlinedButton(
+                      onPressed: () => controller.setBpm(controller.bpm - 1),
+                      child: const Text('-1'),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      onPressed: () => controller.setBpm(controller.bpm + 1),
+                      child: const Text('+1'),
+                    ),
+                    const Spacer(),
+                    DropdownButton<int>(
+                      value: controller.beatsPerBar,
+                      items: const [
+                        DropdownMenuItem(value: 2, child: Text('2 beats')),
+                        DropdownMenuItem(value: 3, child: Text('3 beats')),
+                        DropdownMenuItem(value: 4, child: Text('4 beats')),
+                        DropdownMenuItem(value: 6, child: Text('6 beats')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) controller.setBeatsPerBar(value);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Accent first beat'),
+                  subtitle: const Text('Use a stronger pulse on beat 1'),
+                  value: controller.accentFirstBeat,
+                  onChanged: controller.setAccentFirstBeat,
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Tick sound'),
+                  value: controller.soundEnabled,
+                  onChanged: controller.setSoundEnabled,
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Haptic pulse'),
+                  value: controller.hapticsEnabled,
+                  onChanged: controller.setHapticsEnabled,
+                ),
+                if (controller.isRunning) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'You can close this sheet. The metronome will keep playing until you stop it or leave this song.',
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BeatIndicator extends StatelessWidget {
+  const _BeatIndicator({
+    required this.currentBeat,
+    required this.beatsPerBar,
+    required this.isRunning,
+  });
+
+  final int currentBeat;
+  final int beatsPerBar;
+  final bool isRunning;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 10,
+      children: [
+        for (var beat = 1; beat <= beatsPerBar; beat++)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 90),
+            width: beat == currentBeat && isRunning ? 18 : 12,
+            height: beat == currentBeat && isRunning ? 18 : 12,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: beat == currentBeat && isRunning
+                  ? colorScheme.primary
+                  : colorScheme.surfaceContainerHighest,
+              border: Border.all(color: colorScheme.outlineVariant),
+            ),
+          ),
+      ],
+    );
   }
 }
 
