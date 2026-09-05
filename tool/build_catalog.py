@@ -208,12 +208,16 @@ def delta_metadata(folder: Path) -> list[dict[str, object]]:
             {
                 "fromVersion": from_version,
                 "toVersion": to_version,
-                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "sha256": hashlib.sha256(canonical_json_bytes(path)).hexdigest(),
                 "url": path.name,
             }
         )
     references.sort(key=lambda item: (item["fromVersion"], item["toVersion"]))
     return references
+
+
+def canonical_json_bytes(path: Path) -> bytes:
+    return path.read_bytes().replace(b"\r\n", b"\n")
 
 
 def json_bytes(value: object, *, pretty: bool = False) -> bytes:

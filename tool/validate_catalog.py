@@ -74,7 +74,7 @@ def validate_delta_file(
         or "/" in delta_url
     ):
         raise ValueError("Invalid deltaUrl")
-    delta_data = (folder / delta_url).read_bytes()
+    delta_data = (folder / delta_url).read_bytes().replace(b"\r\n", b"\n")
     if hashlib.sha256(delta_data).hexdigest() != delta_sha256:
         raise ValueError("Delta checksum mismatch")
     delta = json.loads(delta_data.decode("utf-8"))
