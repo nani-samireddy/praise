@@ -5,18 +5,20 @@ import 'package:flutter/services.dart';
 
 class MetronomeController extends ChangeNotifier {
   MetronomeController({
-    Future<void> Function()? playClick,
+    Future<void> Function(bool accent)? playTick,
     Future<void> Function()? playAccent,
     Future<void> Function()? playBeatHaptic,
-  }) : _playClick =
-           playClick ?? (() => SystemSound.play(SystemSoundType.click)),
+  }) : _playTick = playTick ?? _defaultPlayTick,
        _playAccent = playAccent ?? HapticFeedback.mediumImpact,
        _playBeatHaptic = playBeatHaptic ?? HapticFeedback.selectionClick;
 
   static const minBpm = 40;
   static const maxBpm = 240;
+  static const _metronomeChannel = MethodChannel(
+    'com.nanisamireddy.praise/metronome',
+  );
 
-  final Future<void> Function() _playClick;
+  final Future<void> Function(bool accent) _playTick;
   final Future<void> Function() _playAccent;
   final Future<void> Function() _playBeatHaptic;
 
@@ -98,7 +100,7 @@ class MetronomeController extends ChangeNotifier {
     _currentBeat = (_currentBeat % _beatsPerBar) + 1;
     final isAccent = _currentBeat == 1 && _accentFirstBeat;
     if (_soundEnabled) {
-      unawaited(_playClick());
+      unawaited(_playTick(isAccent));
     }
     if (_hapticsEnabled) {
       unawaited(isAccent ? _playAccent() : _playBeatHaptic());
@@ -109,6 +111,18 @@ class MetronomeController extends ChangeNotifier {
   void _restartTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(beatInterval, (_) => tickForTest());
+  }
+
+  static Future<void> _defaultPlayTick(bool accent) async {
+    try {
+      await _metronomeChannel.invokeMethod<void>('playTick', {
+        'accent': accent,
+      });
+    } on MissingPluginException {
+      await SystemSound.play(SystemSoundType.click);
+    } on PlatformException {
+      await SystemSound.play(SystemSoundType.click);
+    }
   }
 
   @override

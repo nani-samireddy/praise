@@ -544,16 +544,25 @@ class _BeatIndicator extends StatelessWidget {
       spacing: 10,
       children: [
         for (var beat = 1; beat <= beatsPerBar; beat++)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 90),
-            width: beat == currentBeat && isRunning ? 18 : 12,
-            height: beat == currentBeat && isRunning ? 18 : 12,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: beat == currentBeat && isRunning
-                  ? colorScheme.primary
-                  : colorScheme.surfaceContainerHighest,
-              border: Border.all(color: colorScheme.outlineVariant),
+          SizedBox.square(
+            dimension: 18,
+            child: Center(
+              child: AnimatedScale(
+                duration: const Duration(milliseconds: 90),
+                scale: beat == currentBeat && isRunning ? 1.45 : 1,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 90),
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: beat == currentBeat && isRunning
+                        ? colorScheme.primary
+                        : colorScheme.surfaceContainerHighest,
+                    border: Border.all(color: colorScheme.outlineVariant),
+                  ),
+                ),
+              ),
             ),
           ),
       ],

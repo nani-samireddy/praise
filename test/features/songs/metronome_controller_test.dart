@@ -4,7 +4,7 @@ import 'package:praise/features/songs/presentation/metronome_controller.dart';
 void main() {
   test('clamps tempo to the supported practice range', () {
     final controller = MetronomeController(
-      playClick: () async {},
+      playTick: (_) async {},
       playAccent: () async {},
       playBeatHaptic: () async {},
     );
@@ -20,7 +20,7 @@ void main() {
 
   test('advances beats within the selected bar length', () {
     final controller = MetronomeController(
-      playClick: () async {},
+      playTick: (_) async {},
       playAccent: () async {},
       playBeatHaptic: () async {},
     )..setBeatsPerBar(3);
@@ -42,7 +42,7 @@ void main() {
 
   test('starts, stops, and resets the current beat', () {
     final controller = MetronomeController(
-      playClick: () async {},
+      playTick: (_) async {},
       playAccent: () async {},
       playBeatHaptic: () async {},
     );
