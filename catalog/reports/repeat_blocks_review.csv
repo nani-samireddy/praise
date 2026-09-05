@@ -1,0 +1,347 @@
+decision,source_id,title,language,start_line,end_line,repeat_count,confidence,reason,source_sha256,original_block,proposed_structured_block
+pending,2021-04-1709:39:00.056196,ఆశీర్వాదం,telugu,1,14,4,0.99,"2 adjacent copies of a 7-line group, each marked ×2",62ffbe8afe3466964689db00fba3007573d53b3bce916410cfb8689b7fb9d504,"యెహోవా దీవించి – కాపాడును గాక
+తన సన్నిధి కాంతితో
+నిను కరుణించును గాక
+నీ వైపు తన ముఖమును చూపి
+శాంతినిచ్చును గాక ×2
+ఆ.. ఆ.. ఆ.. ఆమెన్ ఆమెన్ ఆ.. ఆమెన్
+ఆ.. ఆ.. ఆ.. ఆమెన్ ఆమెన్ ఆ.. ఆమెన్
+యెహోవా దీవించి – కాపాడును గాక
+తన సన్నిధి కాంతితో
+నిను కరుణించును గాక
+నీ వైపు తన ముఖమును చూపి
+శాంతినిచ్చును గాక
+ఆ.. ఆ.. ఆ.. ఆమెన్ ఆమెన్ ఆ.. ఆమెన్
+ఆ.. ఆ.. ఆ.. ఆమెన్ ఆమెన్ ఆ.. ఆమెన్ ×2","[Repeat ×4]
+యెహోవా దీవించి – కాపాడును గాక
+తన సన్నిధి కాంతితో
+నిను కరుణించును గాక
+నీ వైపు తన ముఖమును చూపి
+శాంతినిచ్చును గాక
+ఆ.. ఆ.. ఆ.. ఆమెన్ ఆమెన్ ఆ.. ఆమెన్
+ఆ.. ఆ.. ఆ.. ఆమెన్ ఆమెన్ ఆ.. ఆమెన్
+[/Repeat]"
+pending,2021-04-1709:39:00.056196,Aasheervaadam.,english,1,14,4,0.99,"2 adjacent copies of a 7-line group, each marked ×2",7721800ece7538582c8ed92df28bf84f668d759914b1c4c54d0cda492e4bcdf5,"Yehovaa Deevinchi – Kaapadunu Gaaka
+Thana Sannidhi Kaanthitho
+Ninu Karuninchunu Gaaka
+Nee Vaipu Thana Mukhamunu Choopi
+Shaanthinichchunu Gaaka ×2
+Aa.. Aa.. Aa.. Aamen Aamen Aa.. Aamen
+Aa.. Aa.. Aa.. Aamen Aamen Aa.. Aamen
+Yehovaa Deevinchi – Kaapadunu Gaaka
+Thana Sannidhi Kaanthitho
+Ninu Karuninchunu Gaaka
+Nee Vaipu Thana Mukhamunu Choopi
+Shaanthinichchunu Gaaka
+Aa.. Aa.. Aa.. Aamen Aamen Aa.. Aamen
+Aa.. Aa.. Aa.. Aamen Aamen Aa.. Aamen ×2","[Repeat ×4]
+Yehovaa Deevinchi – Kaapadunu Gaaka
+Thana Sannidhi Kaanthitho
+Ninu Karuninchunu Gaaka
+Nee Vaipu Thana Mukhamunu Choopi
+Shaanthinichchunu Gaaka
+Aa.. Aa.. Aa.. Aamen Aamen Aa.. Aamen
+Aa.. Aa.. Aa.. Aamen Aamen Aa.. Aamen
+[/Repeat]"
+pending,2021-04-1709:39:21.690372,కమనీయమైన,telugu,1,4,2,0.97,2 adjacent copies of a 2-line group,92c96687b0e5b62a5b9dd5905dfa033d123b13ae764ec03e61150c9c70dc74e5,"కమనీయమైన నీ ప్రేమలోన
+నే నిలువనా నా యేసయ్యా
+కమనీయమైన నీ ప్రేమలోన
+నే నిలువనా నా యేసయ్యా","[Repeat ×2]
+కమనీయమైన నీ ప్రేమలోన
+నే నిలువనా నా యేసయ్యా
+[/Repeat]"
+pending,2021-04-1709:39:21.690372,Kamaneeyamaina.,english,1,4,2,0.97,2 adjacent copies of a 2-line group,27cc9baa8d5a878f19ad24d9fecee4bbffd9d17a132c2b820d55846575598430,"Kamaneeyamaina Nee Premalona
+Ne Niluvanaa Naa Yesayyaa
+Kamaneeyamaina Nee Premalona
+Ne Niluvanaa Naa Yesayyaa","[Repeat ×2]
+Kamaneeyamaina Nee Premalona
+Ne Niluvanaa Naa Yesayyaa
+[/Repeat]"
+pending,2021-04-1709:40:14.597610,నిత్య ప్రేమతో,telugu,19,24,4,0.99,"2 adjacent copies of a 3-line group, each marked ×2",fc4b896e9dab26da3bc902d886bef1754394d0af219ea073dacda4cee33f9782,"నిత్య ప్రేమతో – నన్ను ప్రేమించెన్ ×2
+తల్లి ప్రేమను మించినదే
+లోక ప్రేమను మించినదే
+నిత్య ప్రేమతో – నన్ను ప్రేమించెన్ ×2
+తల్లి ప్రేమను మించినదే
+లోక ప్రేమను మించినదే","[Repeat ×4]
+నిత్య ప్రేమతో – నన్ను ప్రేమించెన్
+తల్లి ప్రేమను మించినదే
+లోక ప్రేమను మించినదే
+[/Repeat]"
+pending,2021-04-1709:40:14.597610,Nithya Prematho.,english,19,24,4,0.99,"2 adjacent copies of a 3-line group, each marked ×2",0ec0c48ea64b1ad7e50bf4457f384210ebf070d8fc366c5b45c25c239e54da73,"Nithya Prematho – Nannu Preminchen ×2
+Thalli Premanu Minchinade
+Loka Premanu Minchinade
+Nithya Prematho – Nannu Preminchen ×2
+Thalli Premanu Minchinade
+Loka Premanu Minchinade","[Repeat ×4]
+Nithya Prematho – Nannu Preminchen
+Thalli Premanu Minchinade
+Loka Premanu Minchinade
+[/Repeat]"
+pending,2021-04-1709:40:19.142724,నీ కృప లేనిచో,telugu,1,4,4,0.99,"2 adjacent copies of a 2-line group, each marked ×2",b19fe1f4fd3eb4a8c32bb43a3665deac9755f8ce93d2d178a50d2072a6c2555b,"నీ కృప లేనిచో ఒక క్షణమైననూ
+నే నిలువజాలనో ప్రభు ×2
+నీ కృప లేనిచో ఒక క్షణమైననూ
+నే నిలువజాలనో ప్రభు ×2","[Repeat ×4]
+నీ కృప లేనిచో ఒక క్షణమైననూ
+నే నిలువజాలనో ప్రభు
+[/Repeat]"
+pending,2021-04-1709:40:19.142724,Nee Krupa Lenicho.,english,1,4,4,0.99,"2 adjacent copies of a 2-line group, each marked ×2",b5884ec384f205ad8ea569c7ea3925ad31bbdb30f4acbb1b0e9ff546b17a76c7,"Nee Krupa Lenicho Oka Kshanamainanu
+Ne Niluvajaalano Prabhu ×2
+Nee Krupa Lenicho Oka Kshanamainanu
+Ne Niluvajaalano Prabhu ×2","[Repeat ×4]
+Nee Krupa Lenicho Oka Kshanamainanu
+Ne Niluvajaalano Prabhu
+[/Repeat]"
+pending,2021-04-1709:45:02.441705,నేనున్నా నేనున్నా,telugu,46,49,4,0.99,"2 adjacent copies of a 2-line group, each marked ×2",97575d1aad463d1983d0e36755a8d360e5194e1c863e26004e254757ddeaae10,"యీల్డ్ యువర్ బాడీస్ అంటు ద లార్డ్
+యాస్ ఇన్స్ట్రుమెంట్స్ ఆఫ్ రైటియస్నెస్ ×2
+యీల్డ్ యువర్ బాడీస్ అంటు ద లార్డ్
+యాస్ ఇన్స్ట్రుమెంట్స్ ఆఫ్ రైటియస్నెస్ ×2","[Repeat ×4]
+యీల్డ్ యువర్ బాడీస్ అంటు ద లార్డ్
+యాస్ ఇన్స్ట్రుమెంట్స్ ఆఫ్ రైటియస్నెస్
+[/Repeat]"
+pending,2021-04-1709:45:29.393960,మారా గయా సులీ పర్,telugu,1,6,4,0.99,"2 adjacent copies of a 3-line group, each marked ×2",f2e84909b4afe4add07ae626caa99881e9120c25628a5439d3ec6b952f8fdaba,"మారా గయా సులీ పర్
+మేరా యీషు మసీహ్ ×2
+మేరా యీషు మసీహ్ ×2
+మారా గయా సులీ పర్
+మేరా యీషు మసీహ్ ×2
+మేరా యీషు మసీహ్","[Repeat ×4]
+మారా గయా సులీ పర్
+మేరా యీషు మసీహ్
+మేరా యీషు మసీహ్
+[/Repeat]"
+pending,2021-04-1709:45:29.393960,Maaraa Gayaa Sulee Par.,english,1,6,4,0.99,"2 adjacent copies of a 3-line group, each marked ×2",358244718da18858ea9c3c9479a8301949455f03cec99f30802987f0487c335f,"Maaraa Gayaa Sulee Par
+Meraa Yeeshu Masih ×2
+Meraa Yeeshu Masih ×2
+Maaraa Gayaa Sulee Par
+Meraa Yeeshu Masih ×4
+Meraa Yeeshu Masih","[Repeat ×4]
+Maaraa Gayaa Sulee Par
+Meraa Yeeshu Masih
+Meraa Yeeshu Masih
+[/Repeat]"
+pending,2021-04-1709:45:39.337873,యేసయ్యా నీ మాటలు,telugu,5,20,4,0.99,"2 adjacent copies of a 8-line group, each marked ×2",da6ed12a81096e6a1631b1cf0808e6e3d55a95d443d75166409b2f41b66342ed,"యేసయ్యా నీ మాటలు – తేనె కంటె మధురము
+యేసయ్యా నీ మాటలు – జీవపు ఊటలు
+కష్టములలో నష్టములలో
+వ్యాధులలో నా వేదనలో ×2
+ఆదరించును ఆవరించును
+తీర్చి దిద్ది సరిచేయును
+స్వస్థపరచును లేవనెత్తును
+జీవమిచ్చి నడిపించును
+యేసయ్యా నీ మాటలు – తేనె కంటె మధురము
+యేసయ్యా నీ మాటలు – జీవపు ఊటలు
+కష్టములలో నష్టములలో
+వ్యాధులలో నా వేదనలో ×2
+ఆదరించును ఆవరించును
+తీర్చి దిద్ది సరిచేయును
+స్వస్థపరచును లేవనెత్తును
+జీవమిచ్చి నడిపించును ×2","[Repeat ×4]
+యేసయ్యా నీ మాటలు – తేనె కంటె మధురము
+యేసయ్యా నీ మాటలు – జీవపు ఊటలు
+కష్టములలో నష్టములలో
+వ్యాధులలో నా వేదనలో
+ఆదరించును ఆవరించును
+తీర్చి దిద్ది సరిచేయును
+స్వస్థపరచును లేవనెత్తును
+జీవమిచ్చి నడిపించును
+[/Repeat]"
+pending,2021-04-1709:45:39.337873,యేసయ్యా నీ మాటలు,telugu,6,21,4,0.99,"2 adjacent copies of a 8-line group, each marked ×2",da6ed12a81096e6a1631b1cf0808e6e3d55a95d443d75166409b2f41b66342ed,"యేసయ్యా నీ మాటలు – జీవపు ఊటలు
+కష్టములలో నష్టములలో
+వ్యాధులలో నా వేదనలో ×2
+ఆదరించును ఆవరించును
+తీర్చి దిద్ది సరిచేయును
+స్వస్థపరచును లేవనెత్తును
+జీవమిచ్చి నడిపించును
+యేసయ్యా నీ మాటలు – తేనె కంటె మధురము
+యేసయ్యా నీ మాటలు – జీవపు ఊటలు
+కష్టములలో నష్టములలో
+వ్యాధులలో నా వేదనలో ×2
+ఆదరించును ఆవరించును
+తీర్చి దిద్ది సరిచేయును
+స్వస్థపరచును లేవనెత్తును
+జీవమిచ్చి నడిపించును ×2
+యేసయ్యా నీ మాటలు – తేనె కంటె మధురము","[Repeat ×4]
+యేసయ్యా నీ మాటలు – జీవపు ఊటలు
+కష్టములలో నష్టములలో
+వ్యాధులలో నా వేదనలో
+ఆదరించును ఆవరించును
+తీర్చి దిద్ది సరిచేయును
+స్వస్థపరచును లేవనెత్తును
+జీవమిచ్చి నడిపించును
+యేసయ్యా నీ మాటలు – తేనె కంటె మధురము
+[/Repeat]"
+pending,2021-04-1709:45:39.337873,యేసయ్యా నీ మాటలు,telugu,7,22,4,0.99,"2 adjacent copies of a 8-line group, each marked ×2",da6ed12a81096e6a1631b1cf0808e6e3d55a95d443d75166409b2f41b66342ed,"కష్టములలో నష్టములలో
+వ్యాధులలో నా వేదనలో ×2
+ఆదరించును ఆవరించును
+తీర్చి దిద్ది సరిచేయును
+స్వస్థపరచును లేవనెత్తును
+జీవమిచ్చి నడిపించును
+యేసయ్యా నీ మాటలు – తేనె కంటె మధురము
+యేసయ్యా నీ మాటలు – జీవపు ఊటలు
+కష్టములలో నష్టములలో
+వ్యాధులలో నా వేదనలో ×2
+ఆదరించును ఆవరించును
+తీర్చి దిద్ది సరిచేయును
+స్వస్థపరచును లేవనెత్తును
+జీవమిచ్చి నడిపించును ×2
+యేసయ్యా నీ మాటలు – తేనె కంటె మధురము
+యేసయ్యా నీ మాటలు – జీవపు ఊటలు","[Repeat ×4]
+కష్టములలో నష్టములలో
+వ్యాధులలో నా వేదనలో
+ఆదరించును ఆవరించును
+తీర్చి దిద్ది సరిచేయును
+స్వస్థపరచును లేవనెత్తును
+జీవమిచ్చి నడిపించును
+యేసయ్యా నీ మాటలు – తేనె కంటె మధురము
+యేసయ్యా నీ మాటలు – జీవపు ఊటలు
+[/Repeat]"
+pending,2021-04-1709:45:39.337873,Yesayyaa Nee Maatalu.,english,5,20,4,0.99,"2 adjacent copies of a 8-line group, each marked ×2",a82c36d8aa4cc2947f8f356e5e3ff22538fc28149c572ed96d6b591459052550,"Yesayyaa Nee Maatalu – Thene Kante Madhuramu
+Yesayyaa Nee Maatalu – Jeevapu Ootalu
+Kashtamulalo Nashtamulalo
+Vyaadhulalo Naa Vedhanalo ×2
+Aadharinchunu Aavarinchunu
+Theerchi Dhiddhi Saricheyunu
+Swasthaparachunu Levanetthunu
+Jeevamichchi Nadipinchunu
+Yesayyaa Nee Maatalu – Thene Kante Madhuramu
+Yesayyaa Nee Maatalu – Jeevapu Ootalu
+Kashtamulalo Nashtamulalo
+Vyaadhulalo Naa Vedhanalo ×2
+Aadharinchunu Aavarinchunu
+Theerchi Dhiddhi Saricheyunu
+Swasthaparachunu Levanetthunu
+Jeevamichchi Nadipinchunu ×2","[Repeat ×4]
+Yesayyaa Nee Maatalu – Thene Kante Madhuramu
+Yesayyaa Nee Maatalu – Jeevapu Ootalu
+Kashtamulalo Nashtamulalo
+Vyaadhulalo Naa Vedhanalo
+Aadharinchunu Aavarinchunu
+Theerchi Dhiddhi Saricheyunu
+Swasthaparachunu Levanetthunu
+Jeevamichchi Nadipinchunu
+[/Repeat]"
+pending,2021-04-1709:45:39.337873,Yesayyaa Nee Maatalu.,english,6,21,4,0.99,"2 adjacent copies of a 8-line group, each marked ×2",a82c36d8aa4cc2947f8f356e5e3ff22538fc28149c572ed96d6b591459052550,"Yesayyaa Nee Maatalu – Jeevapu Ootalu
+Kashtamulalo Nashtamulalo
+Vyaadhulalo Naa Vedhanalo ×2
+Aadharinchunu Aavarinchunu
+Theerchi Dhiddhi Saricheyunu
+Swasthaparachunu Levanetthunu
+Jeevamichchi Nadipinchunu
+Yesayyaa Nee Maatalu – Thene Kante Madhuramu
+Yesayyaa Nee Maatalu – Jeevapu Ootalu
+Kashtamulalo Nashtamulalo
+Vyaadhulalo Naa Vedhanalo ×2
+Aadharinchunu Aavarinchunu
+Theerchi Dhiddhi Saricheyunu
+Swasthaparachunu Levanetthunu
+Jeevamichchi Nadipinchunu ×2
+Yesayyaa Nee Maatalu – Thene Kante Madhuramu","[Repeat ×4]
+Yesayyaa Nee Maatalu – Jeevapu Ootalu
+Kashtamulalo Nashtamulalo
+Vyaadhulalo Naa Vedhanalo
+Aadharinchunu Aavarinchunu
+Theerchi Dhiddhi Saricheyunu
+Swasthaparachunu Levanetthunu
+Jeevamichchi Nadipinchunu
+Yesayyaa Nee Maatalu – Thene Kante Madhuramu
+[/Repeat]"
+pending,2021-04-1709:45:39.337873,Yesayyaa Nee Maatalu.,english,7,22,4,0.99,"2 adjacent copies of a 8-line group, each marked ×2",a82c36d8aa4cc2947f8f356e5e3ff22538fc28149c572ed96d6b591459052550,"Kashtamulalo Nashtamulalo
+Vyaadhulalo Naa Vedhanalo ×2
+Aadharinchunu Aavarinchunu
+Theerchi Dhiddhi Saricheyunu
+Swasthaparachunu Levanetthunu
+Jeevamichchi Nadipinchunu
+Yesayyaa Nee Maatalu – Thene Kante Madhuramu
+Yesayyaa Nee Maatalu – Jeevapu Ootalu
+Kashtamulalo Nashtamulalo
+Vyaadhulalo Naa Vedhanalo ×2
+Aadharinchunu Aavarinchunu
+Theerchi Dhiddhi Saricheyunu
+Swasthaparachunu Levanetthunu
+Jeevamichchi Nadipinchunu ×2
+Yesayyaa Nee Maatalu – Thene Kante Madhuramu
+Yesayyaa Nee Maatalu – Jeevapu Ootalu","[Repeat ×4]
+Kashtamulalo Nashtamulalo
+Vyaadhulalo Naa Vedhanalo
+Aadharinchunu Aavarinchunu
+Theerchi Dhiddhi Saricheyunu
+Swasthaparachunu Levanetthunu
+Jeevamichchi Nadipinchunu
+Yesayyaa Nee Maatalu – Thene Kante Madhuramu
+Yesayyaa Nee Maatalu – Jeevapu Ootalu
+[/Repeat]"
+pending,2021-04-1709:45:47.361545,రండి రండి రండయో,telugu,6,9,4,0.99,"2 adjacent copies of a 2-line group, each marked ×2",5bcd1c911c4080e549ffa24ab35dc31a870175635c1f7efafdc890d02beb4447,"యూదుల యూదట రాజుల రాజట ×2
+రక్షణాలు ఇవ్వను వచ్చియున్నాడట ×2
+యూదుల యూదట రాజుల రాజట ×2
+రక్షణాలు ఇవ్వను వచ్చియున్నాడట ×2","[Repeat ×4]
+యూదుల యూదట రాజుల రాజట
+రక్షణాలు ఇవ్వను వచ్చియున్నాడట
+[/Repeat]"
+pending,2021-04-1709:45:47.361545,రండి రండి రండయో,telugu,13,16,4,0.99,"2 adjacent copies of a 2-line group, each marked ×2",5bcd1c911c4080e549ffa24ab35dc31a870175635c1f7efafdc890d02beb4447,"బెత్లెహేము ఊరిలో బీద కన్య మరియకు ×2
+పశువుల శాలలో శిశువుగా పుట్టెను ×2
+బెత్లెహేము ఊరిలో బీద కన్య మరియకు ×2
+పశువుల శాలలో శిశువుగా పుట్టెను ×2","[Repeat ×4]
+బెత్లెహేము ఊరిలో బీద కన్య మరియకు
+పశువుల శాలలో శిశువుగా పుట్టెను
+[/Repeat]"
+pending,2021-04-1709:45:47.361545,రండి రండి రండయో,telugu,20,23,4,0.99,"2 adjacent copies of a 2-line group, each marked ×2",5bcd1c911c4080e549ffa24ab35dc31a870175635c1f7efafdc890d02beb4447,"సాతాను సంతలో సంతోషమేదిరా ×2
+సంతోషం కలదురా శ్రీ యేసుని రాకలో ×2
+సాతాను సంతలో సంతోషమేదిరా ×2
+సంతోషం కలదురా శ్రీ యేసుని రాకలో ×2","[Repeat ×4]
+సాతాను సంతలో సంతోషమేదిరా
+సంతోషం కలదురా శ్రీ యేసుని రాకలో
+[/Repeat]"
+pending,2021-04-1709:45:47.361545,Randi Randi Randayo.,english,6,9,4,0.99,"2 adjacent copies of a 2-line group, each marked ×2",38bbd5f44a69b1af7d56f1ec271cc0c7a2d745cfa2047e8e7421867719dd3c49,"Yoodula Yoodata Raajula Raajata ×2
+Rakshanaalu Ivvanu Vachchiyunnaadata ×2
+Yoodula Yoodata Raajula Raajata ×2
+Rakshanaalu Ivvanu Vachchiyunnaadata ×2","[Repeat ×4]
+Yoodula Yoodata Raajula Raajata
+Rakshanaalu Ivvanu Vachchiyunnaadata
+[/Repeat]"
+pending,2021-04-1709:45:47.361545,Randi Randi Randayo.,english,13,16,4,0.99,"2 adjacent copies of a 2-line group, each marked ×2",38bbd5f44a69b1af7d56f1ec271cc0c7a2d745cfa2047e8e7421867719dd3c49,"Bethlehemu Oorilo Beeda Kanya Mariyaku ×2
+Pashuvula Shaalalo Shishuvugaa Puttenu ×2
+Bethlehemu Oorilo Beeda Kanya Mariyaku ×2
+Pashuvula Shaalalo Shishuvugaa Puttenu ×2","[Repeat ×4]
+Bethlehemu Oorilo Beeda Kanya Mariyaku
+Pashuvula Shaalalo Shishuvugaa Puttenu
+[/Repeat]"
+pending,2021-04-1709:45:47.361545,Randi Randi Randayo.,english,20,23,4,0.99,"2 adjacent copies of a 2-line group, each marked ×2",38bbd5f44a69b1af7d56f1ec271cc0c7a2d745cfa2047e8e7421867719dd3c49,"Saathaanu Santhalo Santhoshamediraa ×2
+Santhosham Kaladuraa Shree Yesuni Raakalo ×2
+Saathaanu Santhalo Santhoshamediraa ×2
+Santhosham Kaladuraa Shree Yesuni Raakalo ×2","[Repeat ×4]
+Saathaanu Santhalo Santhoshamediraa
+Santhosham Kaladuraa Shree Yesuni Raakalo
+[/Repeat]"
+pending,2021-04-1709:45:49.330543,రాత్ అంధేరి,telugu,5,8,8,0.99,"2 adjacent copies of a 2-line group, each marked ×4",d01200dd7423942a2a2c40c666a7fd20d6ba2a32cfbd4eea2d570c6bb0f869e4,"లా లా లా – లా లా లా ×4
+లా లా ల లా
+లా లా లా – లా లా లా ×4
+లా లా ల లా","[Repeat ×8]
+లా లా లా – లా లా లా
+లా లా ల లా
+[/Repeat]"
+pending,2021-04-1709:45:49.330543,Raath Andheri.,english,5,8,8,0.99,"2 adjacent copies of a 2-line group, each marked ×4",b4f79553cff1e41b1d4854ac076a040c3488cd6778dc4eb0d5a3ba97979bd004,"Laa Laa Laa – Laa Laa Laa ×4
+Laa Laa La Laa
+Laa Laa Laa – Laa Laa Laa ×4
+Laa Laa La Laa","[Repeat ×8]
+Laa Laa Laa – Laa Laa Laa
+Laa Laa La Laa
+[/Repeat]"
+pending,2021-04-1709:45:54.608493,వాగ్ధానము,telugu,9,12,2,0.97,2 adjacent copies of a 2-line group,d8f4e5d601c3c29995831d4f7efce58601a0929bca98224182fe251e1d4a37be,"భయపడను… నిలిచెదను…
+నీ వాగ్ధానము దృఢపరచును – నిరంతరము
+భయపడను… నిలిచెదను…
+నీ వాగ్ధానము దృఢపరచును – నిరంతరము","[Repeat ×2]
+భయపడను… నిలిచెదను…
+నీ వాగ్ధానము దృఢపరచును – నిరంతరము
+[/Repeat]"
+pending,2021-04-1709:45:54.608493,Vaagdhaanamu.,english,9,12,2,0.97,2 adjacent copies of a 2-line group,3b76855c82980159d7bb77e8a5c3ec3ce4490daf20cee937e8c3644972294a8a,"Bhayapadanu… Nilichedanu…
+Nee Vaagdhaanamu Dhrudaparachunu – Nirantharamu
+Bhayapadanu… Nilichedanu…
+Nee Vaagdhaanamu Dhrudaparachunu – Nirantharamu","[Repeat ×2]
+Bhayapadanu… Nilichedanu…
+Nee Vaagdhaanamu Dhrudaparachunu – Nirantharamu
+[/Repeat]"
+pending,2021-04-1709:46:06.376896,సహోదరులు ఐక్యత కలిగి,telugu,3,6,2,0.97,2 adjacent copies of a 2-line group,7babd83c8f442461f32e2ae8d5ae3245468e790aa80236b61222f951a05c761c,"సహోదరులు ఐక్యత కలిగి నివసించుట
+ఎంత మేలు – ఎంత మనోహరము
+సహోదరులు ఐక్యత కలిగి నివసించుట
+ఎంత మేలు – ఎంత మనోహరము","[Repeat ×2]
+సహోదరులు ఐక్యత కలిగి నివసించుట
+ఎంత మేలు – ఎంత మనోహరము
+[/Repeat]"

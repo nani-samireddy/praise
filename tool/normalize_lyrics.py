@@ -11,7 +11,9 @@ from collections import Counter
 from pathlib import Path
 
 
-LYRIC_COLUMNS = ("TELUGU SONG", "ENGLISH SONG")
+# Original lyrics are preserved exactly for editorial audit and AI reprocessing.
+# Only the app-ready structured fields may be normalized.
+LYRIC_COLUMNS = ("TELUGU STRUCTURED SONG", "ENGLISH STRUCTURED SONG")
 MARKER = re.compile(r"\|\|\s*([^|\r\n]+?)\s*\|\|")
 REPEAT_COUNT = re.compile(r"\(\s*([2-9]\d*)\s*\)")
 HORIZONTAL_SPACE = re.compile(r"[\t \u00a0\u1680\u2000-\u200a\u202f\u205f\u3000]+")

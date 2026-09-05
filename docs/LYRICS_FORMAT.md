@@ -57,6 +57,58 @@ are normalized to `[Repeat: Agni]`.
 Unknown bracketed text remains visible as ordinary lyrics. The reader never
 silently discards syntax it does not understand.
 
+## Editorial source and structured lyrics
+
+The catalogue keeps two bodies per language:
+
+| Field | Purpose |
+| --- | --- |
+| `original_song` / `original_english_song` | Immutable submitted lyrics. Never overwrite with AI formatting. |
+| `structured_song` / `structured_english_song` | Editor-approved display text, including lightweight markers. |
+
+The published app body is `structured_song` when it is non-empty; otherwise it
+falls back to `original_song`. This keeps formatting experiments reversible and
+lets reviewers compare every proposed change with the source.
+
+### Multi-line repeat blocks
+
+Use a multi-line repeat block only when the same consecutive group is intended
+to be sung repeatedly:
+
+```text
+[Repeat ×4]
+అన్ని వేళల ఆరాధన
+కన్న తండ్రి నీకే మహిమ
+[/Repeat]
+```
+
+The reader shows the group once in short lyrics mode and expands the *entire*
+group four times in full lyrics mode. It is different from a trailing `×2`,
+which repeats only that single line.
+
+### Repeat-block review tool
+
+The repository provides a safe, reusable workflow for large catalogues:
+
+```powershell
+# 1. Detect candidates only — this never modifies lyrics.
+python tool/repeat_blocks.py scan `
+  --input catalog/source/songs.normalized.csv `
+  --review catalog/reports/repeat_blocks_review.csv
+
+# 2. Open the review CSV and change selected `decision` values to `approved`.
+
+# 3. Apply approved proposals to structured fields only.
+python tool/repeat_blocks.py apply `
+  --input catalog/source/songs.normalized.csv `
+  --review catalog/reports/repeat_blocks_review.csv `
+  --output catalog/source/songs.normalized.updated.csv
+```
+
+The apply step refuses to overwrite a manually edited structured body. Review
+that song manually, or deliberately pass `--overwrite-structured` when the
+original source is the intended basis for regeneration.
+
 ## Chords
 
 Chords are not written into the canonical lyrics body. The body stays one lyric

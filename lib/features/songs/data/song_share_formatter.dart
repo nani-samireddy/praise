@@ -7,6 +7,7 @@ String formatLyricsForSharing(String body) {
           LyricsBlockType.lyrics => block.text,
           LyricsBlockType.section => '[${block.text}]',
           LyricsBlockType.repeat => block.text,
+          LyricsBlockType.repeatBlock => '${block.text}\n×${block.repeatCount}',
         };
       })
       .join('\n\n');

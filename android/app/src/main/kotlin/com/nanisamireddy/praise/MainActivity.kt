@@ -1,5 +1,7 @@
 package com.nanisamireddy.praise
 
+import android.media.AudioAttributes
+import android.media.SoundPool
 import com.googlecode.tesseract.android.TessBaseAPI
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -16,9 +18,13 @@ class MainActivity : FlutterActivity() {
     private val ocrExecutor = Executors.newSingleThreadExecutor()
     private val aiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val songStructuringService = SongStructuringService()
+    private lateinit var metronomeSoundPool: SoundPool
+    private var metronomeTickSoundId = 0
+    private var metronomeAccentSoundId = 0
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        configureMetronomeSounds()
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             "com.nanisamireddy.praise/song_scan",
@@ -30,6 +36,37 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "com.nanisamireddy.praise/metronome",
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "playTick" -> {
+                    playMetronomeTick(call.argument<Boolean>("accent") == true)
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    private fun configureMetronomeSounds() {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        metronomeSoundPool = SoundPool.Builder()
+            .setAudioAttributes(audioAttributes)
+            .setMaxStreams(2)
+            .build()
+        metronomeTickSoundId = metronomeSoundPool.load(this, R.raw.metronome_tick, 1)
+        metronomeAccentSoundId = metronomeSoundPool.load(this, R.raw.metronome_accent, 1)
+    }
+
+    private fun playMetronomeTick(accent: Boolean) {
+        val soundId = if (accent) metronomeAccentSoundId else metronomeTickSoundId
+        if (soundId == 0) return
+        metronomeSoundPool.play(soundId, 1f, 1f, 1, 0, 1f)
     }
 
     private fun recognize(imagePath: String?, result: MethodChannel.Result) {
@@ -106,6 +143,9 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        if (::metronomeSoundPool.isInitialized) {
+            metronomeSoundPool.release()
+        }
         ocrExecutor.shutdownNow()
         aiScope.cancel()
         super.onDestroy()

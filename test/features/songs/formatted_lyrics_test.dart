@@ -80,4 +80,50 @@ void main() {
       closeTo(14.4, 0.001),
     );
   });
+
+  testWidgets('song-level option controls annotated lyric blocks', (
+    tester,
+  ) async {
+    const body = '''
+[Repeat ×2]
+Line one
+Line two
+[/Repeat]''';
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: FormattedLyrics(body: body, fontSize: 19),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Line one'), findsOneWidget);
+    expect(find.text('Line two'), findsOneWidget);
+    expect(find.text('×2'), findsOneWidget);
+    expect(find.text('[Repeat ×2]'), findsNothing);
+    expect(find.text('[/Repeat]'), findsNothing);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: FormattedLyrics(
+              body: body,
+              fontSize: 19,
+              expandCounts: true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Line one'), findsNWidgets(2));
+    expect(find.text('Line two'), findsNWidgets(2));
+    expect(find.text('×2'), findsNothing);
+    expect(find.text('[Repeat ×2]'), findsNothing);
+    expect(find.text('[/Repeat]'), findsNothing);
+  });
 }

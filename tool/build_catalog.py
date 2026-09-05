@@ -16,10 +16,18 @@ from pathlib import Path
 REQUIRED_COLUMNS = {
     "ID",
     "TELUGU TITLE",
-    "TELUGU SONG",
     "ENGLISH TITLE",
-    "ENGLISH SONG",
 }
+
+TELUGU_ORIGINAL_COLUMN = "TELUGU ORIGINAL SONG"
+TELUGU_STRUCTURED_COLUMN = "TELUGU STRUCTURED SONG"
+ENGLISH_ORIGINAL_COLUMN = "ENGLISH ORIGINAL SONG"
+ENGLISH_STRUCTURED_COLUMN = "ENGLISH STRUCTURED SONG"
+
+
+def lyric_value(row: dict[str, str], *, original: str, structured: str, legacy: str) -> str:
+    """Return app-ready structured lyrics, falling back to the preserved source."""
+    return (row.get(structured) or row.get(original) or row.get(legacy) or "").strip()
 
 
 def parse_args() -> argparse.Namespace:
@@ -105,10 +113,15 @@ def read_songs(path: Path, id_map: dict[str, str]) -> list[dict[str, object]]:
         for line_number, row in enumerate(reader, start=2):
             source_id = (row.get("ID") or "").strip()
             title = (row.get("TELUGU TITLE") or "").strip()
-            body = (row.get("TELUGU SONG") or "").strip()
+            body = lyric_value(
+                row,
+                original=TELUGU_ORIGINAL_COLUMN,
+                structured=TELUGU_STRUCTURED_COLUMN,
+                legacy="TELUGU SONG",
+            )
             if not source_id or not title or not body:
                 raise ValueError(
-                    f"CSV row {line_number} requires ID, TELUGU TITLE, and TELUGU SONG"
+                    f"CSV row {line_number} requires ID, TELUGU TITLE, and Telugu lyrics"
                 )
             if source_id in source_ids:
                 raise ValueError(f"CSV row {line_number} repeats source ID {source_id!r}")
@@ -130,7 +143,14 @@ def read_songs(path: Path, id_map: dict[str, str]) -> list[dict[str, object]]:
                 "title": title,
                 "englishTitle": optional(row.get("ENGLISH TITLE")),
                 "body": body,
-                "englishBody": optional(row.get("ENGLISH SONG")),
+                "englishBody": optional(
+                    lyric_value(
+                        row,
+                        original=ENGLISH_ORIGINAL_COLUMN,
+                        structured=ENGLISH_STRUCTURED_COLUMN,
+                        legacy="ENGLISH SONG",
+                    )
+                ),
                 "author": optional(row.get("AUTHOR")),
             }
             for output_key, input_key in (
@@ -221,21 +241,29 @@ def main() -> None:
     id_map = load_id_map(args.id_map)
     songs = read_songs(args.input, id_map)
     songs_data = json_bytes(songs)
-    checksum = hashlib.sha256(songs_data).hexdigest()
 
     manifest_path = args.output / "manifest.json"
     songs_path = args.output / "songs.json"
     previous_manifest = None
     previous_songs = None
+    content_changed = True
     if manifest_path.exists():
         previous_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         previous_version = int(previous_manifest["catalogVersion"])
         previous_bytes = songs_path.read_bytes() if songs_path.exists() else b""
         if previous_bytes:
             previous_songs = json.loads(previous_bytes.decode("utf-8"))
+            # Compare parsed JSON, not bytes: Git's checkout line-ending policy
+            # must never create a no-op catalogue version or delta.
+            content_changed = songs != previous_songs
+            if not content_changed:
+                # Preserve the established byte representation (including its
+                # key order) so a schema-only source migration does not alter
+                # the manifest checksum or force every phone to sync.
+                songs_data = previous_bytes.replace(b"\r\n", b"\n")
         if args.auto_version:
-            args.version = previous_version + (0 if songs_data == previous_bytes else 1)
-        elif songs_data != previous_bytes and args.version <= previous_version:
+            args.version = previous_version + (1 if content_changed else 0)
+        elif content_changed and args.version <= previous_version:
             raise ValueError(
                 f"Catalogue content changed; --version must exceed {previous_version}"
             )
@@ -247,11 +275,13 @@ def main() -> None:
     if args.version is None:
         raise ValueError("--version could not be resolved")
 
+    checksum = hashlib.sha256(songs_data).hexdigest()
+
     if (
         previous_manifest
         and args.version == int(previous_manifest["catalogVersion"])
         and songs_path.exists()
-        and songs_data == songs_path.read_bytes()
+        and not content_changed
     ):
         generated_at = previous_manifest["generatedAt"]
     else:
@@ -265,6 +295,18 @@ def main() -> None:
         "sha256": checksum,
         "catalogUrl": "songs.json",
     }
+
+    # A no-op build must retain the latest delta pointer.  Otherwise a later
+    # schema/tool-only run would make clients fall back to a full snapshot even
+    # though the existing incremental update is still valid.
+    if (
+        previous_manifest
+        and not content_changed
+        and args.version == int(previous_manifest["catalogVersion"])
+    ):
+        for key in ("deltaFromVersion", "deltaSha256", "deltaUrl"):
+            if key in previous_manifest:
+                manifest[key] = previous_manifest[key]
 
     if (
         previous_manifest

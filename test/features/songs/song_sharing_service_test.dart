@@ -56,4 +56,31 @@ First line ×2''');
       'Photo song\n\nLyrics are saved as a photo in Praise.',
     );
   });
+
+  test('builds readable share text for multi-line repeat blocks', () {
+    final now = DateTime.utc(2026, 9, 3);
+    final song = Song(
+      id: 'repeat-block-song',
+      title: 'Repeat Block Song',
+      englishTitle: null,
+      body: '''[Repeat ×2]
+Line one
+Line two
+[/Repeat]''',
+      englishBody: null,
+      author: null,
+      source: 'server',
+      createdAt: now,
+      updatedAt: now,
+      isDeleted: false,
+    );
+
+    expect(buildSongShareText(song), '''Repeat Block Song
+
+Lyrics
+
+Line one
+Line two
+×2''');
+  });
 }

@@ -41,4 +41,36 @@ Chorus line
     expect(parseRepeatableLyricsLine('×2 at the start'), isNull);
     expect(parseRepeatableLyricsLine('Untrusted count ×999'), isNull);
   });
+
+  test('parses a safe multi-line repeat block', () {
+    final blocks = parseLyricsDocument('''
+[Chorus]
+[Repeat ×2]
+Line one
+Line two
+[/Repeat]
+
+Next line
+''');
+
+    expect(blocks.map((block) => block.type), [
+      LyricsBlockType.section,
+      LyricsBlockType.repeatBlock,
+      LyricsBlockType.lyrics,
+    ]);
+    expect(blocks[1].text, 'Line one\nLine two');
+    expect(blocks[1].repeatCount, 2);
+  });
+
+  test('leaves an unclosed repeat block as lyrics', () {
+    final blocks = parseLyricsDocument('''
+[Repeat ×2]
+Line one
+Line two
+''');
+
+    expect(blocks, hasLength(1));
+    expect(blocks.single.type, LyricsBlockType.lyrics);
+    expect(blocks.single.text, '[Repeat ×2]\nLine one\nLine two');
+  });
 }

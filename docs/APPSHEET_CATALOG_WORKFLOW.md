@@ -29,8 +29,10 @@ Use one canonical `Songs` sheet with these columns:
 | `source_id` | Yes | Stable editorial ID. Never reuse for a different song. |
 | `title` | Yes | Telugu or primary-language title. |
 | `english_title` | No | English title. |
-| `body` | Yes | Canonical primary lyrics body. |
-| `english_body` | No | Canonical English lyrics body. |
+| `original_song` | Yes | Immutable primary-language source lyrics, as supplied by the editor. |
+| `structured_song` | Yes | App-ready primary lyrics. May contain approved section and repeat markers. |
+| `original_english_song` | No | Immutable English/transliterated source lyrics. |
+| `structured_english_song` | No | App-ready English/transliterated lyrics. |
 | `author` | No | Author or source attribution. |
 | `male_video_url` | No | YouTube URL for a male practice version. |
 | `female_video_url` | No | YouTube URL for a female practice version. |
@@ -58,8 +60,10 @@ Use a private editor tab named `Songs` with exactly these columns:
 source_id
 title
 english_title
-body
-english_body
+original_song
+structured_song
+original_english_song
+structured_english_song
 author
 male_video_url
 female_video_url
@@ -80,15 +84,15 @@ only the fields needed by the mobile catalogue import.
 In `PublishedSongs`, set row 1 to:
 
 ```text
-source_id,title,english_title,body,english_body,author,male_video_url,female_video_url,status
+source_id,title,english_title,original_song,structured_song,original_english_song,structured_english_song,author,male_video_url,female_video_url,status
 ```
 
 In `PublishedSongs!A2`, use:
 
 ```text
 =FILTER(
-  {Songs!A2:A, Songs!B2:B, Songs!C2:C, Songs!D2:D, Songs!E2:E, Songs!F2:F, Songs!G2:G, Songs!H2:H, Songs!I2:I},
-  (LOWER(Songs!I2:I)="approved") + (LOWER(Songs!I2:I)="published")
+  {Songs!A2:A, Songs!B2:B, Songs!C2:C, Songs!D2:D, Songs!E2:E, Songs!F2:F, Songs!G2:G, Songs!H2:H, Songs!I2:I, Songs!J2:J, Songs!K2:K},
+  (LOWER(Songs!K2:K)="approved") + (LOWER(Songs!K2:K)="published")
 )
 ```
 
@@ -130,8 +134,10 @@ Recommended AppSheet column behavior:
 | `source_id` | Text | Initial value `UNIQUEID()`. Editable only for imported legacy rows if needed. |
 | `title` | LongText/Text | Required. |
 | `english_title` | Text | Optional. |
-| `body` | LongText | Required. Enable multi-line editing. |
-| `english_body` | LongText | Optional. Enable multi-line editing. |
+| `original_song` | LongText | Required. Preserve supplied lyrics; AppSheet editors should not use this field for display formatting. |
+| `structured_song` | LongText | Required. Starts as `original_song`; this is the reviewed app display version. |
+| `original_english_song` | LongText | Optional immutable English/transliterated source. |
+| `structured_english_song` | LongText | Optional reviewed English/transliterated display version. |
 | `author` | Text | Optional. |
 | `male_video_url` | URL | Optional. |
 | `female_video_url` | URL | Optional. |
@@ -149,6 +155,19 @@ Recommended AppSheet views:
 | Needs review | `status = "needs_review"` |
 | Approved | `status = "approved"` |
 | Published | `status = "published"` |
+
+### Original versus structured lyrics
+
+Never replace `original_song` or `original_english_song` with AI output. Those
+columns are the editorial record and make formatting changes reversible.
+`structured_song` and `structured_english_song` are the only lyrics fields sent
+to the mobile catalogue. When a structured field is blank, the importer safely
+falls back to its corresponding original field.
+
+For existing rows created before this schema, initially copy the old `body` to
+both `original_song` and `structured_song` (and do the same for English). This
+does not claim to reconstruct historic raw formatting; it simply preserves the
+best record currently available.
 
 Recommended actions:
 

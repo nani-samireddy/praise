@@ -20,58 +20,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Set up Java
-        uses: actions/setup-java@v5
+      - name: Validate project
+        uses: ./.github/actions/validate
         with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.47.0"
-          channel: stable
-          cache: true
-
-      - name: Resolve dependencies
-        run: flutter pub get
-
-      - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed lib test
-
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Test
-        run: flutter test
-
-      - name: Test release tooling
-        run: python -m unittest discover -s test/tool -p "test_*.py"
-
-      - name: Validate AppSheet seed export
-        run: |
-          python tool/import_sheet_catalog.py \
-            --input catalog/source/songs.appsheet.csv \
-            --output /tmp/praise-songs.normalized.csv
-
-      - name: Test support API
-        run: python -m unittest discover -s support_api/tests -p "test_*.py"
-
-      - name: Set up Node
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: support_worker/package-lock.json
-
-      - name: Test support worker
-        working-directory: support_worker
-        run: |
-          npm ci
-          npm test
-
-      - name: Validate catalogue
-        run: python tool/validate_catalog.py
-
-      - name: Build debug APK
-        run: flutter build apk --debug
+          build-debug-apk: ${{ github.event_name != 'push' }}

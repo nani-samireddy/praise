@@ -44,6 +44,7 @@ class FormattedLyrics extends StatelessWidget {
     return switch (current.type) {
       LyricsBlockType.section => 24,
       LyricsBlockType.repeat => 18,
+      LyricsBlockType.repeatBlock => 20,
       LyricsBlockType.lyrics => 20,
     };
   }
@@ -100,7 +101,71 @@ class _LyricsBlockView extends StatelessWidget {
           ),
         ),
       ),
+      LyricsBlockType.repeatBlock => _RepeatBlockView(
+        text: block.text,
+        repeatCount: block.repeatCount,
+        fontSize: fontSize,
+        fontFamily: fontFamily,
+        expandCounts: expandCounts,
+      ),
     };
+  }
+}
+
+class _RepeatBlockView extends StatelessWidget {
+  const _RepeatBlockView({
+    required this.text,
+    required this.repeatCount,
+    required this.fontSize,
+    required this.fontFamily,
+    required this.expandCounts,
+  });
+
+  final String text;
+  final int repeatCount;
+  final double fontSize;
+  final String? fontFamily;
+  final bool expandCounts;
+
+  @override
+  Widget build(BuildContext context) {
+    if (expandCounts) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4, bottom: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var index = 0; index < repeatCount; index++) ...[
+              if (index > 0) SizedBox(height: fontSize * 0.85),
+              _LyricsLines(
+                text: text,
+                fontSize: fontSize,
+                fontFamily: fontFamily,
+                expandCounts: expandCounts,
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _LyricsLines(
+          text: text,
+          fontSize: fontSize,
+          fontFamily: fontFamily,
+          expandCounts: expandCounts,
+        ),
+        const SizedBox(height: 6),
+        _RepeatCountLabel(
+          repeatCount: repeatCount,
+          fontSize: fontSize,
+          fontFamily: fontFamily,
+        ),
+      ],
+    );
   }
 }
 
@@ -161,24 +226,10 @@ class _LyricsLine extends StatelessWidget {
         ?.copyWith(fontSize: fontSize, fontFamily: fontFamily, height: 1.5);
     if (repeatable == null) return Text(line, style: style);
 
-    final countLabel = DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer
-            .withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-        child: Text(
-          '×${repeatable.repeatCount}',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontSize: (fontSize * 0.72).clamp(12, 24),
-            fontFamily: fontFamily,
-            color: Theme.of(context).colorScheme.onPrimaryContainer,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
+    final countLabel = _RepeatCountLabel(
+      repeatCount: repeatable.repeatCount,
+      fontSize: fontSize,
+      fontFamily: fontFamily,
     );
 
     if (!expandCount) {
@@ -204,6 +255,41 @@ class _LyricsLine extends StatelessWidget {
           for (var index = 0; index < repeatable.repeatCount; index++)
             Text(repeatable.text, style: style),
         ],
+      ),
+    );
+  }
+}
+
+class _RepeatCountLabel extends StatelessWidget {
+  const _RepeatCountLabel({
+    required this.repeatCount,
+    required this.fontSize,
+    required this.fontFamily,
+  });
+
+  final int repeatCount;
+  final double fontSize;
+  final String? fontFamily;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer
+            .withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+        child: Text(
+          '×$repeatCount',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontSize: (fontSize * 0.72).clamp(12, 24),
+            fontFamily: fontFamily,
+            color: Theme.of(context).colorScheme.onPrimaryContainer,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ),
     );
   }

@@ -37,18 +37,8 @@ jobs:
             exit 1
           fi
 
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.47.0"
-          channel: stable
-          cache: true
+      - name: Set up Flutter project
+        uses: ./.github/actions/setup-flutter
 
       - name: Verify release tag and version
         run: python tool/verify_release_version.py --tag "$GITHUB_REF_NAME"
@@ -80,46 +70,25 @@ jobs:
           keyPassword=$ANDROID_RELEASE_KEY_PASSWORD
           EOF
 
-      - name: Resolve dependencies
-        run: flutter pub get
-
-      - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed lib test
-
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Test
-        run: flutter test
-
-      - name: Test release tooling
-        run: python -m unittest discover -s test/tool -p "test_*.py"
-
-      - name: Test support API
-        run: python -m unittest discover -s support_api/tests -p "test_*.py"
-
-      - name: Validate catalogue
-        run: python tool/validate_catalog.py
-
       - name: Build signed Android artifacts
+        shell: bash
         run: |
-          flutter build apk --release --target-platform android-arm,android-arm64,android-x64
           cd android
-          ./gradlew :app:bundleRelease
+          ./gradlew :app:assembleRelease :app:bundleRelease
 
       - name: Verify native release payloads
         run: |
           python tool/verify_android_artifacts.py \
-            --apk build/app/outputs/flutter-apk/app-release.apk \
-            --aab build/app/outputs/bundle/release/app-release.aab
+            --apk android/app/build/outputs/apk/release/app-release.apk \
+            --aab android/app/build/outputs/bundle/release/app-release.aab
 
       - name: Prepare release artifacts
         shell: bash
         run: |
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk \
+          cp android/app/build/outputs/apk/release/app-release.apk \
             "dist/Praise-${GITHUB_REF_NAME}.apk"
-          cp build/app/outputs/bundle/release/app-release.aab \
+          cp android/app/build/outputs/bundle/release/app-release.aab \
             "dist/Praise-${GITHUB_REF_NAME}.aab"
           cd dist
           sha256sum "Praise-${GITHUB_REF_NAME}.apk" \
@@ -143,10 +112,12 @@ jobs:
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" \
               "dist/Praise-${GITHUB_REF_NAME}.apk" \
+              "dist/Praise-${GITHUB_REF_NAME}.aab" \
               dist/SHA256SUMS.txt --clobber
           else
             gh release create "$GITHUB_REF_NAME" \
               "dist/Praise-${GITHUB_REF_NAME}.apk" \
+              "dist/Praise-${GITHUB_REF_NAME}.aab" \
               dist/SHA256SUMS.txt \
               --verify-tag \
               --draft \
