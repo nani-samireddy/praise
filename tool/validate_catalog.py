@@ -18,6 +18,10 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def canonical_json_bytes(data: bytes) -> bytes:
+    return data.replace(b"\r\n", b"\n")
+
+
 def required_text(song: object, key: str, index: int) -> str:
     if not isinstance(song, dict):
         raise ValueError(f"Song {index} is not an object")
@@ -74,7 +78,7 @@ def validate_delta_file(
         or "/" in delta_url
     ):
         raise ValueError("Invalid deltaUrl")
-    delta_data = (folder / delta_url).read_bytes()
+    delta_data = canonical_json_bytes((folder / delta_url).read_bytes())
     if hashlib.sha256(delta_data).hexdigest() != delta_sha256:
         raise ValueError("Delta checksum mismatch")
     delta = json.loads(delta_data.decode("utf-8"))
@@ -103,7 +107,7 @@ def validate_delta_file(
 def main() -> None:
     folder = parse_args().catalog
     manifest = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
-    songs_data = (folder / "songs.json").read_bytes()
+    songs_data = canonical_json_bytes((folder / "songs.json").read_bytes())
     songs = json.loads(songs_data.decode("utf-8"))
 
     if manifest.get("schemaVersion") != 1:
