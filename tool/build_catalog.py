@@ -208,7 +208,7 @@ def delta_metadata(folder: Path) -> list[dict[str, object]]:
             {
                 "fromVersion": from_version,
                 "toVersion": to_version,
-                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "sha256": hashlib.sha256(canonical_json_bytes(path.read_bytes())).hexdigest(),
                 "url": path.name,
             }
         )
@@ -224,6 +224,10 @@ def json_bytes(value: object, *, pretty: bool = False) -> bytes:
         separators=None if pretty else (",", ":"),
     )
     return (text + "\n").encode("utf-8")
+
+
+def canonical_json_bytes(data: bytes) -> bytes:
+    return data.replace(b"\r\n", b"\n")
 
 
 def write_atomic(path: Path, data: bytes) -> None:
@@ -275,7 +279,7 @@ def main() -> None:
     if args.version is None:
         raise ValueError("--version could not be resolved")
 
-    checksum = hashlib.sha256(songs_data).hexdigest()
+    checksum = hashlib.sha256(canonical_json_bytes(songs_data)).hexdigest()
 
     if (
         previous_manifest
@@ -327,7 +331,7 @@ def main() -> None:
         manifest.update(
             {
                 "deltaFromVersion": previous_version,
-                "deltaSha256": hashlib.sha256(delta_data).hexdigest(),
+                "deltaSha256": hashlib.sha256(canonical_json_bytes(delta_data)).hexdigest(),
                 "deltaUrl": delta_name,
             }
         )

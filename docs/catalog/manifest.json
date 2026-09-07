@@ -6,31 +6,31 @@
   "sha256": "82bc8d7a772496111b93385e01b72256753342d463d01accf8383fd1a43eb512",
   "catalogUrl": "songs.json",
   "deltaFromVersion": 12,
-  "deltaSha256": "ed5f0bfa3fced93a1582011ee44f9da7e55d06509334f28ac90f742a1aacd949",
+  "deltaSha256": "c4a7a8a4f540d3ac91342deee5d5d3f342cd925d30a58707532cf53f5d6f524c",
   "deltaUrl": "delta-v12-v13.json",
   "deltas": [
     {
       "fromVersion": 9,
       "toVersion": 10,
-      "sha256": "94091fd1ee3badf9cb366139b229c6db3dce25df0559bf75c8f976cb3ebf2486",
+      "sha256": "a7fa500bda0e928e18b94807eec8e44dffa0e43985a82e21597752c9d1d0a250",
       "url": "delta-v9-v10.json"
     },
     {
       "fromVersion": 10,
       "toVersion": 11,
-      "sha256": "8877b2aeda6a0b0a00dddff634248583f7266e77ed2a61ce9b745bb196df1b97",
+      "sha256": "0fe07c7892d1a01a0c43e631e95406a9ccc6a8cec8241c2291203ad89583bb40",
       "url": "delta-v10-v11.json"
     },
     {
       "fromVersion": 11,
       "toVersion": 12,
-      "sha256": "6a6ba09fe1daf5039778ac1c17c4b1f40b9a5df6cfdf92d6939d9ec4d80f9c01",
+      "sha256": "0d024231d3f44230691da5f73d19853d808032440f01df968364fc7a2f66b630",
       "url": "delta-v11-v12.json"
     },
     {
       "fromVersion": 12,
       "toVersion": 13,
-      "sha256": "ed5f0bfa3fced93a1582011ee44f9da7e55d06509334f28ac90f742a1aacd949",
+      "sha256": "c4a7a8a4f540d3ac91342deee5d5d3f342cd925d30a58707532cf53f5d6f524c",
       "url": "delta-v12-v13.json"
     }
   ]
