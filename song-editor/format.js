@@ -27,6 +27,6 @@ export function serialize(blocks, structured=false, keepChords=false) {
   return blocks.map(b=> {
     if ('cue' in b) return structured ? `[Repeat: ${b.cue}]` : `||${b.cue}||`;
     const text=(keepChords ? b.text : plainLyrics(b.text)).trim(); const heading=b.label ? `[${b.label}]\n` : '';
-    return heading+(b.count>1 ? (structured ? `[Repeat ×${b.count}]\n${text}\n[/Repeat]` : `${text} (${b.count})`) : text);
+    return heading+(b.count>1 ? (structured ? `[Repeat:${b.count}]\n${text}\n[/Repeat:${b.count}]` : `${text} (${b.count})`) : text);
   }).join('\n\n');
 }

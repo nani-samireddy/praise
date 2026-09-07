@@ -30,3 +30,11 @@ export function insertChord(text, cursor, chord) {
   }
   return text.slice(0,at)+`[${chord}]`+text.slice(at);
 }
+
+export function addRepeatToSelection(text, start, end, count) {
+  if (!Number.isInteger(count) || count < 2 || count > 12) throw Error('Choose a repeat count from 2 to 12.');
+  if (start === end) throw Error('Select the lyric lines to repeat first.');
+  const selected = text.slice(start, end).trim();
+  if (!selected) throw Error('Select the lyric lines to repeat first.');
+  return text.slice(0, start) + `[Repeat:${count}]\n${selected}\n[/Repeat:${count}]` + text.slice(end);
+}
