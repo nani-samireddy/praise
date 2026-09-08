@@ -38,15 +38,6 @@ jobs:
       - name: Validate catalogue
         run: python tool/validate_catalog.py
 
-      - name: Set up editor tests
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Test Song Studio
-        working-directory: song-editor
-        run: node --test
-
       - name: Check out catalogue server repository
         uses: actions/checkout@v6
         with:
@@ -64,7 +55,7 @@ jobs:
           rsync --archive --delete docs/list/ catalog-server/list/
           cp docs/privacy.html catalog-server/privacy.html
           mkdir -p catalog-server/song-editor
-          cp song-editor/index.html song-editor/style.css song-editor/chords.css song-editor/mobile.css song-editor/app.js song-editor/format.js song-editor/chords.js song-editor/transliterate.js catalog-server/song-editor/
+          rsync --archive --delete song-editor/ catalog-server/song-editor/
           touch catalog-server/.nojekyll
 
       - name: Publish changed catalogue

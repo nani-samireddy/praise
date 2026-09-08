@@ -1,0 +1,56 @@
+/* Responsive metadata layout: every field stays readable without clipping. */
+.meta-card {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.meta-card .field {
+  min-width: 0;
+  overflow: visible;
+}
+
+.meta-card .field input,
+.meta-card .field select {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  text-overflow: ellipsis;
+}
+
+.meta-card .field:nth-child(1) { grid-column: span 3; }
+.meta-card .field:nth-child(2) { grid-column: span 2; }
+.meta-card .field:nth-child(3),
+.meta-card .field:nth-child(4),
+.meta-card .field:nth-child(5),
+.meta-card .field:nth-child(6),
+.meta-card .field:nth-child(7) { grid-column: span 1; }
+.meta-card .field:nth-child(8) { grid-column: span 2; border-right: 0; }
+.meta-card .field:nth-child(9) { grid-column: span 3; border-top: 1px solid var(--line); }
+.meta-card .field:nth-child(10) { grid-column: span 3; border-top: 1px solid var(--line); }
+.meta-card .field:nth-child(11) { grid-column: span 3; border-top: 1px solid var(--line); }
+.meta-card .field:nth-child(12) { grid-column: span 3; border-top: 1px solid var(--line); border-right: 0; }
+
+@media (max-width: 1180px) {
+  .meta-card .field:nth-child(1) { grid-column: span 4; }
+  .meta-card .field:nth-child(2) { grid-column: span 2; }
+  .meta-card .field:nth-child(3),
+  .meta-card .field:nth-child(4),
+  .meta-card .field:nth-child(5) { grid-column: span 2; }
+  .meta-card .field:nth-child(6),
+  .meta-card .field:nth-child(7),
+  .meta-card .field:nth-child(8) { grid-column: span 4; }
+  .meta-card .field:nth-child(9),
+  .meta-card .field:nth-child(10),
+  .meta-card .field:nth-child(11),
+  .meta-card .field:nth-child(12) { grid-column: span 6; }
+}
+
+@media (max-width: 760px) {
+  .meta-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .meta-card .field,
+  .meta-card .field:nth-child(n) { grid-column: span 1; border-top: 0; border-bottom: 1px solid var(--line); }
+  .meta-card .field:nth-child(1),
+  .meta-card .field:nth-child(9),
+  .meta-card .field:nth-child(10),
+  .meta-card .field:nth-child(11),
+  .meta-card .field:nth-child(12) { grid-column: 1 / -1; }
+}

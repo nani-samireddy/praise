@@ -1,7 +1,76 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Praise • Song studio</title><link rel="stylesheet" href="style.css"></head>
-<body><header><a href="./" class="brand">✳ <span>Praise <small>SONG STUDIO</small></span></a><span class="privacy">Private by default · No account needed</span></header>
-<main><div class="intro"><div><h1>Song editor</h1><p>Lyrics, repeats and chords.</p></div><button id="new">New song</button></div>
-<div class="meta"><label>Song title<input id="title" placeholder="Untitled song"></label><span id="saved" role="status">Draft stays in this browser</span></div>
-<div class="workspace"><section class="editor"><div class="panel-heading"><h2>01 <span>Your lyrics</span></h2><button id="sample" class="quiet">Try an example</button></div><p class="hint">Blank lines separate phrases. Select lines to make a repeat block.</p><textarea id="source" placeholder="Paste your Telugu or English lyrics here…" spellcheck="false"></textarea><button class="primary" id="format">Arrange lyrics →</button><p class="hint">Select text in a phrase, then use Repeat selection below.</p><div id="blocks"></div><button id="add" hidden>+ Add section</button></section>
-<section class="preview-panel"><div class="panel-heading"><h2>02 <span>Live preview</span></h2><label class="toggle"><input type="checkbox" id="expanded"> Expand repeats</label></div><div id="preview" class="preview"><div class="empty">✳<h3>A song, beautifully spaced.</h3><p>Your preview will appear here.</p></div></div><footer><label>Export format<select id="output"><option value="normalized">For Google Sheets</option><option value="structured">For Praise app</option><option value="json">Full draft (JSON)</option></select></label><div><button id="copy">Copy lyrics</button><button id="download" class="primary">Download</button></div></footer></section></div><p id="message" role="status" aria-live="polite"></p></main><script type="module" src="app.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#f4ff51" />
+  <title>Praise Song Studio</title>
+  <meta name="description" content="Format worship songs, place chords, and generate aligned transliteration." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="layout-fix.css" />
+</head>
+<body>
+  <header>
+    <a class="brand" href="#">praise<span>.</span></a>
+    <div class="header-actions">
+      <span id="save-state">Saved locally</span>
+      <button class="ghost" id="new-song">New</button>
+      <button class="dark" id="export-song">Export JSON</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <p class="eyebrow">SONG STUDIO / 01</p>
+      <h1>Turn lyrics into<br><em>music-ready data.</em></h1>
+      <p>Structure the song, anchor chords, and keep every position aligned across Telugu and transliteration.</p>
+    </section>
+
+    <section class="workspace">
+      <div class="meta-card">
+        <div class="field title-field"><label for="title">Song title</label><input id="title" placeholder="యేసయ్య నీ ప్రేమ" /></div>
+        <div class="field"><label for="language">Language</label><select id="language"><option value="te">Telugu</option><option value="hi">Hindi</option><option value="en">English</option><option value="ta">Tamil</option></select></div>
+        <div class="field small"><label for="key">Key</label><select id="key"></select></div>
+        <div class="field small"><label for="bpm">BPM</label><input id="bpm" type="number" min="30" max="240" placeholder="72" /></div>
+        <div class="field small"><label for="meter">Time</label><select id="meter"><option>4/4</option><option>3/4</option><option>6/8</option><option>2/4</option><option>12/8</option></select></div>
+        <div class="field small"><label for="tempo">Tempo</label><select id="tempo"><option>Slow</option><option selected>Medium</option><option>Fast</option></select></div>
+        <div class="field small"><label for="capo">Capo</label><input id="capo" type="number" min="0" max="12" value="0" /></div>
+        <div class="field small"><label for="shape">Shape</label><select id="shape"></select></div>
+        <div class="field"><label for="theme">Theme / tags</label><input id="theme" placeholder="Worship, Grace, Prayer" /></div>
+        <div class="field"><label for="author">Writer / composer</label><input id="author" placeholder="Optional" /></div>
+        <div class="field"><label for="maleReference">Male voice YouTube</label><input id="maleReference" type="url" placeholder="Male version URL" /></div>
+        <div class="field"><label for="femaleReference">Female voice YouTube</label><input id="femaleReference" type="url" placeholder="Female version URL" /></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="tabs" role="tablist"><button class="tab active" data-view="edit">Edit</button><button class="tab" data-view="preview">Preview</button><button class="tab" data-view="data">Data</button></div>
+        <div class="tool-actions">
+          <button class="ghost" id="format">✨ Format sections</button>
+          <button class="ghost" id="transliterate">అ → Aa &nbsp;Transliterate</button>
+          <button class="dark" id="add-chord">+ Add chord</button>
+        </div>
+      </div>
+
+      <div id="edit-view" class="view active">
+        <div class="editor-grid">
+          <article class="panel">
+            <div class="panel-head"><div><b>Original lyrics</b><span>Use [G], [Am], [D/F#] before a syllable to anchor a chord.</span></div><button class="mini" id="sample">Load sample</button></div>
+            <textarea id="lyrics" spellcheck="false" placeholder="[Verse 1]\n[G]యేసయ్య నీ [C]ప్రేమ\n[D]ఎంతో మధు[G]రము\n\n[Chorus]\n..." lang="te"></textarea>
+          </article>
+          <article class="panel translit-panel">
+            <div class="panel-head"><div><b>Transliteration</b><span>Chord anchors follow the matching lyric position.</span></div><span class="status" id="translit-state">Not generated</span></div>
+            <textarea id="transliteration" spellcheck="false" placeholder="Yesayya Nee Prema..." lang="en"></textarea>
+          </article>
+        </div>
+      </div>
+
+      <div id="preview-view" class="view"><div class="preview-grid"><article><p class="preview-label">Original</p><div id="original-preview" class="song-preview"></div></article><article><p class="preview-label">Transliteration</p><div id="translit-preview" class="song-preview"></div></article></div></div>
+      <div id="data-view" class="view"><div class="data-head"><span>Structured song object</span><button class="ghost" id="copy-json">Copy JSON</button></div><pre id="json-output"></pre></div>
+    </section>
+  </main>
+
+  <div class="chord-pop" id="chord-pop" hidden><label for="chord-input">Chord</label><div><input id="chord-input" placeholder="G, Am7, D/F#" /><button class="dark" id="insert-chord">Insert</button></div><small>Places the chord at your cursor in both language views.</small></div>
+  <div class="toast" id="toast" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
