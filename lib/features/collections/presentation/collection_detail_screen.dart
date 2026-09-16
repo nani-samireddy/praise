@@ -68,7 +68,7 @@ class CollectionDetailScreen extends ConsumerWidget {
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(Icons.edit_outlined),
-                    title: Text('Rename list'),
+                    title: Text('Rename'),
                   ),
                 ),
                 PopupMenuItem(
@@ -76,7 +76,7 @@ class CollectionDetailScreen extends ConsumerWidget {
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(Icons.delete_outline),
-                    title: Text('Delete list'),
+                    title: Text('Delete'),
                   ),
                 ),
               ],
@@ -167,31 +167,31 @@ class CollectionDetailScreen extends ConsumerWidget {
         ActionSheetItem(
           value: _CollectionAction.copy,
           icon: Icons.copy_outlined,
-          title: 'Copy text',
+          title: 'Copy list',
           subtitle: 'Copy the song titles and lyrics',
         ),
         ActionSheetItem(
           value: _CollectionAction.shareText,
           icon: Icons.share_outlined,
-          title: 'Share text',
-          subtitle: 'Best for messages and WhatsApp',
+          title: 'Share as text',
+          subtitle: 'Works well in messaging apps',
         ),
         ActionSheetItem(
           value: _CollectionAction.shareLink,
           icon: Icons.link_outlined,
           title: 'Share list link',
-          subtitle: 'Lets another Praise user add this list',
+          subtitle: 'Let another Praise user add this list',
         ),
         ActionSheetItem(
           value: _CollectionAction.shareImage,
           icon: Icons.image_outlined,
-          title: 'Share image',
-          subtitle: 'Create a visual list or full-song export',
+          title: 'Share as image',
+          subtitle: 'Create a visual list or song export',
         ),
         ActionSheetItem(
           value: _CollectionAction.sharePdf,
           icon: Icons.picture_as_pdf_outlined,
-          title: 'Share PDF',
+          title: 'Share as PDF',
           subtitle: 'Best for printing or complete song sets',
         ),
       ],
@@ -328,13 +328,13 @@ class CollectionDetailScreen extends ConsumerWidget {
               ),
               ListTile(
                 leading: const Icon(Icons.format_list_numbered),
-                title: const Text('Song list only'),
+                title: const Text('Song titles only'),
                 subtitle: const Text('Titles, English titles, and authors'),
                 onTap: () => Navigator.pop(sheetContext, false),
               ),
               ListTile(
                 leading: const Icon(Icons.library_music_outlined),
-                title: const Text('Full songs'),
+                title: const Text('Songs and lyrics'),
                 subtitle: const Text(
                   'Include Telugu and English lyrics for every song',
                 ),
@@ -451,12 +451,12 @@ class CollectionDetailScreen extends ConsumerWidget {
   void _showFailure(BuildContext context) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Could not update the list.')));
+    ).showSnackBar(const SnackBar(content: Text('Couldn’t update the list.')));
   }
 
   void _showShareFailure(BuildContext context, String action) {
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Could not $action the list.')));
+        .showSnackBar(SnackBar(content: Text('Couldn’t $action the list.')));
   }
 
   void _logFailure(Object error, StackTrace stackTrace) {
@@ -493,7 +493,7 @@ class _EmptyCollection extends StatelessWidget {
             Text(
               isSystem
                   ? 'Songs you add or scan will appear here automatically.'
-                  : 'Add songs to prepare this set.',
+                  : 'Add songs to build this list.',
               textAlign: TextAlign.center,
             ),
             if (onAdd != null) ...[

@@ -28,7 +28,7 @@ void main() {
 
     await repository.setThemeMode('dark');
     await repository.setLyricsFontSize(27.5);
-    await repository.setLyricsDisplayMode(LyricsDisplayMode.english);
+    await repository.setLyricsDisplayMode(LyricsDisplayMode.lineByLine);
     await repository.setTeluguFont(TeluguFont.notoSerifTelugu);
 
     final reopenedRepository = DriftSettingsRepository(database);
@@ -36,7 +36,7 @@ void main() {
     expect(await reopenedRepository.watchLyricsFontSize().first, 27.5);
     expect(
       await reopenedRepository.watchLyricsDisplayMode().first,
-      LyricsDisplayMode.english,
+      LyricsDisplayMode.lineByLine,
     );
     expect(
       await reopenedRepository.watchTeluguFont().first,

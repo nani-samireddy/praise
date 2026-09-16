@@ -2,6 +2,77 @@ import 'package:flutter/material.dart';
 
 import 'lyrics_document.dart';
 
+class BilingualFormattedLyrics extends StatelessWidget {
+  const BilingualFormattedLyrics({
+    super.key,
+    required this.primaryBody,
+    required this.englishBody,
+    required this.fontSize,
+    this.primaryFontFamily,
+    this.expandCounts = false,
+  });
+
+  final String primaryBody;
+  final String englishBody;
+  final double fontSize;
+  final String? primaryFontFamily;
+  final bool expandCounts;
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryBlocks = parseLyricsDocument(primaryBody);
+    final englishBlocks = parseLyricsDocument(englishBody);
+    final blockCount = primaryBlocks.length > englishBlocks.length
+        ? primaryBlocks.length
+        : englishBlocks.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var index = 0; index < blockCount; index++) ...[
+          if (index > 0)
+            SizedBox(
+              height: _spacingBetween(
+                primaryBlocks.elementAtOrNull(index - 1) ??
+                    englishBlocks.elementAtOrNull(index - 1),
+                primaryBlocks.elementAtOrNull(index) ??
+                    englishBlocks.elementAtOrNull(index),
+              ),
+            ),
+          _BilingualBlockView(
+            primary: primaryBlocks.elementAtOrNull(index),
+            english: englishBlocks.elementAtOrNull(index),
+            fontSize: fontSize,
+            primaryFontFamily: primaryFontFamily,
+            expandCounts: expandCounts,
+          ),
+        ],
+      ],
+    );
+  }
+
+  double _spacingBetween(LyricsBlock? previous, LyricsBlock? current) {
+    if (previous?.type == LyricsBlockType.repeat) {
+      return 30;
+    }
+    if (previous?.type == LyricsBlockType.repeatBlock) {
+      return 32;
+    }
+    if (previous != null &&
+        previous.type != LyricsBlockType.lyrics &&
+        current?.type == LyricsBlockType.lyrics) {
+      return 30;
+    }
+    return switch (current?.type) {
+      LyricsBlockType.section => 24,
+      LyricsBlockType.repeat => 18,
+      LyricsBlockType.repeatBlock => 20,
+      LyricsBlockType.lyrics => 20,
+      null => 20,
+    };
+  }
+}
+
 class FormattedLyrics extends StatelessWidget {
   const FormattedLyrics({
     super.key,
@@ -37,6 +108,12 @@ class FormattedLyrics extends StatelessWidget {
   }
 
   double _spacingBetween(LyricsBlock previous, LyricsBlock current) {
+    if (previous.type == LyricsBlockType.repeat) {
+      return 30;
+    }
+    if (previous.type == LyricsBlockType.repeatBlock) {
+      return 32;
+    }
     if (previous.type != LyricsBlockType.lyrics &&
         current.type == LyricsBlockType.lyrics) {
       return 30;
@@ -47,6 +124,331 @@ class FormattedLyrics extends StatelessWidget {
       LyricsBlockType.repeatBlock => 20,
       LyricsBlockType.lyrics => 20,
     };
+  }
+}
+
+class _BilingualBlockView extends StatelessWidget {
+  const _BilingualBlockView({
+    required this.primary,
+    required this.english,
+    required this.fontSize,
+    required this.primaryFontFamily,
+    required this.expandCounts,
+  });
+
+  final LyricsBlock? primary;
+  final LyricsBlock? english;
+  final double fontSize;
+  final String? primaryFontFamily;
+  final bool expandCounts;
+
+  @override
+  Widget build(BuildContext context) {
+    if (primary == null) {
+      return _LyricsBlockView(
+        block: english!,
+        fontSize: fontSize,
+        fontFamily: null,
+        expandCounts: expandCounts,
+      );
+    }
+    if (english == null || primary!.type != english!.type) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _LyricsBlockView(
+            block: primary!,
+            fontSize: fontSize,
+            fontFamily: primaryFontFamily,
+            expandCounts: expandCounts,
+          ),
+          if (english != null) ...[
+            const SizedBox(height: 10),
+            _LyricsBlockView(
+              block: english!,
+              fontSize: fontSize,
+              fontFamily: null,
+              expandCounts: expandCounts,
+            ),
+          ],
+        ],
+      );
+    }
+
+    return switch (primary!.type) {
+      LyricsBlockType.lyrics => _BilingualLyricsLines(
+        primaryText: primary!.text,
+        englishText: english!.text,
+        fontSize: fontSize,
+        primaryFontFamily: primaryFontFamily,
+        expandCounts: expandCounts,
+      ),
+      LyricsBlockType.repeatBlock => _BilingualRepeatBlock(
+        primaryText: primary!.text,
+        englishText: english!.text,
+        repeatCount: primary!.repeatCount,
+        fontSize: fontSize,
+        primaryFontFamily: primaryFontFamily,
+        expandCounts: expandCounts,
+      ),
+      LyricsBlockType.section || LyricsBlockType.repeat => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _LyricsBlockView(
+            block: primary!,
+            fontSize: fontSize,
+            fontFamily: primaryFontFamily,
+            expandCounts: expandCounts,
+          ),
+          if (primary!.text != english!.text) ...[
+            const SizedBox(height: 4),
+            _LyricsBlockView(
+              block: english!,
+              fontSize: fontSize,
+              fontFamily: null,
+              expandCounts: expandCounts,
+            ),
+          ],
+        ],
+      ),
+    };
+  }
+}
+
+class _BilingualLyricsLines extends StatelessWidget {
+  const _BilingualLyricsLines({
+    required this.primaryText,
+    required this.englishText,
+    required this.fontSize,
+    required this.primaryFontFamily,
+    required this.expandCounts,
+    this.expandLineCounts = true,
+    this.showRepeatLabels = true,
+  });
+
+  final String primaryText;
+  final String englishText;
+  final double fontSize;
+  final String? primaryFontFamily;
+  final bool expandCounts;
+  final bool expandLineCounts;
+  final bool showRepeatLabels;
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryLines = primaryText.split('\n');
+    final englishLines = englishText.split('\n');
+    final lineCount = primaryLines.length > englishLines.length
+        ? primaryLines.length
+        : englishLines.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var index = 0; index < lineCount; index++) ...[
+          if (index > 0)
+            SizedBox(
+              height: _spacingBeforeLine(
+                primaryLines.elementAtOrNull(index - 1),
+                englishLines.elementAtOrNull(index - 1),
+              ),
+            ),
+          _BilingualLinePair(
+            primaryLine: index < primaryLines.length
+                ? primaryLines[index]
+                : null,
+            englishLine: index < englishLines.length
+                ? englishLines[index]
+                : null,
+            fontSize: fontSize,
+            primaryFontFamily: primaryFontFamily,
+            expandCounts: expandCounts,
+            expandLineCounts: expandLineCounts,
+            showRepeatLabels: showRepeatLabels,
+          ),
+        ],
+      ],
+    );
+  }
+
+  double _spacingBeforeLine(String? primaryLine, String? englishLine) {
+    final previousRepeatCount = [
+      parseRepeatableLyricsLine(primaryLine ?? '')?.repeatCount ?? 1,
+      parseRepeatableLyricsLine(englishLine ?? '')?.repeatCount ?? 1,
+    ].reduce((left, right) => left > right ? left : right);
+    if (expandCounts && expandLineCounts && previousRepeatCount > 1) {
+      return 30;
+    }
+    return 22;
+  }
+}
+
+class _BilingualLinePair extends StatelessWidget {
+  const _BilingualLinePair({
+    required this.primaryLine,
+    required this.englishLine,
+    required this.fontSize,
+    required this.primaryFontFamily,
+    required this.expandCounts,
+    required this.expandLineCounts,
+    required this.showRepeatLabels,
+  });
+
+  final String? primaryLine;
+  final String? englishLine;
+  final double fontSize;
+  final String? primaryFontFamily;
+  final bool expandCounts;
+  final bool expandLineCounts;
+  final bool showRepeatLabels;
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryRepeatable = primaryLine == null
+        ? null
+        : parseRepeatableLyricsLine(primaryLine!);
+    final englishRepeatable = englishLine == null
+        ? null
+        : parseRepeatableLyricsLine(englishLine!);
+    final repeatCount = [
+      primaryRepeatable?.repeatCount ?? 1,
+      englishRepeatable?.repeatCount ?? 1,
+    ].reduce((left, right) => left > right ? left : right);
+
+    if (expandCounts && expandLineCounts && repeatCount > 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var index = 0; index < repeatCount; index++) ...[
+            if (index > 0) SizedBox(height: fontSize * 0.85),
+            _buildPlainPair(
+              context: context,
+              primaryText: primaryRepeatable?.text ?? primaryLine,
+              englishText: englishRepeatable?.text ?? englishLine,
+            ),
+          ],
+        ],
+      );
+    }
+
+    return _buildAnnotatedPair(context: context);
+  }
+
+  Widget _buildAnnotatedPair({required BuildContext context}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (primaryLine != null && primaryLine!.trim().isNotEmpty)
+          _LyricsLine(
+            line: primaryLine!,
+            fontSize: fontSize,
+            fontFamily: primaryFontFamily,
+            expandCount: false,
+            addExpandedBottomSpacing: false,
+            showRepeatLabel: showRepeatLabels,
+          ),
+        if (englishLine != null && englishLine!.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: _LyricsLine(
+              line: englishLine!,
+              fontSize: fontSize * 0.9,
+              fontFamily: null,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              expandCount: false,
+              addExpandedBottomSpacing: false,
+              showRepeatLabel: showRepeatLabels,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPlainPair({
+    required BuildContext context,
+    required String? primaryText,
+    required String? englishText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (primaryText != null && primaryText.trim().isNotEmpty)
+          Text(
+            primaryText,
+            style: TextStyle(
+              fontFamily: primaryFontFamily,
+              fontSize: fontSize,
+              height: 1.6,
+            ),
+          ),
+        if (englishText != null && englishText.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              englishText,
+              style: TextStyle(
+                fontSize: fontSize * 0.9,
+                height: 1.55,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _BilingualRepeatBlock extends StatelessWidget {
+  const _BilingualRepeatBlock({
+    required this.primaryText,
+    required this.englishText,
+    required this.repeatCount,
+    required this.fontSize,
+    required this.primaryFontFamily,
+    required this.expandCounts,
+  });
+
+  final String primaryText;
+  final String englishText;
+  final int repeatCount;
+  final double fontSize;
+  final String? primaryFontFamily;
+  final bool expandCounts;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = _BilingualLyricsLines(
+      primaryText: primaryText,
+      englishText: englishText,
+      fontSize: fontSize,
+      primaryFontFamily: primaryFontFamily,
+      expandCounts: expandCounts,
+      expandLineCounts: !expandCounts,
+      showRepeatLabels: !expandCounts,
+    );
+    if (expandCounts) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var index = 0; index < repeatCount; index++) ...[
+            if (index > 0) SizedBox(height: fontSize * 0.85),
+            content,
+          ],
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        content,
+        const SizedBox(height: 10),
+        _RepeatCountLabel(
+          repeatCount: repeatCount,
+          fontSize: fontSize,
+          fontFamily: primaryFontFamily,
+        ),
+      ],
+    );
   }
 }
 
@@ -158,7 +560,7 @@ class _RepeatBlockView extends StatelessWidget {
           fontFamily: fontFamily,
           expandCounts: expandCounts,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 10),
         _RepeatCountLabel(
           repeatCount: repeatCount,
           fontSize: fontSize,
@@ -191,7 +593,8 @@ class _LyricsLines extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var index = 0; index < lines.length; index++)
+        for (var index = 0; index < lines.length; index++) ...[
+          if (index > 0) const SizedBox(height: 14),
           _LyricsLine(
             line: lines[index],
             fontSize: fontSize,
@@ -199,6 +602,7 @@ class _LyricsLines extends StatelessWidget {
             expandCount: expandCounts,
             addExpandedBottomSpacing: index < lastContentIndex,
           ),
+        ],
       ],
     );
   }
@@ -211,6 +615,8 @@ class _LyricsLine extends StatelessWidget {
     required this.fontFamily,
     required this.expandCount,
     required this.addExpandedBottomSpacing,
+    this.showRepeatLabel = true,
+    this.color,
   });
 
   final String line;
@@ -218,12 +624,18 @@ class _LyricsLine extends StatelessWidget {
   final String? fontFamily;
   final bool expandCount;
   final bool addExpandedBottomSpacing;
+  final bool showRepeatLabel;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final repeatable = parseRepeatableLyricsLine(line);
-    final style = Theme.of(context).textTheme.bodyLarge
-        ?.copyWith(fontSize: fontSize, fontFamily: fontFamily, height: 1.5);
+    final style = Theme.of(context).textTheme.bodyLarge?.copyWith(
+      fontSize: fontSize,
+      fontFamily: fontFamily,
+      height: 1.6,
+      color: color,
+    );
     if (repeatable == null) return Text(line, style: style);
 
     final countLabel = _RepeatCountLabel(
@@ -239,7 +651,7 @@ class _LyricsLine extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text(repeatable.text, style: style),
-          countLabel,
+          if (showRepeatLabel) countLabel,
         ],
       );
     }

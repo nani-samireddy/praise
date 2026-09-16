@@ -39,7 +39,7 @@ full-lyrics list exports,
 offline Telugu-English photo scanning with optional Gemini Nano organization or
 private original-photo storage when OCR is unreliable,
 automatic English-title transliteration for custom songs, pinch-to-resize lyrics, and
-five persistent Telugu typeface choices (system plus four bundled Google Fonts
+28 persistent Telugu typeface choices (system plus 27 bundled Google Fonts
 families). A versioned GitHub Pages catalogue provides manual snapshot
 synchronization without a maintained application server.
 A stateless Cloudflare Worker lets users submit song requests and reports to a
@@ -150,7 +150,7 @@ flutter test
 flutter run
 ```
 
-For wireless Android development from Git Bash or WSL, use:
+For wireless Android development from macOS, Linux, Git Bash/MSYS, or WSL, use:
 
 ```bash
 scripts/run_wireless_flutter.sh
@@ -159,8 +159,13 @@ scripts/run_wireless_flutter.sh --prod
 scripts/run_wireless_flutter.sh --mode release
 ```
 
-The script lists wireless ADB devices, connects to the selected `HOST:PORT`,
-and starts `flutter run`. Debug mode supports hot reload from the terminal.
+The script lists connected ADB devices and wireless-debugging devices discovered
+by mDNS, lets you select one, connects to a selected `HOST:PORT` when needed,
+and starts `flutter run`. If Android exposes a pairing service, the script can
+prompt for the pairing code and retry the connection. Use `--device SERIAL` to
+bypass the picker for an already-connected device. It discovers common Android
+SDK locations and adds `platform-tools` to the process PATH when `adb` is not
+already available. Debug mode supports hot reload from the terminal.
 
 Normal builds use the production catalogue automatically:
 

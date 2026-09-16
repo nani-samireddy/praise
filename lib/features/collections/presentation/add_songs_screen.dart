@@ -31,13 +31,13 @@ class _AddSongsScreenState extends ConsumerState<AddSongsScreen> {
         title: Text(
           collection.valueOrNull == null
               ? 'Add songs'
-              : 'Add to ${collection.valueOrNull!.name}',
+              : 'Add songs to ${collection.valueOrNull!.name}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
       ),
       body: !editable && collection.hasValue
-          ? const Center(child: Text('This list is managed automatically.'))
+          ? const Center(child: Text('This list updates automatically.'))
           : Column(
               children: [
                 Padding(
@@ -82,7 +82,7 @@ class _AddSongsScreenState extends ConsumerState<AddSongsScreen> {
                       child: CircularProgressIndicator.adaptive(),
                     ),
                     error: (error, stackTrace) =>
-                        const Center(child: Text('Could not load songs.')),
+                        const Center(child: Text('Couldn’t load songs.')),
                   ),
                 ),
               ],
@@ -104,7 +104,7 @@ class _AddSongsScreenState extends ConsumerState<AddSongsScreen> {
       debugPrintStack(stackTrace: stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not update the list.')),
+          const SnackBar(content: Text('Couldn’t update the list.')),
         );
       }
     } finally {

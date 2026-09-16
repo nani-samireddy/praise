@@ -92,7 +92,7 @@ class _CustomSongEditorScreenState
       setState(() => _saving = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Could not save the song.')));
+      ).showSnackBar(const SnackBar(content: Text('Couldn’t save the song.')));
     }
   }
 
@@ -134,8 +134,8 @@ class _CustomSongEditorScreenState
           _isEditing
               ? 'Edit song'
               : widget.scannedDraft == null
-              ? 'Add song'
-              : 'Review scanned song',
+              ? 'Add a song'
+              : 'Review scanned lyrics',
         ),
       ),
       body: Form(
@@ -156,8 +156,8 @@ class _CustomSongEditorScreenState
             TextFormField(
               controller: _titleController,
               decoration: const InputDecoration(
-                labelText: 'Title',
-                hintText: 'Primary-language title',
+                labelText: 'Song title',
+                hintText: 'Enter the song title',
               ),
               textInputAction: TextInputAction.next,
               validator: _requiredValidator,
@@ -185,10 +185,10 @@ class _CustomSongEditorScreenState
             TextFormField(
               controller: _bodyController,
               decoration: InputDecoration(
-                labelText: _activeImagePath == null ? 'Body' : 'Lyrics text',
+                labelText: 'Lyrics',
                 hintText: _activeImagePath == null
-                    ? 'Primary-language lyrics'
-                    : 'Optional when the original photo is kept',
+                    ? 'Lyrics in the original language'
+                    : 'Optional when keeping the original photo',
                 alignLabelWithHint: true,
               ),
               minLines: 8,
@@ -200,8 +200,8 @@ class _CustomSongEditorScreenState
             TextFormField(
               controller: _englishBodyController,
               decoration: const InputDecoration(
-                labelText: 'English body',
-                hintText: 'Optional English lyrics',
+                labelText: 'English lyrics',
+                hintText: 'Optional',
                 alignLabelWithHint: true,
               ),
               minLines: 6,
@@ -212,7 +212,7 @@ class _CustomSongEditorScreenState
             TextFormField(
               controller: _authorController,
               decoration: const InputDecoration(
-                labelText: 'Author',
+                labelText: 'Author or source',
                 hintText: 'Optional',
               ),
               textInputAction: TextInputAction.next,
@@ -222,7 +222,7 @@ class _CustomSongEditorScreenState
               controller: _maleVideoUrlController,
               decoration: const InputDecoration(
                 labelText: 'Male practice video',
-                hintText: 'Optional YouTube URL',
+                hintText: 'Paste a YouTube link (optional)',
               ),
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.next,
@@ -233,7 +233,7 @@ class _CustomSongEditorScreenState
               controller: _femaleVideoUrlController,
               decoration: const InputDecoration(
                 labelText: 'Female practice video',
-                hintText: 'Optional YouTube URL',
+                hintText: 'Paste a YouTube link (optional)',
               ),
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.done,
@@ -276,24 +276,24 @@ class _CustomSongEditorScreenState
         host.endsWith('.youtube-nocookie.com');
     return uri != null && uri.hasScheme && isYoutube
         ? null
-        : 'Use a valid YouTube URL';
+        : 'Enter a valid YouTube link';
   }
 
   static String _scanReviewMessage(ScannedSongDraft draft) {
     if (draft.imagePath != null) {
-      return 'The original photo will be kept instead of OCR text. Add a '
-          'title and confirm the photo before saving to My Songs.';
+      return 'The original photo will be kept. Add a title and check the '
+          'photo before saving.';
     }
     if (draft.aiEnhanced) {
-      return 'On-device AI organized the OCR result. Check every field and '
-          'line break before saving to My Songs.';
+      return 'The lyrics were organized on this device. Check every field and '
+          'line break before saving.';
     }
     if (draft.aiFallback) {
-      return 'On-device AI could not organize this scan, so the original OCR '
-          'result is shown. Check the title, line breaks, and lyrics.';
+      return 'We couldn’t organize this scan, so the original text is shown. '
+          'Check the title, line breaks, and lyrics.';
     }
-    return 'OCR can make mistakes. Check the title, line breaks, and lyrics '
-        'before saving to My Songs.';
+    return 'Scanned text can contain mistakes. Check the title, line breaks, '
+        'and lyrics before saving.';
   }
 
   String? get _activeImagePath {
@@ -326,7 +326,7 @@ class _SongPhotoEditorCard extends StatelessWidget {
                   children: [
                     Icon(Icons.broken_image_outlined, size: 42),
                     SizedBox(height: 10),
-                    Text('This photo could not be opened.'),
+                    Text('Couldn’t open this photo.'),
                   ],
                 ),
               ),
@@ -334,7 +334,7 @@ class _SongPhotoEditorCard extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.image_outlined),
-            title: const Text('Original song photo'),
+            title: const Text('Original photo'),
             trailing: TextButton.icon(
               onPressed: onRemove,
               icon: const Icon(Icons.delete_outline),

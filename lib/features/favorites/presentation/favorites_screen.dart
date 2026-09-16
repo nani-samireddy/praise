@@ -60,12 +60,12 @@ class _EmptyFavorites extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              'No favorite songs yet',
+              'No favorites yet',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
             const Text(
-              'Tap the heart beside a song to keep it here.',
+              'Tap the heart beside a song to save it here.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 18),

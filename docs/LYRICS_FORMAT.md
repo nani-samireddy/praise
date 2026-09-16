@@ -43,8 +43,12 @@ are normalized to `[Repeat: Agni]`.
   next lyric line. This is the visual equivalent of one additional blank line.
 - The outer primary/English lyrics heading receives 28 logical pixels before
   its first content block.
-- Primary and English language blocks remain separate, with 32 logical pixels
-  around the language divider.
+- Primary and English language blocks remain separate in the original, English,
+  and both display modes, with 32 logical pixels around the language divider.
+- Line-by-line mode pairs corresponding primary and English lines together,
+  keeping section labels and repeat cues in their original positions. When the
+  source languages have different line counts, unmatched lines remain visible
+  instead of being silently discarded.
 - Pinch scaling changes lyric text size while structural labels remain stable.
 - The selected Telugu typeface applies to the primary title, primary lyrics,
   structural labels, repeat cues, and repeat counts. English lyrics continue to
@@ -115,11 +119,11 @@ Chords are not written into the canonical lyrics body. The body stays one lyric
 line per physical line so search, copy, sync, and lyrics-only reading remain
 simple and fast.
 
-Future chord support uses optional structured arrangements described in
-`docs/CHORDS_SCHEMA.md`. Chords are anchored to positions inside normalized
-lyric lines and rendered above the lyrics at display time. Do not preserve
-legacy padded chord-over-lyric spacing as the canonical format; it is an input
-format that must be parsed and validated before publishing.
+Structured chord support uses optional arrangements described in
+`docs/CHORDS_SCHEMA.md`. Each chord is attached to a lyric segment and rendered
+above that segment at display time. Do not preserve legacy padded
+chord-over-lyric spacing or character offsets as the canonical format; they are
+input formats that must be parsed into segments before publishing.
 
 ## Normalization workflow
 

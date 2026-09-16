@@ -71,21 +71,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          const _SectionTitle('Personalize Praise'),
+          const _SectionTitle('Your preferences'),
           Card(
             child: ListTile(
               leading: const Icon(Icons.tune),
-              title: const Text('Role and features'),
+              title: const Text('Your role'),
               subtitle: Text(
                 ref.watch(primaryRoleProvider).valueOrNull?.name ??
-                    'Choose your role and feature defaults',
+                    'Choose a role to personalize your features',
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.go('/starter?change=true'),
             ),
           ),
           const SizedBox(height: 20),
-          const _SectionTitle('Feature controls'),
+          const _SectionTitle('Features'),
           Card(
             child: Column(
               children: [
@@ -150,7 +150,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       const Expanded(
                         child: Text(
-                          'Default text size',
+                          'Text size',
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -186,7 +186,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const Divider(),
                   const SizedBox(height: 12),
                   const Text(
-                    'Telugu typeface',
+                    'Telugu font',
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 12),
@@ -239,37 +239,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const Divider(),
                   const SizedBox(height: 12),
                   const Text(
-                    'Display language',
+                    'Lyrics language',
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 12),
-                  SegmentedButton<LyricsDisplayMode>(
-                    segments: const [
-                      ButtonSegment(
-                        value: LyricsDisplayMode.primary,
-                        label: Text('Original'),
-                      ),
-                      ButtonSegment(
-                        value: LyricsDisplayMode.english,
-                        label: Text('English'),
-                      ),
-                      ButtonSegment(
-                        value: LyricsDisplayMode.both,
-                        label: Text('Both'),
-                      ),
-                    ],
-                    selected: {displayMode},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (selection) => ref
-                        .read(settingsRepositoryProvider)
-                        .setLyricsDisplayMode(selection.single),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SegmentedButton<LyricsDisplayMode>(
+                      segments: const [
+                        ButtonSegment(
+                          value: LyricsDisplayMode.primary,
+                          label: Text('Original only'),
+                        ),
+                        ButtonSegment(
+                          value: LyricsDisplayMode.english,
+                          label: Text('English only'),
+                        ),
+                        ButtonSegment(
+                          value: LyricsDisplayMode.both,
+                          label: Text('Sections'),
+                        ),
+                        ButtonSegment(
+                          value: LyricsDisplayMode.lineByLine,
+                          label: Text('Line by line'),
+                        ),
+                      ],
+                      selected: {displayMode},
+                      showSelectedIcon: false,
+                      onSelectionChanged: (selection) => ref
+                          .read(settingsRepositoryProvider)
+                          .setLyricsDisplayMode(selection.single),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 20),
-          const _SectionTitle('Catalogue'),
+          const _SectionTitle('Song library'),
           Card(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
@@ -283,7 +290,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Offline catalogue',
+                          'Song library',
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 4),
@@ -296,13 +303,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         if (!AppConfig.isCatalogueSyncConfigured) ...[
                           const SizedBox(height: 4),
                           Text(
-                            'Remote refresh is not configured in this build.',
+                            'Song updates aren’t available in this build.',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
                         if (!catalogueSyncEnabled)
                           Text(
-                            'Catalogue refresh is disabled in Feature controls.',
+                            'Song updates are turned off in Features.',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         if (syncProgress != null)
@@ -329,7 +336,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               AppConfig.isCatalogueSyncConfigured
                           ? _refreshCatalogue
                           : null,
-                      tooltip: 'Refresh catalogue',
+                      tooltip: 'Refresh songs',
                       icon: const Icon(Icons.refresh),
                     ),
                 ],
@@ -337,14 +344,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const _SectionTitle('Feedback & requests'),
+          const _SectionTitle('Help & feedback'),
           Card(
             child: Column(
               children: [
                 ListTile(
                   leading: const Icon(Icons.library_add_outlined),
                   title: const Text('Request a song'),
-                  subtitle: const Text('Submit and receive a tracking link'),
+                  subtitle: const Text('Tell us which song to add'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => showFeedbackForm(
                     context: context,
@@ -356,7 +363,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ListTile(
                   leading: const Icon(Icons.bug_report_outlined),
                   title: const Text('Report a problem'),
-                  subtitle: const Text('Submit and receive a tracking link'),
+                  subtitle: const Text('Tell us what went wrong'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => showFeedbackForm(
                     context: context,
@@ -403,14 +410,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             'Praise is offline-first. Songs, favorites, lists, custom lyrics, '
             'and saved song photos are stored on this device.\n\n'
             'Camera and photo access are used only when you choose to scan or '
-            'keep a song photo. OCR runs on the device where supported.\n\n'
-            'The app connects to the internet to refresh the public song '
-            'catalogue, open YouTube practice videos, open shared list links, '
+            'keep a song photo. Text recognition runs on the device where supported.\n\n'
+            'The app connects to the internet to update the public song '
+            'song library, open YouTube practice videos, open shared list links, '
             'and submit feedback or song requests. Feedback submissions may '
             'become reviewer-visible support requests, so do not include private details.\n\n'
-            'Catalogue songs are community-provided. Praise does not intend to '
+            'Songs in the library are community-provided. Praise does not intend to '
             'use anyone\'s work without permission. If your work appears in '
-            'the catalogue without consent, report the song and it will be '
+            'the song library without consent, report the song and it will be '
             'reviewed for removal.',
           ),
         ),
@@ -442,7 +449,7 @@ class _FeatureTile extends ConsumerWidget {
       subtitle: Text(
         definition.available
             ? definition.description
-            : '${definition.description} • Coming soon',
+            : '${definition.description} • Not available yet',
       ),
       value: enabled,
       onChanged: definition.available
@@ -458,7 +465,7 @@ class _FeatureTile extends ConsumerWidget {
 }
 
 String _catalogueStatusText(int? version, DateTime? lastSync) {
-  if (lastSync == null) return 'Bundled songs are available offline.';
+  if (lastSync == null) return 'Songs are available offline.';
   final local = lastSync.toLocal();
   final date =
       '${local.year.toString().padLeft(4, '0')}-'
@@ -468,7 +475,7 @@ String _catalogueStatusText(int? version, DateTime? lastSync) {
       '${local.hour.toString().padLeft(2, '0')}:'
       '${local.minute.toString().padLeft(2, '0')}';
   final versionText = version == null ? '' : 'Version $version • ';
-  return '$versionText last refreshed $date at $time';
+  return '${versionText}Last updated $date at $time';
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -481,7 +488,7 @@ class _SectionTitle extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
       child: Text(
-        text.toUpperCase(),
+        text,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
           color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.w800,

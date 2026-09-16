@@ -48,7 +48,7 @@ class CatalogueSyncController extends AsyncNotifier<CatalogueSyncResult?> {
     ref
         .read(catalogueSyncProgressProvider.notifier)
         .state = const CatalogueSyncProgress(
-      message: 'Preparing catalogue refresh…',
+      message: 'Preparing song library update…',
       progress: 0,
     );
     state = const AsyncLoading();
@@ -64,8 +64,8 @@ class CatalogueSyncController extends AsyncNotifier<CatalogueSyncResult?> {
           .read(catalogueSyncProgressProvider.notifier)
           .state = CatalogueSyncProgress(
         message: result.outcome == CatalogueSyncOutcome.upToDate
-            ? 'Catalogue is up to date.'
-            : 'Catalogue refresh complete.',
+            ? 'Song library is up to date.'
+            : 'Song library update complete.',
         progress: 1,
       );
       state = AsyncData(result);

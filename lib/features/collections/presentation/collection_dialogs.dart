@@ -56,10 +56,10 @@ class _CollectionNameDialogState extends State<_CollectionNameDialog> {
         child: TextFormField(
           controller: _controller,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'List name'),
+          decoration: const InputDecoration(labelText: 'Name'),
           textCapitalization: TextCapitalization.words,
           validator: (value) => value == null || value.trim().isEmpty
-              ? 'List name is required'
+              ? 'Enter a list name'
               : null,
           onFieldSubmitted: (_) => _submit(),
         ),
@@ -69,7 +69,10 @@ class _CollectionNameDialogState extends State<_CollectionNameDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Save')),
+        FilledButton(
+          onPressed: _submit,
+          child: Text(widget.title.startsWith('Create') ? 'Create' : 'Save'),
+        ),
       ],
     );
   }
@@ -82,8 +85,8 @@ Future<bool> confirmCollectionDeletion(
   return await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Delete list?'),
-          content: Text('"$name" will be deleted. Its songs will remain safe.'),
+          title: const Text('Delete this list?'),
+          content: Text('"$name" will be deleted. The songs will stay safe.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),

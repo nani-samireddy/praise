@@ -43,7 +43,7 @@ const featureDefinitions = <FeatureDefinition>[
   FeatureDefinition(
     FeatureKey.transliteration,
     'English transliteration',
-    'Show Telugu in Latin script.',
+    'Show Telugu written in English letters.',
   ),
   FeatureDefinition(
     FeatureKey.practiceVideos,
@@ -53,34 +53,32 @@ const featureDefinitions = <FeatureDefinition>[
   FeatureDefinition(
     FeatureKey.metronome,
     'Metronome',
-    'Keep a steady practice tempo.',
+    'Keep a steady beat while you practice.',
   ),
   FeatureDefinition(
     FeatureKey.repeatExpansion,
-    'Repeat expansion',
-    'Expand repeated lyric blocks.',
+    'Show full lyrics',
+    'Expand repeated sections.',
   ),
   FeatureDefinition(
     FeatureKey.chordDisplay,
-    'Chord display',
-    'Show chords with lyrics.',
+    'Show chords',
+    'Show chord names above the lyrics.',
   ),
   FeatureDefinition(
     FeatureKey.catalogueSync,
-    'Catalogue sync',
-    'Refresh published songs.',
+    'Song library updates',
+    'Check for new and updated songs.',
   ),
   FeatureDefinition(
     FeatureKey.chordTranspose,
-    'Chord transposition',
-    'Change the sounding key.',
-    available: false,
+    'Transpose chords',
+    'Change the chord key while reading.',
   ),
   FeatureDefinition(
     FeatureKey.capoShapes,
-    'Capo and guitar shapes',
-    'Show playable guitar shapes.',
-    available: false,
+    'Guitar shapes',
+    'Show playable shapes for songs with a capo.',
   ),
   FeatureDefinition(
     FeatureKey.stageMode,
@@ -110,7 +108,6 @@ const featureDefinitions = <FeatureDefinition>[
     FeatureKey.harmony,
     'Harmony parts',
     'Practice vocal harmony lines.',
-    available: false,
   ),
   FeatureDefinition(
     FeatureKey.arrangements,
@@ -155,9 +152,15 @@ Set<FeatureKey> roleDefaults(PrimaryRole role) {
     FeatureKey.transliteration,
     FeatureKey.practiceVideos,
     FeatureKey.repeatExpansion,
+    FeatureKey.harmony,
   };
   if (role != PrimaryRole.singer) {
-    enabled.addAll({FeatureKey.chordDisplay, FeatureKey.metronome});
+    enabled.addAll({
+      FeatureKey.chordDisplay,
+      FeatureKey.chordTranspose,
+      FeatureKey.metronome,
+      FeatureKey.capoShapes,
+    });
   }
   if (role == PrimaryRole.worshipLeader) {
     enabled.add(FeatureKey.catalogueSync);

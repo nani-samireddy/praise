@@ -14,7 +14,7 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), '  Sunday Worship  ');
-    await tester.tap(find.text('Save'));
+    await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();
 
     expect(result, 'Sunday Worship');
@@ -51,7 +51,7 @@ class _DialogTestApp extends StatelessWidget {
           builder: (context) => TextButton(
             onPressed: () async {
               onResult(
-                await showCollectionNameDialog(context, title: 'New list'),
+                await showCollectionNameDialog(context, title: 'Create a list'),
               );
             },
             child: const Text('Open'),

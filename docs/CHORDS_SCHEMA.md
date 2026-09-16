@@ -49,10 +49,10 @@ structured overlay for one language/body, not a replacement for `body`.
           "lines": [
             {
               "text": "నీ ప్రేమ నన్ను నడిపించెను",
-              "chords": [
-                { "at": 0, "chord": "D" },
-                { "at": 5, "chord": "G" },
-                { "at": 10, "chord": "A" }
+              "segments": [
+                { "text": "నీ ప్రేమ", "chord": "D" },
+                { "text": "నన్ను నడి", "chord": "G" },
+                { "text": "పించెను", "chord": "A" }
               ]
             }
           ]
@@ -74,15 +74,41 @@ structured overlay for one language/body, not a replacement for `body`.
 | `key` | Concert key. Use canonical names like `C`, `F#`, `Bb`, `Am`. |
 | `capo` | Integer from `0` to `12`. |
 | `sections[].label` | Optional display label matching the lyrics format labels when possible. |
-| `lines[].text` | The lyric line text for this arrangement. |
-| `chords[].at` | Zero-based grapheme-cluster offset inside `text`. |
-| `chords[].chord` | Valid chord symbol from the supported grammar. |
+| `lines[].text` | The complete lyric line, retained for search and validation. |
+| `lines[].segments` | Ordered lyric pieces that make up the rendered line. |
+| `segments[].text` | Contiguous lyric text. Preserve boundary whitespace when it is meaningful. |
+| `segments[].chord` | Optional valid chord symbol applied to the start of that segment. |
 
-For Telugu and other Indic scripts, offsets must be counted by visible text
-clusters, not bytes, UTF-16 code units, or raw Unicode scalar values. A syllable
-such as `నీ` counts as one position, and a conjunct cluster such as `ప్రే`
-also counts as one position. The parser and Flutter renderer must use the same
-cluster-counting rule before mapping offsets to displayed text positions.
+Segments are ordered and concatenated to form the lyric line. Chords are
+attached to lyric content rather than character offsets, so the renderer can
+lay out each segment and chord together at every font size and screen width.
+
+## Capo, guitar shapes, and harmony
+
+The mobile structure form may also include `capo` at the song level. It is an
+integer from `0` to `12`. When guitar shapes are enabled, the reader displays
+the transposed concert chord together with the playable shape relative to the
+capo. For example, a concert `C` chord with capo `2` uses an `A` shape.
+
+Optional harmony parts use the same line and segment format as the primary
+sections:
+
+```json
+{
+  "capo": 2,
+  "harmonyParts": [
+    {
+      "label": "Alto",
+      "lines": [
+        { "text": "ఆల్టో గీతము" }
+      ]
+    }
+  ]
+}
+```
+
+Harmony content is hidden by default and is shown only when the `harmony`
+feature is enabled and the reader's Harmony parts control is turned on.
 
 ## Chord grammar
 
@@ -146,14 +172,13 @@ view.
 The reader should support two modes:
 
 - Lyrics: current plain lyric rendering, no chord layout cost.
-- Chords: sectioned chord sheet with chords positioned above lyric offsets.
+- Chords: sectioned chord sheet with chords positioned above lyric segments.
 
 The chord renderer should:
 
-- layout each lyric line with `TextPainter`;
-- calculate chord x-position from the configured text offset;
-- draw chord labels above the lyric baseline;
-- wrap long lyric lines before positioning chords on each visual line;
+- layout each lyric segment with its optional chord label;
+- keep the chord and segment as one responsive unit;
+- wrap segments as a group without losing their association;
 - hide or compress overlapping chord labels on narrow screens only after
   preserving the lyric line;
 - use the selected transpose value as temporary UI state unless the user saves
@@ -181,7 +206,7 @@ The catalogue builder must reject:
 - duplicate arrangement IDs within a song;
 - unsupported `language` values;
 - invalid keys or capo values;
-- chord offsets outside the line text;
+- malformed or empty lyric segments;
 - chord symbols outside the supported grammar;
 - empty sections with no lines; and
 - arrangement bodies that do not substantially match the plain `body` or
@@ -192,7 +217,7 @@ canonical lyrics.
 
 ## AppSheet editing
 
-AppSheet should not ask editors to edit raw nested JSON or numeric offsets by
+AppSheet should not ask editors to edit raw nested JSON or segment arrays by
 default. The first editor format is inline chord markup:
 
 ```text
@@ -204,9 +229,8 @@ default. The first editor format is inline chord markup:
 ```
 
 Editors place `[D]`, `[G]`, `[A]`, and similar chord markers immediately before
-the lyric syllable where the chord changes. The build tool removes the chord
-markers, validates the chord names, counts grapheme clusters, and writes the
-structured arrangement JSON.
+the lyric phrase where the chord changes. The build tool removes the chord
+markers, validates the chord names, and writes ordered lyric segments.
 
 The local parser can be run with:
 
@@ -232,7 +256,7 @@ are involved.
 
 ## Implementation phases
 
-1. Add validators and tests for chord symbols, keys, offsets, and arrangement
+1. Add validators and tests for chord symbols, keys, segments, and arrangement
    shape.
 2. Extend the catalogue schema with optional `arrangements` while preserving
    lyrics-only parsing.

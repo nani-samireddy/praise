@@ -212,8 +212,8 @@ Bundled imports shall never overwrite custom songs or user-managed lists.
 V1 settings shall include:
 
 - lyrics font size;
-- Telugu typeface: system, Noto Sans Telugu, Noto Serif Telugu, Mandali, or
-  Ramabhadra;
+- Telugu typeface: system or any bundled Telugu family from the Google Fonts
+  Telugu catalog;
 - theme preference: system, light, or dark;
 - latest successful catalogue sync time; and
 - a manual catalogue refresh action;

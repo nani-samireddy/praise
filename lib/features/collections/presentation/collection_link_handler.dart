@@ -57,7 +57,7 @@ class _CollectionLinkHandlerState extends ConsumerState<CollectionLinkHandler> {
           title: const Text('Add shared list?'),
           content: Text(
             '"${payload.name}" contains ${payload.songIds.length} songs. '
-            'It will be added as a new list on this device.',
+            'This will create a new list on your device.',
           ),
           actions: [
             TextButton(
@@ -84,7 +84,7 @@ class _CollectionLinkHandlerState extends ConsumerState<CollectionLinkHandler> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Could not add this list. Refresh the catalogue and try again.',
+            'Couldn’t add this list. Refresh your songs and try again.',
           ),
         ),
       );

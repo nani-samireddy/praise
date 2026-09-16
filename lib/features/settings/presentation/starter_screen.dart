@@ -27,15 +27,15 @@ class _StarterScreenState extends ConsumerState<StarterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  widget.changeRole ? 'Change your role' : 'Welcome to Praise',
+                  widget.changeRole ? 'Change role' : 'Welcome to Praise',
                   style: Theme.of(context).textTheme.headlineMedium
                       ?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   widget.changeRole
-                      ? 'Choose a role to reset your feature defaults.'
-                      : 'Choose the role that best matches how you use Praise. You can change every feature later in Settings.',
+                      ? 'Choose a role to update your feature defaults.'
+                      : 'Choose how you use Praise. You can change these features later in Settings.',
                 ),
                 const SizedBox(height: 28),
                 for (final role in PrimaryRole.values) _role(context, role),
@@ -78,10 +78,10 @@ class _StarterScreenState extends ConsumerState<StarterScreen> {
         title: Text(labels[role]!),
         subtitle: Text(
           role == PrimaryRole.singer
-              ? 'Lyrics and vocal practice'
+              ? 'Lyrics and singing'
               : role == PrimaryRole.musician
-              ? 'Chords, tempo and practice tools'
-              : 'Setlists and worship preparation',
+              ? 'Chords and tempo'
+              : 'Lists and service planning',
         ),
         trailing: selected == role ? const Icon(Icons.check) : null,
         onTap: () => setState(() => selected = role),

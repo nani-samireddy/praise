@@ -86,7 +86,7 @@ class _FeedbackFormSheetState extends State<_FeedbackFormSheet> {
     } on FeedbackSubmissionException catch (error) {
       _showError(error.message);
     } catch (_) {
-      _showError('Could not submit right now. Try again later.');
+      _showError('Couldn’t send this right now. Try again later.');
     }
   }
 
@@ -133,7 +133,7 @@ class _FeedbackFormSheetState extends State<_FeedbackFormSheet> {
                     child: ListTile(
                       leading: const Icon(Icons.music_note_outlined),
                       title: Text(song.title),
-                      subtitle: Text('Catalogue ID: ${song.id}'),
+                      subtitle: Text('Song ID: ${song.id}'),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -147,8 +147,8 @@ class _FeedbackFormSheetState extends State<_FeedbackFormSheet> {
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Submitting creates a support request through the '
-                        'Praise support service. Do not include private information.',
+                        'Your message will be sent to the Praise support team. '
+                        'Please don’t include private information.',
                       ),
                     ),
                   ],
@@ -162,7 +162,7 @@ class _FeedbackFormSheetState extends State<_FeedbackFormSheet> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.send_outlined),
-                  label: Text(_submitting ? 'Submitting…' : 'Submit'),
+                  label: Text(_submitting ? 'Sending…' : 'Send'),
                 ),
               ],
             ),
@@ -256,12 +256,12 @@ Future<void> _showReceipt(
     context: context,
     builder: (dialogContext) => AlertDialog(
       icon: const Icon(Icons.check_circle_outline),
-      title: Text('Request #${receipt.number} created'),
+      title: const Text('Request sent'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Keep this link to track updates:'),
+          const Text('Use this link to track updates:'),
           const SizedBox(height: 10),
           SelectableText(receipt.url.toString()),
         ],
@@ -292,7 +292,7 @@ Future<void> _showReceipt(
               if (!dialogContext.mounted) return;
               ScaffoldMessenger.of(dialogContext).showSnackBar(
                 const SnackBar(
-                  content: Text('Could not open the support link.'),
+                  content: Text('Couldn’t open the support link.'),
                 ),
               );
             }

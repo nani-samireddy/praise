@@ -27,7 +27,7 @@ class CollectionsScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _createCollection(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New list'),
+        label: const Text('Create a list'),
       ),
       body: collections.when(
         data: (items) {
@@ -58,7 +58,7 @@ class CollectionsScreen extends ConsumerWidget {
                   ),
                   trailing: Builder(
                     builder: (actionContext) => PopupMenuButton<_ListAction>(
-                      tooltip: 'List actions',
+                      tooltip: 'List options',
                       onSelected: (action) => _handleListAction(
                         actionContext,
                         ref,
@@ -71,7 +71,7 @@ class CollectionsScreen extends ConsumerWidget {
                           value: _ListAction.shareLink,
                           child: ListTile(
                             leading: Icon(Icons.link_outlined),
-                            title: Text('Share link'),
+                            title: Text('Share list link'),
                             contentPadding: EdgeInsets.zero,
                           ),
                         ),
@@ -113,7 +113,7 @@ class CollectionsScreen extends ConsumerWidget {
                 const Icon(Icons.playlist_remove_outlined, size: 52),
                 const SizedBox(height: 16),
                 Text(
-                  'Could not open your lists',
+                  'Couldn’t load your lists',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 16),
@@ -183,14 +183,17 @@ class CollectionsScreen extends ConsumerWidget {
       _logFailure(error, stackTrace);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not share this list link.')),
+          const SnackBar(content: Text('Couldn’t share the list link.')),
         );
       }
     }
   }
 
   Future<void> _createCollection(BuildContext context, WidgetRef ref) async {
-    final name = await showCollectionNameDialog(context, title: 'New list');
+    final name = await showCollectionNameDialog(
+      context,
+      title: 'Create a list',
+    );
     if (name == null || !context.mounted) return;
     try {
       final id = await ref
@@ -244,7 +247,7 @@ class CollectionsScreen extends ConsumerWidget {
   void _showFailure(BuildContext context) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Could not update the list.')));
+    ).showSnackBar(const SnackBar(content: Text('Couldn’t update the list.')));
   }
 
   Rect? _shareOrigin(BuildContext context) {
@@ -283,7 +286,7 @@ class _EmptyCollections extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Create a list for practice sets. My Songs appears automatically when you add custom songs.',
+              'Create a list for practice or worship. My Songs appears automatically when you add a song.',
               textAlign: TextAlign.center,
             ),
           ],

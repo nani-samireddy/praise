@@ -8,19 +8,71 @@
         "type": "chorus",
         "label": "Chorus",
         "lines": [
-          {"text":"అంతా నా మేలుకే – ఆరాధన యేసుకే","transliteration":"Anthaa Naa Meluke – Aaraadhana Yesuke","chords":[{"at":0,"chord":"Em"},{"at":9,"chord":"C"},{"at":19,"chord":"Em"},{"at":30,"chord":"D"}]},
-          {"text":"అంతా నా మంచికే – తన చిత్తమునకు తల వంచితే","transliteration":"Anthaa Naa Manchike – Thana Chitthamunaku Thala Vanchithe","chords":[{"at":0,"chord":"Am"},{"at":10,"chord":"C"},{"at":27,"chord":"D"},{"at":45,"chord":"Em"}]},
-          {"text":"తన చిత్తమునకు తల వంచితే","transliteration":"Thana Chitthamunaku Thala Vanchithe","chords":[{"at":0,"chord":"C"},{"at":18,"chord":"Em"}]},
-          {"text":"ఆరాధన ఆపను – స్తుతియించుట మానను","transliteration":"Aaraadhana Aapanu – Stuthiyinchuta Maananu","repeatCount":2,"chords":[{"at":0,"chord":"C"},{"at":10,"chord":"Em"},{"at":25,"chord":"D"}]},
-          {"text":"స్తుతియించుట మానను","transliteration":"Stuthiyinchuta Maananu","chords":[{"at":0,"chord":"C"},{"at":15,"chord":"Em"}]}
+          {"text":"అంతా నా మేలుకే – ఆరాధన యేసుకే","transliteration":"Anthaa Naa Meluke – Aaraadhana Yesuke","segments":[{"text":"అంతా నా","chord":"Em"},{"text":"మేలుకే –","chord":"C"},{"text":"ఆరాధన","chord":"Em"},{"text":"యేసుకే","chord":"D"}]},
+          {"text":"అంతా నా మంచికే – తన చిత్తమునకు తల వంచితే","transliteration":"Anthaa Naa Manchike – Thana Chitthamunaku Thala Vanchithe","segments":[{"text":"అంతా నా","chord":"Am"},{"text":"మంచికే –","chord":"C"},{"text":"తన చిత్తమునకు","chord":"D"},{"text":"తల వంచితే","chord":"Em"}]},
+          {"text":"తన చిత్తమునకు తల వంచితే","transliteration":"Thana Chitthamunaku Thala Vanchithe","segments":[{"text":"తన చిత్తమునకు","chord":"C"},{"text":"తల వంచితే","chord":"Em"}]},
+          {"text":"ఆరాధన ఆపను – స్తుతియించుట మానను","transliteration":"Aaraadhana Aapanu – Stuthiyinchuta Maananu","repeatCount":2,"segments":[{"text":"ఆరాధన ఆపను –","chord":"C"},{"text":"స్తుతియించుట","chord":"Em"},{"text":"మానను","chord":"D"}]},
+          {"text":"స్తుతియించుట మానను","transliteration":"Stuthiyinchuta Maananu","segments":[{"text":"స్తుతియించుట","chord":"C"},{"text":"మానను","chord":"Em"}]}
         ]
       },
       {
         "id":"verse-1","type":"verse","number":1,"label":"Verse 1",
         "lines":[
-          {"text":"అవమానం ఎంతైనా – నా వారే కాదన్నా","transliteration":"Avamaanam Enthainaa – Naa Vaare Kaadannaa","chords":[{"at":0,"chord":"Em"},{"at":10,"chord":"C"},{"at":22,"chord":"Em"},{"at":30,"chord":"C"}]},
-          {"text":"నీవు తప్ప ఎవరున్నారు ఆకాశమందున","transliteration":"Neevu Thappa Evarunnaaru Aakaashamanduna","repeatCount":2,"chords":[{"at":0,"chord":"D"},{"at":12,"chord":"Am"},{"at":26,"chord":"D"},{"at":34,"chord":"Em"}]},
-          {"text":"నీవు నాకుండగా – ఏది నాకక్కర లేదు","transliteration":"Neevu Naakundagaa – Edi Naakakkara Ledu","repeatCount":2,"chords":[{"at":0,"chord":"A"},{"at":20,"chord":"Em"}]}
+          {"text":"అవమానం ఎంతైనా – నా వారే కాదన్నా","transliteration":"Avamaanam Enthainaa – Naa Vaare Kaadannaa","segments":[{"text":"అవమానం","chord":"Em"},{"text":"ఎంతైనా –","chord":"C"},{"text":"నా వారే","chord":"Em"},{"text":"కాదన్నా","chord":"C"}]},
+          {"text":"నీవు తప్ప ఎవరున్నారు ఆకాశమందున","transliteration":"Neevu Thappa Evarunnaaru Aakaashamanduna","repeatCount":2,"segments":[{"text":"నీవు తప్ప","chord":"D"},{"text":"ఎవరున్నారు","chord":"Am"},{"text":"ఆకాశ","chord":"D"},{"text":"మందున","chord":"Em"}]},
+          {"text":"నీవు నాకుండగా – ఏది నాకక్కర లేదు","transliteration":"Neevu Naakundagaa – Edi Naakakkara Ledu","repeatCount":2,"segments":[{"text":"నీవు నాకుండగా –","chord":"A"},{"text":"ఏది నాకక్కర","chord":"Em"},{"text":"లేదు"}]}
+        ]
+      }
+    ]
+  },
+  "csv-0463": {
+    "originalKey": "Em",
+    "sections": [
+      {
+        "id": "verse-1",
+        "type": "verse",
+        "number": 1,
+        "label": "Verse 1",
+        "lines": [
+          {"text":"జుంటె తేనె కన్నా తీయనిది","transliteration":"Junte Thene Kannaa Theeyanidi","segments":[{"text":"జుంటె","chord":"Em"},{"text":"తేనె కన్నా","chord":"G"},{"text":"తీయనిది","chord":"D"}]},
+          {"text":"వెండి పసిడి కన్నా మిన్న అది","transliteration":"Vendi Pasidi Kannaa Minna Adi","segments":[{"text":"వెండి","chord":"Bm"},{"text":"పసిడి కన్నా","chord":"Em"},{"text":"మిన్న అది"}]},
+          {"text":"పొంగి పొర్లుచున్న ప్రేమ నీది","transliteration":"Pongi Porlu Chunna Prema Needi","segments":[{"text":"పొంగి పొర్లుచున్న","chord":"C"},{"text":"ప్రేమ నీది","chord":"D"}]},
+          {"text":"యేసు నీ నామము","transliteration":"Yesu Nee Naamamu","segments":[{"text":"యేసు నీ","chord":"B"},{"text":"నామము","chord":"Em"}]},
+          {"text":"సూర్య కాంతి కన్నా ప్రకాశమైనది","transliteration":"Soorya Kaanthi Kannaa Prakaashamainadi","segments":[{"text":"సూర్య కాంతి కన్నా","chord":"G"},{"text":"ప్రకాశమైనది","chord":"D"}]},
+          {"text":"పండు వెన్నెల కన్నా నిర్మలమైనది","transliteration":"Pandu Vennela Kannaa Nirmalamainadi","segments":[{"text":"పండు వెన్నెల కన్నా","chord":"Bm"},{"text":"నిర్మలమైనది","chord":"Em"}]},
+          {"text":"మంచు కొండల కన్నా చల్లనిది","transliteration":"Manchu Kondala Kannaa Challanidi","segments":[{"text":"మంచు కొండల కన్నా","chord":"C"},{"text":"చల్లనిది","chord":"D"}]},
+          {"text":"యేసు నీ నామము","transliteration":"Yesu Nee Naamamu","segments":[{"text":"యేసు నీ","chord":"B"},{"text":"నామము","chord":"Em"}]}
+        ]
+      },
+      {
+        "id": "chorus",
+        "type": "chorus",
+        "label": "Chorus",
+        "lines": [
+          {"text":"యేసూ అసాధ్యుడవు నీవు","transliteration":"Yesu Asaadhyudavu Neevu","segments":[{"text":"యేసూ అసాధ్యుడవు","chord":"G"},{"text":"నీవు","chord":"D"}]},
+          {"text":"మరణాన్నే జయించిన వీరుడవు","transliteration":"Maranaanne Jayinchina Veerudavu","segments":[{"text":"మరణాన్నే జయించిన","chord":"Bm"},{"text":"వీరుడవు","chord":"Em"}]},
+          {"text":"సర్వాన్నీ శాసించే యోధుడవు","transliteration":"Sarvannee Shaasinche Yodhudavu","segments":[{"text":"సర్వాన్నీ శాసించే","chord":"C"},{"text":"యోధుడవు","chord":"D"}]},
+          {"text":"నీకు సాటి లేరెవరు","transliteration":"Neeku Saati Lerevaru","segments":[{"text":"నీకు సాటి","chord":"B"},{"text":"లేరెవరు","chord":"Em"}]},
+          {"text":"రక్షకా నీవేగా మా బలము","transliteration":"Rakshakaa Neevegaa Maa Balamu","segments":[{"text":"రక్షకా నీవేగా","chord":"G"},{"text":"మా బలము","chord":"D"}]},
+          {"text":"దేవా మా దాగు స్థలము నీవే","transliteration":"Devaa Maa Daagu Sthalamu Neeve","segments":[{"text":"దేవా మా దాగు స్థలము","chord":"Bm"},{"text":"నీవే","chord":"Em"}]},
+          {"text":"నీవే నిజమైన దేవుడవు","transliteration":"Neeve Nijamaina Devudavu","segments":[{"text":"నీవే నిజమైన","chord":"C"},{"text":"దేవుడవు","chord":"D"}]},
+          {"text":"ప్రణమిల్లి మ్రొక్కెదము","transliteration":"Pranamilli Mrokkedamu","segments":[{"text":"ప్రణమిల్లి","chord":"B"},{"text":"మ్రొక్కెదము","chord":"Em"}]}
+        ]
+      },
+      {
+        "id": "verse-2",
+        "type": "verse",
+        "number": 2,
+        "label": "Verse 2",
+        "lines": [
+          {"text":"ఆకాశము కన్నా విశాలమైనది","transliteration":"Aakaashamu Kannaa Vishaala Mainadi","segments":[{"text":"ఆకాశము కన్నా","chord":"G"},{"text":"విశాలమైనది","chord":"D"}]},
+          {"text":"విశ్వమంతటిలో వ్యాపించియున్నది","transliteration":"Vishwamanthatilo Vyaapinchiyunnadi","segments":[{"text":"విశ్వమంతటిలో","chord":"Bm"},{"text":"వ్యాపించియున్నది","chord":"Em"}]},
+          {"text":"ఊహలకందని ఉన్నతమైనది","transliteration":"Oohalakandani Unnathamainadi","segments":[{"text":"ఊహలకందని","chord":"C"},{"text":"ఉన్నతమైనది","chord":"D"}]},
+          {"text":"యేసు నీ నామము","transliteration":"Yesu Nee Naamamu","segments":[{"text":"యేసు నీ","chord":"B"},{"text":"నామము","chord":"Em"}]},
+          {"text":"లోకమంతటికి రక్షణ మార్గము","transliteration":"Lokamanthatiki Rakshana Maargamu","segments":[{"text":"లోకమంతటికి","chord":"G"},{"text":"రక్షణ మార్గము","chord":"D"}]},
+          {"text":"జనులందరిని బ్రతికించు జీవము","transliteration":"Janulandarini Brathikinchu Jeevamu","segments":[{"text":"జనులందరిని","chord":"Bm"},{"text":"బ్రతికించు జీవము","chord":"Em"}]},
+          {"text":"సర్వ కాలములో నివసించు సత్యము","transliteration":"Sarva Kaalamulo Nivasinchu Sathyamu","segments":[{"text":"సర్వ కాలములో","chord":"C"},{"text":"నివసించు సత్యము","chord":"D"}]},
+          {"text":"యేసు నీ నామము","transliteration":"Yesu Nee Naamamu","segments":[{"text":"యేసు నీ","chord":"B"},{"text":"నామము","chord":"Em"}]}
         ]
       }
     ]

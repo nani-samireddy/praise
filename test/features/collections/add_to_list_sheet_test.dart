@@ -46,7 +46,7 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Create new list'), findsOneWidget);
+    expect(find.text('Create a new list'), findsOneWidget);
     expect(find.text('Sunday Worship'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

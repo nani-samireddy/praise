@@ -34,14 +34,14 @@ class AddToListSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              'Add to list',
+              'Add song to a list',
               style: Theme.of(context).textTheme.titleLarge
                   ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             ListTile(
               leading: const Icon(Icons.add),
-              title: const Text('Create new list'),
+              title: const Text('Create a new list'),
               onTap: () => _createAndAdd(context, ref),
             ),
             ConstrainedBox(
@@ -57,7 +57,7 @@ class AddToListSheet extends ConsumerWidget {
                     return const Padding(
                       padding: EdgeInsets.all(20),
                       child: Text(
-                        'No custom lists yet. Create one above.',
+                        'You don’t have any lists yet. Create one above.',
                         textAlign: TextAlign.center,
                       ),
                     );
@@ -87,7 +87,7 @@ class AddToListSheet extends ConsumerWidget {
                 loading: () =>
                     const Center(child: CircularProgressIndicator.adaptive()),
                 error: (error, stackTrace) => const Text(
-                  'Could not load lists.',
+                  'Couldn’t load your lists.',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -99,7 +99,10 @@ class AddToListSheet extends ConsumerWidget {
   }
 
   Future<void> _createAndAdd(BuildContext context, WidgetRef ref) async {
-    final name = await showCollectionNameDialog(context, title: 'New list');
+    final name = await showCollectionNameDialog(
+      context,
+      title: 'Create a list',
+    );
     if (name == null || !context.mounted) return;
     try {
       final repository = ref.read(collectionsRepositoryProvider);
@@ -133,7 +136,7 @@ class AddToListSheet extends ConsumerWidget {
   void _showFailure(BuildContext context) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Could not update the list.')));
+    ).showSnackBar(const SnackBar(content: Text('Couldn’t update the list.')));
   }
 
   void _logFailure(Object error, StackTrace stackTrace) {

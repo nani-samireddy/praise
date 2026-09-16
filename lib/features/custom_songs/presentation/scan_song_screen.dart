@@ -63,7 +63,7 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
       if (image != null) await _process(image);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Could not open the camera or photo.');
+      setState(() => _error = 'Couldn’t open the camera or photo.');
     }
   }
 
@@ -110,7 +110,8 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
       if (!mounted) return;
       setState(() {
         _recognizing = false;
-        _error = 'Text recognition failed. Try a clearer, straighter photo.';
+        _error =
+            'We couldn’t read that photo. Try a clearer, straighter photo.';
       });
     }
   }
@@ -118,7 +119,7 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan lyrics')),
+      appBar: AppBar(title: const Text('Scan a song')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
@@ -138,12 +139,12 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
               ButtonSegment(
                 value: _ScanResultType.extractText,
                 icon: Icon(Icons.text_snippet_outlined),
-                label: Text('Extract text'),
+                label: Text('Read text'),
               ),
               ButtonSegment(
                 value: _ScanResultType.keepPhoto,
                 icon: Icon(Icons.image_outlined),
-                label: Text('Keep photo'),
+                label: Text('Keep the photo'),
               ),
             ],
             selected: {_resultType},
@@ -165,10 +166,10 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
             const Card(
               child: ListTile(
                 leading: Icon(Icons.photo_outlined),
-                title: Text('Save the original photo'),
+                title: Text('Keep the original photo'),
                 subtitle: Text(
-                  'No OCR is used. Add a title, then the photo will be kept '
-                  'privately inside Praise.',
+                  'We won’t read the photo. Add a title and it will stay '
+                  'private on this device.',
                 ),
               ),
             ),
@@ -181,13 +182,13 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
             FilledButton.icon(
               onPressed: () => _pick(ImageSource.camera),
               icon: const Icon(Icons.photo_camera_outlined),
-              label: const Text('Take photo'),
+              label: const Text('Take a photo'),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () => _pick(ImageSource.gallery),
               icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('Choose photo'),
+              label: const Text('Choose from gallery'),
             ),
           ],
           if (_error case final error?) ...[
@@ -214,10 +215,8 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
               Expanded(
                 child: Text(
                   _resultType == _ScanResultType.extractText
-                      ? 'Recognition happens on this device. The photo is not uploaded. '
-                            'You can correct the title and lyrics before saving.'
-                      : 'The photo stays on this device and is not uploaded. It is '
-                            'copied into Praise only when you save the song.',
+                      ? 'The photo stays on this device. Check the title and lyrics before saving.'
+                      : 'The photo stays on this device and is copied into Praise only when you save.',
                 ),
               ),
             ],
@@ -245,20 +244,22 @@ class _AiOrganizationOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final unavailable = !checking && status == OnDeviceAiStatus.unavailable;
     final subtitle = switch (status) {
-      OnDeviceAiStatus.available => 'Gemini Nano will separate the title, lyrics, English text, and author.',
+      OnDeviceAiStatus.available =>
+        'Organize the title, lyrics, English text, and author automatically.',
       OnDeviceAiStatus.downloadable =>
-        'A one-time on-device model download is needed before the first scan.',
-      OnDeviceAiStatus.downloading =>
-        'The on-device model is currently downloading.',
+        'A one-time download is needed before the first scan.',
+      OnDeviceAiStatus.downloading => 'The model is downloading now.',
       OnDeviceAiStatus.unavailable =>
-        checking ? 'Checking whether Gemini Nano is available…' : 'Unavailable on this device. Regular offline OCR will still work.',
+        checking
+            ? 'Checking availability…'
+            : 'Not available here. Standard offline scanning will still work.',
     };
     return Card(
       child: SwitchListTile.adaptive(
         value: unavailable ? false : enabled,
         onChanged: unavailable ? null : onChanged,
         secondary: const Icon(Icons.auto_awesome_outlined),
-        title: const Text('Organize with on-device AI'),
+        title: const Text('Organize lyrics automatically'),
         subtitle: Text(subtitle),
       ),
     );
@@ -282,14 +283,14 @@ class _ScanInstructions extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Photograph lyrics or choose an existing photo',
+              'Take a photo of the lyrics or choose one',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 10),
             const Text(
-              'Extract its text with offline OCR, or keep the original photo '
-              'when OCR may not be reliable.',
+              'Read the lyrics offline, or keep the photo if the text may not '
+              'be clear.',
               textAlign: TextAlign.center,
             ),
           ],

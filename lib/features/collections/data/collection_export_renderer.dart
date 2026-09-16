@@ -40,7 +40,7 @@ ExportDocument buildCollectionExportDocument(
   return ExportDocument(
     title: collection.name,
     subtitle:
-        '${songs.length} ${songs.length == 1 ? 'song' : 'songs'}${includeSongs ? ' • Full lyrics' : ''}',
+        '${songs.length} ${songs.length == 1 ? 'song' : 'songs'}${includeSongs ? ' • Songs and lyrics' : ''}',
     sections: songs.isEmpty
         ? const [ExportSection(body: 'No songs in this list.')]
         : [

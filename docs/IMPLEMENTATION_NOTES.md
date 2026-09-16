@@ -13,8 +13,9 @@ The repository contains the foundation, offline catalogue, local search,
 favorites, custom-song CRUD, automatic My Songs membership, complete local list
 management, persistent themes and reading preferences, and a bilingual reader
 with saved pinch scaling, persistent Telugu typeface selection, and deliberate
-spacing after structural labels. Four Telugu families are bundled locally from
-Google Fonts, so changing fonts never requires network access. Static catalogue
+spacing after structural labels. The Telugu-script families from the Google
+Fonts catalog are bundled locally, so changing fonts never requires network
+access. Static catalogue
 generation, strict snapshot sync, pull-to-refresh, refresh status, and GitHub
 Pages deployment are implemented. Publishing requires the final GitHub Pages
 URL and review of generated lyrics warnings.

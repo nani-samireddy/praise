@@ -80,7 +80,7 @@ class CatalogueSyncService {
     try {
       onProgress?.call(
         const CatalogueSyncProgress(
-          message: 'Checking catalogue version…',
+          message: 'Checking for song updates…',
           progress: 0.08,
         ),
       );
@@ -89,7 +89,7 @@ class CatalogueSyncService {
       if (manifest.catalogueVersion <= localVersion) {
         onProgress?.call(
           const CatalogueSyncProgress(
-            message: 'Catalogue is already current…',
+            message: 'Your song library is already up to date…',
             progress: 0.92,
           ),
         );
@@ -112,8 +112,8 @@ class CatalogueSyncService {
             onProgress?.call(
               CatalogueSyncProgress(
                 message: total == 1
-                    ? 'Downloading catalogue changes…'
-                    : 'Downloading catalogue changes $current of $total…',
+                    ? 'Downloading song updates…'
+                    : 'Downloading song updates $current of $total…',
                 progress: downloadProgress,
               ),
             );
@@ -121,7 +121,7 @@ class CatalogueSyncService {
           }
           onProgress?.call(
             const CatalogueSyncProgress(
-              message: 'Applying catalogue changes…',
+              message: 'Applying song updates…',
               progress: 0.78,
             ),
           );
@@ -143,14 +143,14 @@ class CatalogueSyncService {
 
       onProgress?.call(
         const CatalogueSyncProgress(
-          message: 'Downloading full catalogue…',
+          message: 'Downloading the song library…',
           progress: 0.32,
         ),
       );
       final snapshot = await remote.fetchCatalogue(manifestUri, manifest);
       onProgress?.call(
         const CatalogueSyncProgress(
-          message: 'Applying catalogue update…',
+          message: 'Updating your song library…',
           progress: 0.78,
         ),
       );
@@ -165,17 +165,17 @@ class CatalogueSyncService {
       rethrow;
     } on CatalogueValidationException catch (error) {
       throw CatalogueSyncException(
-        'The downloaded catalogue is invalid. Your saved songs were not changed.',
+        'The downloaded song library is invalid. Your saved songs are unchanged.',
         error,
       );
     } on DioException catch (error) {
       throw CatalogueSyncException(
-        'Could not reach the catalogue. Check your connection and try again.',
+        'Couldn’t reach the song library. Check your connection and try again.',
         error,
       );
     } on Object catch (error) {
       throw CatalogueSyncException(
-        'Catalogue refresh failed. Your saved songs were not changed.',
+        'Couldn’t update the song library. Your saved songs are unchanged.',
         error,
       );
     }

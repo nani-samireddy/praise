@@ -88,18 +88,105 @@ flutter:
     - assets/tessdata/
 
   fonts:
+    - family: AkayaTelivigala
+      fonts:
+        - asset: assets/fonts/AkayaTelivigala-Regular.ttf
+    - family: AnekTelugu
+      fonts:
+        - asset: assets/fonts/AnekTelugu-Variable.ttf
+    - family: BalooTammudu2
+      fonts:
+        - asset: assets/fonts/BalooTammudu2-Variable.ttf
+    - family: Chathura
+      fonts:
+        - asset: assets/fonts/Chathura-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Chathura-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Chathura-Regular.ttf
+        - asset: assets/fonts/Chathura-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Chathura-ExtraBold.ttf
+          weight: 800
+    - family: Dhurjati
+      fonts:
+        - asset: assets/fonts/Dhurjati-Regular.ttf
+    - family: Gidugu
+      fonts:
+        - asset: assets/fonts/Gidugu-Regular.ttf
+    - family: GoogleSans
+      fonts:
+        - asset: assets/fonts/GoogleSans-Regular.ttf
+    - family: Gurajada
+      fonts:
+        - asset: assets/fonts/Gurajada-Regular.ttf
+    - family: HindGuntur
+      fonts:
+        - asset: assets/fonts/HindGuntur-Light.ttf
+          weight: 300
+        - asset: assets/fonts/HindGuntur-Regular.ttf
+        - asset: assets/fonts/HindGuntur-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/HindGuntur-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/HindGuntur-Bold.ttf
+          weight: 700
+    - family: LakkiReddy
+      fonts:
+        - asset: assets/fonts/LakkiReddy-Regular.ttf
+    - family: Mallanna
+      fonts:
+        - asset: assets/fonts/Mallanna-Regular.ttf
+    - family: Mandali
+      fonts:
+        - asset: assets/fonts/Mandali-Regular.ttf
+    - family: NTR
+      fonts:
+        - asset: assets/fonts/NTR-Regular.ttf
     - family: NotoSansTelugu
       fonts:
         - asset: assets/fonts/NotoSansTelugu-Variable.ttf
     - family: NotoSerifTelugu
       fonts:
         - asset: assets/fonts/NotoSerifTelugu-Variable.ttf
-    - family: Mandali
+    - family: Peddana
       fonts:
-        - asset: assets/fonts/Mandali-Regular.ttf
+        - asset: assets/fonts/Peddana-Regular.ttf
+    - family: Ponnala
+      fonts:
+        - asset: assets/fonts/Ponnala-Regular.ttf
     - family: Ramabhadra
       fonts:
         - asset: assets/fonts/Ramabhadra-Regular.ttf
+    - family: Ramaraja
+      fonts:
+        - asset: assets/fonts/Ramaraja-Regular.ttf
+    - family: RaviPrakash
+      fonts:
+        - asset: assets/fonts/RaviPrakash-Regular.ttf
+    - family: Sirivennela
+      fonts:
+        - asset: assets/fonts/Sirivennela-Regular.ttf
+    - family: SreeKrushnadevaraya
+      fonts:
+        - asset: assets/fonts/SreeKrushnadevaraya-Regular.ttf
+    - family: Suranna
+      fonts:
+        - asset: assets/fonts/Suranna-Regular.ttf
+    - family: Suravaram
+      fonts:
+        - asset: assets/fonts/Suravaram-Regular.ttf
+    - family: TenaliRamakrishna
+      fonts:
+        - asset: assets/fonts/TenaliRamakrishna-Regular.ttf
+    - family: Timmana
+      fonts:
+        - asset: assets/fonts/Timmana-Regular.ttf
+    - family: TiroTelugu
+      fonts:
+        - asset: assets/fonts/TiroTelugu-Regular.ttf
+        - asset: assets/fonts/TiroTelugu-Italic.ttf
+          style: italic
 
   # To add assets to your application, add an assets section, like this:
   # assets:

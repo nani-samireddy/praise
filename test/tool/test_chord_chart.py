@@ -4,15 +4,11 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from tool.chord_chart import ChordChartError, grapheme_count, parse_arrangement_text
+from tool.chord_chart import ChordChartError, parse_arrangement_text
 
 
 class ChordChartTest(unittest.TestCase):
-    def test_counts_telugu_visible_clusters(self):
-        self.assertEqual(grapheme_count("నీ"), 1)
-        self.assertEqual(grapheme_count("ప్రే"), 1)
-
-    def test_parses_inline_telugu_chords_to_grapheme_offsets(self):
+    def test_parses_inline_telugu_chords_into_lyric_segments(self):
         arrangement = parse_arrangement_text(
             "[Verse 1]\n[D]నీ ప్రేమ [G]నన్ను నడి[A]పించెను",
             arrangement_id="default-d",
@@ -24,11 +20,11 @@ class ChordChartTest(unittest.TestCase):
         line = arrangement["sections"][0]["lines"][0]
         self.assertEqual(line["text"], "నీ ప్రేమ నన్ను నడిపించెను")
         self.assertEqual(
-            line["chords"],
+            line["segments"],
             [
-                {"at": 0, "chord": "D"},
-                {"at": 5, "chord": "G"},
-                {"at": 10, "chord": "A"},
+                {"text": "నీ ప్రేమ ", "chord": "D"},
+                {"text": "నన్ను నడి", "chord": "G"},
+                {"text": "పించెను", "chord": "A"},
             ],
         )
 
@@ -42,7 +38,10 @@ class ChordChartTest(unittest.TestCase):
         )
 
         line = arrangement["sections"][0]["lines"][0]
-        self.assertEqual(line, {"text": "Plain lyric line", "chords": []})
+        self.assertEqual(
+            line,
+            {"text": "Plain lyric line", "segments": [{"text": "Plain lyric line"}]},
+        )
 
     def test_rejects_invalid_chord(self):
         with self.assertRaises(ChordChartError):

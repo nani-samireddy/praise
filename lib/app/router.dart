@@ -42,7 +42,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return CollectionLinkHandler(
-            child: AppShell(navigationShell: navigationShell),
+            child: AppShell(
+              navigationShell: navigationShell,
+              showBottomNavigationBar:
+                  state.uri.path == '/songs' ||
+                  state.uri.path == '/favorites' ||
+                  state.uri.path == '/lists' ||
+                  state.uri.path == '/settings',
+            ),
           );
         },
         branches: [

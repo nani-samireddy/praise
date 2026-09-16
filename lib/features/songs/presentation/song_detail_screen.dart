@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -20,19 +21,49 @@ import '../../settings/data/feature_flags.dart';
 import '../../../shared/presentation/action_sheet.dart';
 import '../data/song_sharing_service.dart';
 import 'formatted_lyrics.dart';
+import 'chord_transposer.dart';
 import 'metronome_controller.dart';
 import 'song_providers.dart';
 import 'structured_lyrics.dart';
 
-enum _SongAction {
-  copy,
-  shareText,
-  shareImage,
-  sharePdf,
-  metronome,
-  report,
-  edit,
-  delete,
+enum _SongAction { copy, shareText, shareImage, sharePdf, report, edit, delete }
+
+String? _extractOriginalKey(String? structureJson) {
+  if (structureJson == null) return null;
+  try {
+    final decoded = jsonDecode(structureJson);
+    final key = decoded is Map ? decoded['originalKey'] : null;
+    return key is String && key.trim().isNotEmpty ? key : null;
+  } on Object {
+    return null;
+  }
+}
+
+int _extractCapo(String? structureJson) {
+  if (structureJson == null) return 0;
+  try {
+    final decoded = jsonDecode(structureJson);
+    final capo = decoded is Map ? decoded['capo'] : null;
+    return capo is num ? capo.toInt().clamp(0, 12) : 0;
+  } on Object {
+    return 0;
+  }
+}
+
+bool _hasHarmonyParts(String? structureJson) {
+  if (structureJson == null) return false;
+  try {
+    final decoded = jsonDecode(structureJson);
+    final parts = decoded is Map ? decoded['harmonyParts'] : null;
+    if (parts is! List) return false;
+    return parts.any((part) {
+      if (part is! Map) return false;
+      final lines = part['lines'];
+      return lines is List && lines.whereType<Map>().isNotEmpty;
+    });
+  } on Object {
+    return false;
+  }
 }
 
 class SongDetailScreen extends ConsumerStatefulWidget {
@@ -46,6 +77,7 @@ class SongDetailScreen extends ConsumerStatefulWidget {
 
 class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
   late final MetronomeController _metronomeController;
+  var _transposeSemitones = 0;
 
   @override
   void initState() {
@@ -60,6 +92,14 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant SongDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.songId != widget.songId) {
+      _transposeSemitones = 0;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final song = ref.watch(songProvider(widget.songId));
 
@@ -68,14 +108,14 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
         if (value == null) {
           return const Scaffold(appBar: _LyricsAppBar(), body: _SongNotFound());
         }
-        final metronomeEnabled =
-            ref
-                .watch(featureEnabledProvider(FeatureKey.metronome))
-                .valueOrNull ??
-            true;
         return Scaffold(
           body: _SongReader(
             song: value,
+            metronomeController: _metronomeController,
+            transposeSemitones: _transposeSemitones,
+            onTransposeChanged: (value) =>
+                setState(() => _transposeSemitones = value),
+            onMetronomeDetails: () => _showMetronomeSheet(context),
             appBar: SliverAppBar.medium(
               title: _SongAppBarTitle(
                 title: value.title,
@@ -114,27 +154,18 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
                   ),
                 ),
                 PopupMenuButton<_SongAction>(
-                  tooltip: 'More',
+                  tooltip: 'More options',
                   icon: const Icon(Icons.more_vert),
                   onSelected: (action) =>
                       _handleSongAction(context, ref, value, action),
                   itemBuilder: (context) => [
-                    if (metronomeEnabled)
-                      const PopupMenuItem(
-                        value: _SongAction.metronome,
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(Icons.av_timer_outlined),
-                          title: Text('Metronome'),
-                        ),
-                      ),
                     if (value.source == 'server')
                       const PopupMenuItem(
                         value: _SongAction.report,
                         child: ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: Icon(Icons.flag_outlined),
-                          title: Text('Report issue'),
+                          title: Text('Report a problem'),
                         ),
                       ),
                     if (value.source == 'custom') ...[
@@ -178,24 +209,24 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
   Future<_SongAction?> _showSongShareSheet(BuildContext context, Song song) {
     return showActionSheet<_SongAction>(
       context: context,
-      title: 'Share',
+      title: 'Share song',
       items: [
         const ActionSheetItem(
           value: _SongAction.copy,
           icon: Icons.copy_outlined,
           title: 'Copy lyrics',
-          subtitle: 'Save the lyrics to your clipboard',
+          subtitle: 'Copy the lyrics to your clipboard',
         ),
         const ActionSheetItem(
           value: _SongAction.shareText,
           icon: Icons.share_outlined,
-          title: 'Send as text',
-          subtitle: 'Best for WhatsApp and messages',
+          title: 'Share as text',
+          subtitle: 'Works well in messaging apps',
         ),
         ActionSheetItem(
           value: _SongAction.shareImage,
           icon: Icons.image_outlined,
-          title: song.imagePath == null ? 'Send as image' : 'Send photo',
+          title: song.imagePath == null ? 'Share as image' : 'Share photo',
           subtitle: song.imagePath == null
               ? 'Create a clean lyrics image'
               : 'Share the saved song photo',
@@ -203,8 +234,8 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
         const ActionSheetItem(
           value: _SongAction.sharePdf,
           icon: Icons.picture_as_pdf_outlined,
-          title: 'Send as PDF',
-          subtitle: 'Best for printing and long songs',
+          title: 'Share as PDF',
+          subtitle: 'Best for printing or long songs',
         ),
       ],
     );
@@ -222,11 +253,11 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
           await ref.read(songSharingServiceProvider).copySong(song);
           if (!context.mounted) return;
           ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Song copied.')));
+              .showSnackBar(const SnackBar(content: Text('Lyrics copied.')));
         } catch (_) {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not copy the song.')),
+            const SnackBar(content: Text('Couldn’t copy the lyrics.')),
           );
         }
         return;
@@ -238,12 +269,12 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
         } catch (_) {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not share the song.')),
+            const SnackBar(content: Text('Couldn’t share the song.')),
           );
         }
         return;
       case _SongAction.shareImage:
-        _showPreparingShareMessage(context, 'Preparing image...');
+        _showPreparingShareMessage(context, 'Preparing image…');
         var keepResultMessageVisible = false;
         try {
           await ref
@@ -255,7 +286,9 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
           keepResultMessageVisible = true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('This song is too long for an image. Use PDF.'),
+              content: Text(
+                'This song is too long for an image. Try PDF instead.',
+              ),
             ),
           );
         } catch (_) {
@@ -263,7 +296,7 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           keepResultMessageVisible = true;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not share the song image.')),
+            const SnackBar(content: Text('Couldn’t share the song image.')),
           );
         } finally {
           if (context.mounted && !keepResultMessageVisible) {
@@ -272,7 +305,7 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
         }
         return;
       case _SongAction.sharePdf:
-        _showPreparingShareMessage(context, 'Preparing PDF...');
+        _showPreparingShareMessage(context, 'Preparing PDF…');
         var keepResultMessageVisible = false;
         try {
           await ref
@@ -283,16 +316,13 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           keepResultMessageVisible = true;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not share the song PDF.')),
+            const SnackBar(content: Text('Couldn’t share the song PDF.')),
           );
         } finally {
           if (context.mounted && !keepResultMessageVisible) {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
           }
         }
-        return;
-      case _SongAction.metronome:
-        await _showMetronomeSheet(context);
         return;
       case _SongAction.report:
         await showFeedbackForm(
@@ -355,7 +385,7 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete song?'),
+        title: const Text('Delete this song?'),
         content: Text('"${song.title}" will be permanently removed.'),
         actions: [
           TextButton(
@@ -378,9 +408,250 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not delete the song.')),
+        const SnackBar(content: Text('Couldn’t delete the song.')),
       );
     }
+  }
+}
+
+class _SongControlsPanel extends StatelessWidget {
+  const _SongControlsPanel({
+    required this.fontSize,
+    required this.expandCounts,
+    required this.repeatsEnabled,
+    required this.hasEnglish,
+    required this.displayMode,
+    required this.transposeSemitones,
+    required this.originalKey,
+    required this.chordDisplayEnabled,
+    required this.showChords,
+    required this.capoShapesEnabled,
+    required this.capo,
+    required this.showGuitarShapes,
+    required this.harmonyEnabled,
+    required this.hasHarmonyParts,
+    required this.showHarmonyParts,
+    required this.chordTransposeEnabled,
+    required this.metronomeEnabled,
+    required this.metronomeRunning,
+    required this.onFontSize,
+    required this.onFullLyricsChanged,
+    required this.onDisplayModeChanged,
+    required this.onChordsChanged,
+    required this.onGuitarShapesChanged,
+    required this.onHarmonyPartsChanged,
+    required this.onTransposeChanged,
+    required this.onMetronomeToggle,
+    required this.onMetronomeDetails,
+  });
+
+  final double fontSize;
+  final bool expandCounts;
+  final bool repeatsEnabled;
+  final bool hasEnglish;
+  final LyricsDisplayMode displayMode;
+  final int transposeSemitones;
+  final String? originalKey;
+  final bool chordDisplayEnabled;
+  final bool showChords;
+  final bool capoShapesEnabled;
+  final int capo;
+  final bool showGuitarShapes;
+  final bool harmonyEnabled;
+  final bool hasHarmonyParts;
+  final bool showHarmonyParts;
+  final bool chordTransposeEnabled;
+  final bool metronomeEnabled;
+  final bool metronomeRunning;
+  final Future<void> Function() onFontSize;
+  final ValueChanged<bool> onFullLyricsChanged;
+  final ValueChanged<LyricsDisplayMode> onDisplayModeChanged;
+  final ValueChanged<bool> onChordsChanged;
+  final ValueChanged<bool> onGuitarShapesChanged;
+  final ValueChanged<bool> onHarmonyPartsChanged;
+  final ValueChanged<int> onTransposeChanged;
+  final VoidCallback onMetronomeToggle;
+  final VoidCallback onMetronomeDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final targetKey = originalKey == null
+        ? null
+        : transposeKey(originalKey!, transposeSemitones);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      color: colors.surfaceContainerHighest.withValues(alpha: 0.55),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Song controls',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.1,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.text_fields_outlined),
+              title: const Text('Text size'),
+              subtitle: const Text('Pinch to resize the lyrics'),
+              trailing: OutlinedButton(
+                onPressed: onFontSize,
+                child: Text(fontSize.round().toString()),
+              ),
+            ),
+            if (repeatsEnabled)
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                secondary: const Icon(Icons.unfold_more),
+                title: const Text('Show full lyrics'),
+                subtitle: const Text('Expand all repeated lines and sections'),
+                value: expandCounts,
+                onChanged: onFullLyricsChanged,
+              ),
+            if (hasEnglish) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Lyrics display',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<LyricsDisplayMode>(
+                  segments: const [
+                    ButtonSegment(
+                      value: LyricsDisplayMode.primary,
+                      label: Text('Original only'),
+                    ),
+                    ButtonSegment(
+                      value: LyricsDisplayMode.english,
+                      label: Text('English only'),
+                    ),
+                    ButtonSegment(
+                      value: LyricsDisplayMode.both,
+                      label: Text('Sections'),
+                    ),
+                    ButtonSegment(
+                      value: LyricsDisplayMode.lineByLine,
+                      label: Text('Line by line'),
+                    ),
+                  ],
+                  selected: {displayMode},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (selection) =>
+                      onDisplayModeChanged(selection.single),
+                ),
+              ),
+            ],
+            if (chordDisplayEnabled)
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                secondary: const Icon(Icons.music_note_outlined),
+                title: const Text('Chords'),
+                subtitle: const Text('Show chord names above the lyrics'),
+                value: showChords,
+                onChanged: onChordsChanged,
+              ),
+            if (capoShapesEnabled && showChords && capo > 0)
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                secondary: const Icon(Icons.music_note_outlined),
+                title: const Text('Guitar chord shapes'),
+                subtitle: Text('Capo $capo · Show playable shapes'),
+                value: showGuitarShapes,
+                onChanged: onGuitarShapesChanged,
+              ),
+            if (harmonyEnabled && hasHarmonyParts)
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                secondary: const Icon(Icons.record_voice_over_outlined),
+                title: const Text('Harmony parts'),
+                subtitle: const Text('Show harmony lines'),
+                value: showHarmonyParts,
+                onChanged: onHarmonyPartsChanged,
+              ),
+            if (chordTransposeEnabled) ...[
+              const SizedBox(height: 12),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.music_note_outlined),
+                title: const Text('Transpose'),
+                subtitle: Text(
+                  targetKey == null
+                      ? _transposeLabel(transposeSemitones)
+                      : '$originalKey → $targetKey',
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'Lower key',
+                      onPressed: transposeSemitones <= -12
+                          ? null
+                          : () => onTransposeChanged(transposeSemitones - 1),
+                      icon: const Icon(Icons.remove),
+                    ),
+                    Text(
+                      _transposeLabel(transposeSemitones),
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Raise key',
+                      onPressed: transposeSemitones >= 12
+                          ? null
+                          : () => onTransposeChanged(transposeSemitones + 1),
+                      icon: const Icon(Icons.add),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (metronomeEnabled)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                onTap: onMetronomeDetails,
+                leading: const Icon(Icons.av_timer_outlined),
+                title: const Text('Metronome'),
+                subtitle: const Text('Keep a steady practice beat'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'Metronome options',
+                      onPressed: onMetronomeDetails,
+                      icon: const Icon(Icons.settings_outlined),
+                    ),
+                    Switch(
+                      value: metronomeRunning,
+                      onChanged: (_) => onMetronomeToggle(),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _transposeLabel(int semitones) {
+    if (semitones == 0) return 'Original';
+    return '${semitones > 0 ? '+' : ''}$semitones';
   }
 }
 
@@ -500,8 +771,8 @@ class _MetronomeSheet extends StatelessWidget {
                 const SizedBox(height: 8),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Accent first beat'),
-                  subtitle: const Text('Use a stronger pulse on beat 1'),
+                  title: const Text('Accent beat 1'),
+                  subtitle: const Text('Make the first beat stronger'),
                   value: controller.accentFirstBeat,
                   onChanged: controller.setAccentFirstBeat,
                 ),
@@ -513,7 +784,7 @@ class _MetronomeSheet extends StatelessWidget {
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Haptic pulse'),
+                  title: const Text('Vibrate on each beat'),
                   value: controller.hapticsEnabled,
                   onChanged: controller.setHapticsEnabled,
                 ),
@@ -623,10 +894,21 @@ class _SongAppBarTitle extends StatelessWidget {
 }
 
 class _SongReader extends ConsumerStatefulWidget {
-  const _SongReader({required this.song, required this.appBar});
+  const _SongReader({
+    required this.song,
+    required this.appBar,
+    required this.metronomeController,
+    required this.transposeSemitones,
+    required this.onTransposeChanged,
+    required this.onMetronomeDetails,
+  });
 
   final Song song;
   final SliverAppBar appBar;
+  final MetronomeController metronomeController;
+  final int transposeSemitones;
+  final ValueChanged<int> onTransposeChanged;
+  final VoidCallback onMetronomeDetails;
 
   @override
   ConsumerState<_SongReader> createState() => _SongReaderState();
@@ -639,6 +921,10 @@ class _SongReaderState extends ConsumerState<_SongReader> {
   var _scaleStartFontSize = 19.0;
   var _loadedFontSize = false;
   var _expandCounts = false;
+  var _showChords = false;
+  var _showGuitarShapes = false;
+  var _showHarmonyParts = false;
+  var _showSongControls = false;
 
   @override
   Widget build(BuildContext context) {
@@ -663,6 +949,27 @@ class _SongReaderState extends ConsumerState<_SongReader> {
             .watch(featureEnabledProvider(FeatureKey.practiceVideos))
             .valueOrNull ??
         true;
+    final metronomeEnabled =
+        ref.watch(featureEnabledProvider(FeatureKey.metronome)).valueOrNull ??
+        true;
+    final chordDisplayEnabled =
+        ref
+            .watch(featureEnabledProvider(FeatureKey.chordDisplay))
+            .valueOrNull ??
+        true;
+    final capo = _extractCapo(widget.song.structureJson);
+    final capoShapesEnabled =
+        ref.watch(featureEnabledProvider(FeatureKey.capoShapes)).valueOrNull ??
+        true;
+    final harmonyEnabled =
+        ref.watch(featureEnabledProvider(FeatureKey.harmony)).valueOrNull ??
+        true;
+    final hasHarmonyParts = _hasHarmonyParts(widget.song.structureJson);
+    final chordTransposeEnabled =
+        ref
+            .watch(featureEnabledProvider(FeatureKey.chordTranspose))
+            .valueOrNull ??
+        true;
     if (!_loadedFontSize) {
       _fontSize = storedFontSize;
       _scaleStartFontSize = storedFontSize;
@@ -672,6 +979,8 @@ class _SongReaderState extends ConsumerState<_SongReader> {
         displayMode != LyricsDisplayMode.english || englishBody == null;
     final showEnglish =
         englishBody != null && displayMode != LyricsDisplayMode.primary;
+    final showLineByLine =
+        displayMode == LyricsDisplayMode.lineByLine && englishBody != null;
 
     return GestureDetector(
       onScaleStart: (details) => _scaleStartFontSize = _fontSize,
@@ -693,54 +1002,83 @@ class _SongReaderState extends ConsumerState<_SongReader> {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 48),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  if (hasPrimaryLyrics || englishBody != null)
-                    Row(
-                      children: [
-                        if (repeatsEnabled)
-                          TextButton.icon(
-                            onPressed: _chooseFontSize,
-                            icon: const Icon(Icons.text_fields, size: 18),
-                            label: Text('Text ${_fontSize.round()}'),
-                          ),
-                        const Spacer(),
-                        TextButton.icon(
-                          onPressed: () => setState(() {
-                            _expandCounts = !_expandCounts;
-                          }),
-                          icon: Icon(
-                            _expandCounts
-                                ? Icons.unfold_less
-                                : Icons.unfold_more,
-                            size: 18,
-                          ),
-                          label: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 160),
-                            child: Text(
-                              _expandCounts ? 'Short lyrics' : 'Full lyrics',
-                              key: ValueKey(_expandCounts),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  if (author != null) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
+                  if (hasPrimaryLyrics || englishBody != null) ...[
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () => setState(() {
+                          _showSongControls = !_showSongControls;
+                        }),
+                        icon: Icon(
+                          _showSongControls ? Icons.tune : Icons.tune_outlined,
                           size: 18,
-                          color: colorScheme.primary,
                         ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            author,
-                            style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(color: colorScheme.primary),
-                          ),
+                        label: Text(
+                          _showSongControls ? 'Hide controls' : 'Song controls',
                         ),
-                      ],
+                      ),
+                    ),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      alignment: Alignment.topCenter,
+                      child: _showSongControls
+                          ? AnimatedBuilder(
+                              animation: widget.metronomeController,
+                              builder: (context, _) => _SongControlsPanel(
+                                fontSize: _fontSize,
+                                expandCounts: _expandCounts,
+                                repeatsEnabled: repeatsEnabled,
+                                hasEnglish: englishBody != null,
+                                displayMode: displayMode,
+                                transposeSemitones: widget.transposeSemitones,
+                                originalKey: _extractOriginalKey(
+                                  widget.song.structureJson,
+                                ),
+                                chordDisplayEnabled:
+                                    chordDisplayEnabled &&
+                                    widget.song.structureJson != null,
+                                showChords: _showChords,
+                                capoShapesEnabled:
+                                    chordDisplayEnabled && capoShapesEnabled,
+                                capo: capo,
+                                showGuitarShapes: _showGuitarShapes,
+                                harmonyEnabled: harmonyEnabled,
+                                hasHarmonyParts: hasHarmonyParts,
+                                showHarmonyParts: _showHarmonyParts,
+                                chordTransposeEnabled:
+                                    chordDisplayEnabled &&
+                                    _showChords &&
+                                    chordTransposeEnabled &&
+                                    widget.song.structureJson != null,
+                                metronomeEnabled: metronomeEnabled,
+                                metronomeRunning:
+                                    widget.metronomeController.isRunning,
+                                onFontSize: _chooseFontSize,
+                                onFullLyricsChanged: (value) => setState(() {
+                                  _expandCounts = value;
+                                }),
+                                onDisplayModeChanged: (value) {
+                                  ref
+                                      .read(settingsRepositoryProvider)
+                                      .setLyricsDisplayMode(value);
+                                },
+                                onChordsChanged: (value) => setState(() {
+                                  _showChords = value;
+                                }),
+                                onGuitarShapesChanged: (value) => setState(() {
+                                  _showGuitarShapes = value;
+                                }),
+                                onHarmonyPartsChanged: (value) => setState(() {
+                                  _showHarmonyParts = value;
+                                }),
+                                onTransposeChanged: widget.onTransposeChanged,
+                                onMetronomeToggle:
+                                    widget.metronomeController.toggle,
+                                onMetronomeDetails: widget.onMetronomeDetails,
+                              ),
+                            )
+                          : const SizedBox.shrink(),
                     ),
                   ],
                   const SizedBox(height: 24),
@@ -755,7 +1093,15 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                     if (hasPrimaryLyrics || showEnglish)
                       const SizedBox(height: 28),
                   ],
-                  if (showPrimary && hasPrimaryLyrics)
+                  if (showLineByLine && hasPrimaryLyrics)
+                    _LineByLineLyricsSection(
+                      primaryBody: widget.song.body,
+                      englishBody: englishBody,
+                      fontSize: _fontSize,
+                      primaryFontFamily: teluguFont.fontFamily,
+                      expandCounts: _expandCounts,
+                    ),
+                  if (!showLineByLine && showPrimary && hasPrimaryLyrics)
                     _LyricsSection(
                       label: showEnglish ? 'Telugu lyrics' : 'Lyrics',
                       body: widget.song.body,
@@ -763,8 +1109,15 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                       fontFamily: teluguFont.fontFamily,
                       expandCounts: repeatsEnabled && _expandCounts,
                       structuredJson: widget.song.structureJson,
+                      transposeSemitones: widget.transposeSemitones,
+                      showChords: chordDisplayEnabled && _showChords,
+                      showGuitarShapes:
+                          chordDisplayEnabled &&
+                          capoShapesEnabled &&
+                          _showGuitarShapes,
+                      showHarmonyParts: harmonyEnabled && _showHarmonyParts,
                     ),
-                  if (showEnglish) ...[
+                  if (!showLineByLine && showEnglish) ...[
                     const SizedBox(height: 32),
                     if (showPrimary && hasPrimaryLyrics)
                       Divider(color: colorScheme.outlineVariant),
@@ -775,6 +1128,18 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                       fontSize: _fontSize,
                       fontFamily: null,
                       expandCounts: repeatsEnabled && _expandCounts,
+                    ),
+                  ],
+                  if (author != null && author.trim().isNotEmpty) ...[
+                    const SizedBox(height: 36),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        'This song is authored by ${author.trim()}.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
                     ),
                   ],
                 ]),
@@ -933,7 +1298,7 @@ class _PracticeVideosState extends State<_PracticeVideos>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'LISTEN',
+          'Listen',
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: colorScheme.primary,
             fontWeight: FontWeight.w800,
@@ -1050,7 +1415,7 @@ class _SongPhoto extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'SAVED PHOTO',
+          'Saved photo',
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: colorScheme.primary,
             fontWeight: FontWeight.w800,
@@ -1076,7 +1441,7 @@ class _SongPhoto extends StatelessWidget {
                     children: [
                       Icon(Icons.broken_image_outlined, size: 48),
                       SizedBox(height: 12),
-                      Text('The saved song photo could not be opened.'),
+                      Text('Couldn’t open the saved song photo.'),
                     ],
                   ),
                 ),
@@ -1097,6 +1462,10 @@ class _LyricsSection extends StatelessWidget {
     required this.fontFamily,
     required this.expandCounts,
     this.structuredJson,
+    this.transposeSemitones = 0,
+    this.showChords = true,
+    this.showGuitarShapes = false,
+    this.showHarmonyParts = false,
   });
 
   final String label;
@@ -1105,6 +1474,10 @@ class _LyricsSection extends StatelessWidget {
   final String? fontFamily;
   final bool expandCounts;
   final String? structuredJson;
+  final int transposeSemitones;
+  final bool showChords;
+  final bool showGuitarShapes;
+  final bool showHarmonyParts;
 
   @override
   Widget build(BuildContext context) {
@@ -1112,14 +1485,14 @@ class _LyricsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label.toUpperCase(),
+          label,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.1,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         AnimatedSize(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
@@ -1130,6 +1503,10 @@ class _LyricsSection extends StatelessWidget {
                   fontSize: fontSize,
                   fontFamily: fontFamily,
                   expandCounts: expandCounts,
+                  transposeSemitones: transposeSemitones,
+                  showChords: showChords,
+                  showGuitarShapes: showGuitarShapes,
+                  showHarmonyParts: showHarmonyParts,
                 )
               : FormattedLyrics(
                   key: ValueKey(expandCounts),
@@ -1138,6 +1515,47 @@ class _LyricsSection extends StatelessWidget {
                   fontFamily: fontFamily,
                   expandCounts: expandCounts,
                 ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LineByLineLyricsSection extends StatelessWidget {
+  const _LineByLineLyricsSection({
+    required this.primaryBody,
+    required this.englishBody,
+    required this.fontSize,
+    required this.primaryFontFamily,
+    required this.expandCounts,
+  });
+
+  final String primaryBody;
+  final String englishBody;
+  final double fontSize;
+  final String? primaryFontFamily;
+  final bool expandCounts;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Line by line',
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.1,
+          ),
+        ),
+        const SizedBox(height: 32),
+        BilingualFormattedLyrics(
+          primaryBody: primaryBody,
+          englishBody: englishBody,
+          fontSize: fontSize,
+          primaryFontFamily: primaryFontFamily,
+          expandCounts: expandCounts,
         ),
       ],
     );
@@ -1158,7 +1576,7 @@ class _SongNotFound extends StatelessWidget {
             const Icon(Icons.music_off_outlined, size: 52),
             const SizedBox(height: 16),
             Text(
-              'Song not found',
+              'We couldn’t find that song',
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ],

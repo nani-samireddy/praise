@@ -20,8 +20,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Review scanned song'), findsOneWidget);
-    expect(find.textContaining('On-device AI organized'), findsOneWidget);
+    expect(find.text('Review scanned lyrics'), findsOneWidget);
+    expect(find.textContaining('organized on this device'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, draft.title), findsOneWidget);
     expect(find.widgetWithText(TextFormField, draft.body), findsOneWidget);
     expect(
@@ -50,10 +50,10 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('original photo will be kept'), findsOneWidget);
-    expect(find.text('Original song photo'), findsOneWidget);
-    expect(find.text('Lyrics text'), findsOneWidget);
+    expect(find.text('Original photo'), findsOneWidget);
+    expect(find.text('Lyrics'), findsOneWidget);
     expect(
-      find.text('Optional when the original photo is kept'),
+      find.text('Optional when keeping the original photo'),
       findsOneWidget,
     );
   });

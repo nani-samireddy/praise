@@ -37,19 +37,19 @@ void main() {
 
     await tester.tap(find.byTooltip('Share list'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Share PDF'));
+    await tester.tap(find.text('Share as PDF'));
     await tester.pumpAndSettle();
-    expect(find.text('Song list only'), findsOneWidget);
-    expect(find.text('Full songs'), findsOneWidget);
-    await tester.tap(find.text('Full songs'));
+    expect(find.text('Song titles only'), findsOneWidget);
+    expect(find.text('Songs and lyrics'), findsOneWidget);
+    await tester.tap(find.text('Songs and lyrics'));
     await tester.pumpAndSettle();
     expect(sharing.pdfIncludesSongs, isTrue);
 
     await tester.tap(find.byTooltip('Share list'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Share image'));
+    await tester.tap(find.text('Share as image'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Song list only'));
+    await tester.tap(find.text('Song titles only'));
     await tester.pumpAndSettle();
     expect(sharing.imageIncludesSongs, isFalse);
   });

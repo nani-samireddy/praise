@@ -26,7 +26,7 @@ class FavoriteButton extends ConsumerWidget {
             debugPrintStack(stackTrace: stackTrace);
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Could not update favorite.')),
+              const SnackBar(content: Text('Couldn’t update favorites.')),
             );
           }
         },

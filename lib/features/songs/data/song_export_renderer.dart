@@ -37,12 +37,12 @@ ExportDocument buildSongExportDocument(Song song) {
     sections: [
       if (song.body.trim().isNotEmpty)
         ExportSection(
-          title: hasEnglish ? 'Primary lyrics' : 'Lyrics',
+          title: hasEnglish ? 'Original lyrics' : 'Lyrics',
           body: formatLyricsForSharing(song.body),
         )
       else if (song.imagePath != null)
         const ExportSection(
-          title: 'Photo song',
+          title: 'Song photo',
           body: 'Original lyrics are stored as a photo in Praise.',
         ),
       if (_present(song.englishBody) case final englishBody?)

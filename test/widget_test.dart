@@ -25,6 +25,32 @@ void main() {
       body: 'ప్రధాన గీతము',
       englishBody: 'Primary English lyrics',
       author: 'Test Author',
+      structureJson: '''
+        {
+          "sections": [
+            {
+              "label": "Verse",
+              "lines": [
+                {
+                  "text": "ప్రధాన గీతము",
+                  "segments": [
+                    {"text": "ప్రధాన గీతము", "chord": "C"}
+                  ]
+                }
+              ]
+            }
+          ],
+          "capo": 2,
+          "harmonyParts": [
+            {
+              "label": "Alto",
+              "lines": [
+                {"text": "ఆల్టో గీతము"}
+              ]
+            }
+          ]
+        }
+      ''',
       source: 'server',
       createdAt: now,
       updatedAt: now,
@@ -32,6 +58,7 @@ void main() {
     );
     final sharingService = _FakeSongSharingService();
     final feedbackService = _FakeGithubFeedbackService();
+    final settingsRepository = _FakeSettingsRepository();
 
     await tester.pumpWidget(
       ProviderScope(
@@ -42,9 +69,7 @@ void main() {
           favoritesRepositoryProvider.overrideWithValue(
             const _FakeFavoritesRepository(),
           ),
-          settingsRepositoryProvider.overrideWithValue(
-            const _FakeSettingsRepository(),
-          ),
+          settingsRepositoryProvider.overrideWithValue(settingsRepository),
         ],
         child: const PraiseApp(),
       ),
@@ -59,49 +84,88 @@ void main() {
 
     expect(find.text('ప్రధాన గీతము'), findsOneWidget);
     expect(find.text('Primary English lyrics'), findsOneWidget);
-    expect(find.text('Test Author'), findsOneWidget);
+    expect(find.text('C'), findsNothing);
+    expect(find.text('This song is authored by Test Author.'), findsOneWidget);
+    expect(find.byType(NavigationBar), findsNothing);
+    await tester.tap(find.text('Song controls'));
+    await _pumpFrames(tester);
+    expect(find.text('Song controls'), findsOneWidget);
+    expect(find.text('Text size'), findsOneWidget);
+    expect(find.text('Show full lyrics'), findsOneWidget);
+    expect(find.text('Lyrics display'), findsOneWidget);
+    expect(find.text('Chords'), findsOneWidget);
+    expect(find.text('Guitar chord shapes'), findsNothing);
+    expect(find.text('Harmony parts'), findsOneWidget);
+    expect(find.text('Metronome'), findsOneWidget);
+    expect(
+      tester
+          .widget<SwitchListTile>(find.widgetWithText(SwitchListTile, 'Chords'))
+          .value,
+      isFalse,
+    );
+    await tester.tap(find.text('Chords'));
+    await _pumpFrames(tester);
+    expect(
+      tester
+          .widget<SwitchListTile>(find.widgetWithText(SwitchListTile, 'Chords'))
+          .value,
+      isTrue,
+    );
+    expect(find.text('Guitar chord shapes'), findsOneWidget);
+    await tester.tap(find.text('Line by line'));
+    await _pumpFrames(tester);
+    expect(
+      settingsRepository.selectedDisplayMode,
+      LyricsDisplayMode.lineByLine,
+    );
+    await tester.ensureVisible(find.text('Hide controls'));
+    await tester.tap(find.text('Hide controls'));
+    await _pumpFrames(tester);
     expect(
       tester.widget<Text>(find.text(song.body)).style?.fontFamily,
       TeluguFont.notoSansTelugu.fontFamily,
     );
 
-    await tester.tap(find.byTooltip('Share song'));
+    await tester.tap(find.byTooltip('Share'));
     await _pumpFrames(tester);
-    await tester.tap(find.text('Copy text'));
+    await tester.tap(find.text('Copy lyrics'));
     await _pumpFrames(tester);
     expect(sharingService.copiedSong, song);
-    expect(find.text('Song copied.'), findsOneWidget);
+    expect(find.text('Lyrics copied.'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Share song'));
+    await tester.tap(find.byTooltip('Share'));
     await _pumpFrames(tester);
-    await tester.tap(find.text('Share text'));
+    await tester.tap(find.text('Share as text'));
     await _pumpFrames(tester);
     expect(sharingService.sharedSong, song);
 
-    await tester.tap(find.byTooltip('Share song'));
+    await tester.tap(find.byTooltip('Share'));
     await _pumpFrames(tester);
-    await tester.tap(find.text('Share image'));
+    await tester.tap(find.text('Share as image'));
     await _pumpFrames(tester);
     expect(sharingService.sharedImageSong, song);
 
-    await tester.tap(find.byTooltip('Share song'));
+    await tester.tap(find.byTooltip('Share'));
     await _pumpFrames(tester);
-    await tester.tap(find.text('Share PDF'));
+    await tester.tap(find.text('Share as PDF'));
     await _pumpFrames(tester);
     expect(sharingService.sharedPdfSong, song);
 
     await tester.tap(find.byTooltip('More options'));
     await _pumpFrames(tester);
-    await tester.tap(find.text('Report this song'));
+    expect(find.text('Metronome'), findsNothing);
+    expect(find.text('Transpose'), findsNothing);
+    expect(find.text('Lyrics view'), findsNothing);
+    await tester.tap(find.text('Report a problem'));
     await _pumpFrames(tester);
     await tester.enterText(
       find.widgetWithText(TextFormField, 'What should be corrected?'),
       'The second line is incorrect.',
     );
-    await tester.tap(find.widgetWithText(FilledButton, 'Submit'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Send'));
     await _pumpFrames(tester);
     expect(feedbackService.reportedSong, song);
-    expect(find.text('Request #77 created'), findsOneWidget);
+    expect(find.text('Request sent'), findsOneWidget);
   });
 }
 
@@ -225,10 +289,12 @@ class _FakeFavoritesRepository implements FavoritesRepository {
 }
 
 class _FakeSettingsRepository implements SettingsRepository {
-  const _FakeSettingsRepository();
+  LyricsDisplayMode? selectedDisplayMode;
 
   @override
-  Future<void> setLyricsDisplayMode(LyricsDisplayMode value) async {}
+  Future<void> setLyricsDisplayMode(LyricsDisplayMode value) async {
+    selectedDisplayMode = value;
+  }
 
   @override
   Future<void> setLyricsFontSize(double value) async {}

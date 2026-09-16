@@ -5,10 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 
 CHORD_RE = re.compile(
@@ -26,76 +24,53 @@ class ChordChartError(ValueError):
 @dataclass(frozen=True)
 class ParsedLine:
     text: str
-    chords: list[dict[str, object]]
+    segments: list[dict[str, object]]
 
 
 def is_valid_chord(value: str) -> bool:
     return bool(CHORD_RE.fullmatch(value.strip()))
 
 
-def grapheme_count(value: str) -> int:
-    return sum(1 for _ in grapheme_clusters(value))
-
-
-def grapheme_clusters(value: str) -> Iterable[str]:
-    cluster = ""
-    join_next = False
-    for char in value:
-        if not cluster:
-            cluster = char
-            join_next = char == "\u200d"
-            continue
-
-        category = unicodedata.category(char)
-        if category.startswith("M") or char in ("\u200c", "\u200d") or join_next:
-            cluster += char
-        else:
-            yield cluster
-            cluster = char
-        join_next = char == "\u200d" or char == "\u0c4d"
-
-    if cluster:
-        yield cluster
-
-
 def parse_inline_chord_line(line: str, line_number: int) -> ParsedLine:
-    text_parts: list[str] = []
-    chords: list[dict[str, object]] = []
-    grapheme_offset = 0
+    segments: list[dict[str, object]] = []
+    pending_text: list[str] = []
+    pending_chord: str | None = None
     cursor = 0
+
+    def flush_segment() -> None:
+        nonlocal pending_text
+        text = ''.join(pending_text)
+        if text:
+            segment: dict[str, object] = {'text': text}
+            if pending_chord is not None:
+                segment['chord'] = pending_chord
+            segments.append(segment)
+        pending_text = []
 
     for match in INLINE_CHORD_RE.finditer(line):
         before = line[cursor : match.start()]
-        text_parts.append(before)
-        grapheme_offset += grapheme_count(before)
+        pending_text.append(before)
 
         chord = match.group(1).strip()
         if not is_valid_chord(chord):
             raise ChordChartError(f"Line {line_number}: invalid chord {chord!r}")
-        chords.append({"at": grapheme_offset, "chord": chord})
+        flush_segment()
+        pending_chord = chord
         cursor = match.end()
 
     remainder = line[cursor:]
-    text_parts.append(remainder)
-    text = "".join(text_parts).strip()
+    pending_text.append(remainder)
+    flush_segment()
+
+    if segments:
+        segments[0]['text'] = str(segments[0]['text']).lstrip()
+        segments[-1]['text'] = str(segments[-1]['text']).rstrip()
+    segments = [segment for segment in segments if segment['text']]
+    text = ''.join(str(segment['text']) for segment in segments)
     if not text:
         raise ChordChartError(f"Line {line_number}: chord line has no lyric text")
 
-    leading_trimmed = "".join(text_parts).find(text)
-    if leading_trimmed > 0:
-        leading_offset = grapheme_count("".join(text_parts)[:leading_trimmed])
-        chords = [
-            {"at": max(0, int(chord["at"]) - leading_offset), "chord": chord["chord"]}
-            for chord in chords
-        ]
-
-    line_length = grapheme_count(text)
-    for chord in chords:
-        if int(chord["at"]) > line_length:
-            raise ChordChartError(
-                f"Line {line_number}: chord {chord['chord']!r} is outside lyric text"
-            )
-    return ParsedLine(text=text, chords=chords)
+    return ParsedLine(text=text, segments=segments)
 
 
 def parse_arrangement_text(
@@ -141,14 +116,16 @@ def parse_arrangement_text(
             continue
 
         if "[" not in line and "]" not in line:
-            current["lines"].append({"text": line, "chords": []})
+            current["lines"].append({"text": line, "segments": [{"text": line}]})
             continue
 
         if line.count("[") != line.count("]"):
             raise ChordChartError(f"Line {line_number}: unmatched chord bracket")
 
         parsed = parse_inline_chord_line(line, line_number)
-        current["lines"].append({"text": parsed.text, "chords": parsed.chords})
+        current["lines"].append(
+            {"text": parsed.text, "segments": parsed.segments}
+        )
 
     flush()
     if not sections:

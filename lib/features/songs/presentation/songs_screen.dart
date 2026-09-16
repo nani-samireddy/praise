@@ -44,20 +44,20 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(8, 4, 8, 12),
                 child: Text(
-                  'Add song',
+                  'Add a song',
                   style: Theme.of(sheetContext).textTheme.titleLarge,
                 ),
               ),
               ListTile(
                 leading: const Icon(Icons.edit_note_outlined),
-                title: const Text('Enter manually'),
-                subtitle: const Text('Type or paste the song details'),
+                title: const Text('Enter song details'),
+                subtitle: const Text('Type or paste the title and lyrics'),
                 onTap: () => Navigator.pop(sheetContext, '/custom-song/new'),
               ),
               ListTile(
                 leading: const Icon(Icons.document_scanner_outlined),
-                title: const Text('Scan photo'),
-                subtitle: const Text('Recognize Telugu and English offline'),
+                title: const Text('Scan a photo'),
+                subtitle: const Text('Read lyrics from a photo, offline'),
                 onTap: () => Navigator.pop(sheetContext, '/custom-song/scan'),
               ),
             ],
@@ -105,7 +105,7 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddSongOptions,
         icon: const Icon(Icons.add),
-        label: const Text('Add song'),
+        label: const Text('Add a song'),
       ),
       body: SafeArea(
         top: false,
@@ -121,7 +121,7 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
                 },
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
-                  hintText: 'Search title or author',
+                  hintText: 'Search songs or authors',
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   prefixIcon: const Icon(Icons.search),
@@ -345,8 +345,8 @@ class _EmptySongs extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           hasSearch
-              ? 'Try another title or author.'
-              : 'Your offline song library is empty.',
+              ? 'Try another song or author.'
+              : 'Add a song or refresh the library.',
           textAlign: TextAlign.center,
         ),
       ],
@@ -370,7 +370,7 @@ class _SongsError extends StatelessWidget {
             const Icon(Icons.error_outline, size: 52),
             const SizedBox(height: 16),
             Text(
-              'Could not open the song library',
+              'Couldn’t load your songs',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),

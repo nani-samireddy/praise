@@ -111,7 +111,7 @@ class ApiGithubFeedbackService implements GithubFeedbackService {
     );
     if (!opened) {
       throw const FeedbackSubmissionException(
-        'The issue was created, but its link could not be opened.',
+        'Your request was created, but its link couldn’t be opened.',
       );
     }
   }
@@ -150,11 +150,11 @@ class ApiGithubFeedbackService implements GithubFeedbackService {
           ? responseData['message'] as String?
           : null;
       throw FeedbackSubmissionException(
-        message ?? 'Could not submit right now. Try again in a minute.',
+        message ?? 'Couldn’t send this right now. Try again in a minute.',
       );
     } on Object {
       throw const FeedbackSubmissionException(
-        'Could not submit right now. Try again later.',
+        'Couldn’t send this right now. Try again later.',
       );
     }
   }

@@ -60,7 +60,7 @@ void main() {
         songs,
         includeSongs: true,
       );
-      expect(document.subtitle, contains('Full lyrics'));
+      expect(document.subtitle, contains('Songs and lyrics'));
       expect(document.sections, hasLength(2));
       expect(document.sections.first.body, contains('Lyrics'));
       expect(document.sections.last.pageBreakBefore, isTrue);
