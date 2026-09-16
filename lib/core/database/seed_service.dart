@@ -10,8 +10,9 @@ class SeedService {
     : _assetBundle = assetBundle ?? rootBundle;
 
   static const _assetPath = 'assets/data/songs.json';
+  static const _structuresAssetPath = 'assets/data/song_structures.json';
   static const _seedVersionKey = 'bundled_song_catalogue_version';
-  static const _seedVersion = '5';
+  static const _seedVersion = '7';
 
   final AppDatabase _database;
   final AssetBundle _assetBundle;
@@ -23,6 +24,17 @@ class SeedService {
     if (marker?.value == _seedVersion) return;
 
     final rawJson = await _assetBundle.loadString(_assetPath);
+    dynamic structures;
+    try {
+      structures = jsonDecode(
+        await _assetBundle.loadString(_structuresAssetPath),
+      );
+    } catch (_) {
+      structures = null;
+    }
+    final structureMap = structures is Map<String, dynamic>
+        ? structures
+        : <String, dynamic>{};
     final decoded = jsonDecode(rawJson);
     if (decoded is! List<Object?>) {
       throw const FormatException('The bundled song catalogue must be a list.');
@@ -61,6 +73,7 @@ class SeedService {
             author: Value(_optionalString(value, 'author')),
             maleVideoUrl: Value(_optionalString(value, 'maleVideoUrl')),
             femaleVideoUrl: Value(_optionalString(value, 'femaleVideoUrl')),
+            structureJson: Value(_encodeStructure(structureMap[id])),
             source: const Value('server'),
             createdAt: now,
             updatedAt: now,
@@ -102,5 +115,13 @@ class SeedService {
     }
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
+  }
+
+  static String? _encodeStructure(dynamic value) {
+    if (value == null) return null;
+    if (value is! Map && value is! List) {
+      throw const FormatException('Song structure must be an object or list.');
+    }
+    return jsonEncode(value);
   }
 }

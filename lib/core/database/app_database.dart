@@ -15,6 +15,9 @@ class Songs extends Table {
   TextColumn get maleVideoUrl => text().nullable()();
   TextColumn get femaleVideoUrl => text().nullable()();
 
+  /// JSON encoded structured sections/chords/arrangements.
+  TextColumn get structureJson => text().nullable()();
+
   // Internal ownership and synchronization fields are not part of the song
   // editing form, but protect user-created songs during catalogue refreshes.
   TextColumn get source => text().withDefault(const Constant('server'))();
@@ -92,7 +95,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'praise'));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   Stream<List<Song>> watchSongs({String search = ''}) {
     final query = select(songs)
@@ -178,6 +181,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         await migrator.addColumn(songs, songs.maleVideoUrl);
         await migrator.addColumn(songs, songs.femaleVideoUrl);
+      }
+      if (from < 6) {
+        await migrator.addColumn(songs, songs.structureJson);
       }
     },
     beforeOpen: (details) async {

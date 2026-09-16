@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../catalogue_sync/presentation/catalogue_sync_feedback.dart';
@@ -10,6 +11,8 @@ import '../../feedback/presentation/feedback_dialogs.dart';
 import '../data/settings_repository.dart';
 import '../data/telugu_font.dart';
 import 'settings_providers.dart';
+import 'feature_providers.dart';
+import '../data/feature_flags.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -52,6 +55,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final syncState = ref.watch(catalogueSyncControllerProvider);
     final syncProgress = ref.watch(catalogueSyncProgressProvider);
     final catalogueStatus = ref.watch(catalogueStatusProvider).valueOrNull;
+    final catalogueSyncEnabled =
+        ref
+            .watch(featureEnabledProvider(FeatureKey.catalogueSync))
+            .valueOrNull ??
+        true;
 
     return Scaffold(
       appBar: AppBar(
@@ -63,6 +71,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
+          const _SectionTitle('Personalize Praise'),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.tune),
+              title: const Text('Role and features'),
+              subtitle: Text(
+                ref.watch(primaryRoleProvider).valueOrNull?.name ??
+                    'Choose your role and feature defaults',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.go('/starter?change=true'),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const _SectionTitle('Feature controls'),
+          Card(
+            child: Column(
+              children: [
+                for (var i = 0; i < featureDefinitions.length; i++) ...[
+                  _FeatureTile(definition: featureDefinitions[i]),
+                  if (i < featureDefinitions.length - 1)
+                    const Divider(height: 1, indent: 56),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
           const _SectionTitle('Appearance'),
           Card(
             child: Padding(
@@ -265,6 +300,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
+                        if (!catalogueSyncEnabled)
+                          Text(
+                            'Catalogue refresh is disabled in Feature controls.',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         if (syncProgress != null)
                           CatalogueSyncProgressView(
                             progress: syncProgress,
@@ -284,7 +324,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     )
                   else
                     IconButton.filledTonal(
-                      onPressed: AppConfig.isCatalogueSyncConfigured
+                      onPressed:
+                          catalogueSyncEnabled &&
+                              AppConfig.isCatalogueSyncConfigured
                           ? _refreshCatalogue
                           : null,
                       tooltip: 'Refresh catalogue',
@@ -379,6 +421,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _FeatureTile extends ConsumerWidget {
+  const _FeatureTile({required this.definition});
+  final FeatureDefinition definition;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = definition.available
+        ? (ref.watch(featureEnabledProvider(definition.key)).valueOrNull ??
+              true)
+        : false;
+    return SwitchListTile(
+      secondary: Icon(
+        definition.available ? Icons.toggle_on_outlined : Icons.hourglass_empty,
+      ),
+      title: Text(definition.label),
+      subtitle: Text(
+        definition.available
+            ? definition.description
+            : '${definition.description} • Coming soon',
+      ),
+      value: enabled,
+      onChanged: definition.available
+          ? (value) => ref
+                .read(featureSettingsStoreProvider)
+                .set(
+                  ref.read(featureSettingsStoreProvider).key(definition.key),
+                  value.toString(),
+                )
+          : null,
     );
   }
 }

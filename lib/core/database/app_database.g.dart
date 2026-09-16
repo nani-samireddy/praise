@@ -99,6 +99,17 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _structureJsonMeta = const VerificationMeta(
+    'structureJson',
+  );
+  @override
+  late final GeneratedColumn<String> structureJson = GeneratedColumn<String>(
+    'structure_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _sourceMeta = const VerificationMeta('source');
   @override
   late final GeneratedColumn<String> source = GeneratedColumn<String>(
@@ -157,6 +168,7 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
     imagePath,
     maleVideoUrl,
     femaleVideoUrl,
+    structureJson,
     source,
     createdAt,
     updatedAt,
@@ -243,6 +255,15 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
         ),
       );
     }
+    if (data.containsKey('structure_json')) {
+      context.handle(
+        _structureJsonMeta,
+        structureJson.isAcceptableOrUnknown(
+          data['structure_json']!,
+          _structureJsonMeta,
+        ),
+      );
+    }
     if (data.containsKey('source')) {
       context.handle(
         _sourceMeta,
@@ -316,6 +337,10 @@ class $SongsTable extends Songs with TableInfo<$SongsTable, Song> {
         DriftSqlType.string,
         data['${effectivePrefix}female_video_url'],
       ),
+      structureJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}structure_json'],
+      ),
       source: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}source'],
@@ -351,6 +376,9 @@ class Song extends DataClass implements Insertable<Song> {
   final String? imagePath;
   final String? maleVideoUrl;
   final String? femaleVideoUrl;
+
+  /// JSON encoded structured sections/chords/arrangements.
+  final String? structureJson;
   final String source;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -365,6 +393,7 @@ class Song extends DataClass implements Insertable<Song> {
     this.imagePath,
     this.maleVideoUrl,
     this.femaleVideoUrl,
+    this.structureJson,
     required this.source,
     required this.createdAt,
     required this.updatedAt,
@@ -393,6 +422,9 @@ class Song extends DataClass implements Insertable<Song> {
     }
     if (!nullToAbsent || femaleVideoUrl != null) {
       map['female_video_url'] = Variable<String>(femaleVideoUrl);
+    }
+    if (!nullToAbsent || structureJson != null) {
+      map['structure_json'] = Variable<String>(structureJson);
     }
     map['source'] = Variable<String>(source);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -424,6 +456,9 @@ class Song extends DataClass implements Insertable<Song> {
       femaleVideoUrl: femaleVideoUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(femaleVideoUrl),
+      structureJson: structureJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(structureJson),
       source: Value(source),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -446,6 +481,7 @@ class Song extends DataClass implements Insertable<Song> {
       imagePath: serializer.fromJson<String?>(json['imagePath']),
       maleVideoUrl: serializer.fromJson<String?>(json['maleVideoUrl']),
       femaleVideoUrl: serializer.fromJson<String?>(json['femaleVideoUrl']),
+      structureJson: serializer.fromJson<String?>(json['structureJson']),
       source: serializer.fromJson<String>(json['source']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -465,6 +501,7 @@ class Song extends DataClass implements Insertable<Song> {
       'imagePath': serializer.toJson<String?>(imagePath),
       'maleVideoUrl': serializer.toJson<String?>(maleVideoUrl),
       'femaleVideoUrl': serializer.toJson<String?>(femaleVideoUrl),
+      'structureJson': serializer.toJson<String?>(structureJson),
       'source': serializer.toJson<String>(source),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -482,6 +519,7 @@ class Song extends DataClass implements Insertable<Song> {
     Value<String?> imagePath = const Value.absent(),
     Value<String?> maleVideoUrl = const Value.absent(),
     Value<String?> femaleVideoUrl = const Value.absent(),
+    Value<String?> structureJson = const Value.absent(),
     String? source,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -498,6 +536,9 @@ class Song extends DataClass implements Insertable<Song> {
     femaleVideoUrl: femaleVideoUrl.present
         ? femaleVideoUrl.value
         : this.femaleVideoUrl,
+    structureJson: structureJson.present
+        ? structureJson.value
+        : this.structureJson,
     source: source ?? this.source,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -522,6 +563,9 @@ class Song extends DataClass implements Insertable<Song> {
       femaleVideoUrl: data.femaleVideoUrl.present
           ? data.femaleVideoUrl.value
           : this.femaleVideoUrl,
+      structureJson: data.structureJson.present
+          ? data.structureJson.value
+          : this.structureJson,
       source: data.source.present ? data.source.value : this.source,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -541,6 +585,7 @@ class Song extends DataClass implements Insertable<Song> {
           ..write('imagePath: $imagePath, ')
           ..write('maleVideoUrl: $maleVideoUrl, ')
           ..write('femaleVideoUrl: $femaleVideoUrl, ')
+          ..write('structureJson: $structureJson, ')
           ..write('source: $source, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -560,6 +605,7 @@ class Song extends DataClass implements Insertable<Song> {
     imagePath,
     maleVideoUrl,
     femaleVideoUrl,
+    structureJson,
     source,
     createdAt,
     updatedAt,
@@ -578,6 +624,7 @@ class Song extends DataClass implements Insertable<Song> {
           other.imagePath == this.imagePath &&
           other.maleVideoUrl == this.maleVideoUrl &&
           other.femaleVideoUrl == this.femaleVideoUrl &&
+          other.structureJson == this.structureJson &&
           other.source == this.source &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -594,6 +641,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
   final Value<String?> imagePath;
   final Value<String?> maleVideoUrl;
   final Value<String?> femaleVideoUrl;
+  final Value<String?> structureJson;
   final Value<String> source;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -609,6 +657,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
     this.imagePath = const Value.absent(),
     this.maleVideoUrl = const Value.absent(),
     this.femaleVideoUrl = const Value.absent(),
+    this.structureJson = const Value.absent(),
     this.source = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -625,6 +674,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
     this.imagePath = const Value.absent(),
     this.maleVideoUrl = const Value.absent(),
     this.femaleVideoUrl = const Value.absent(),
+    this.structureJson = const Value.absent(),
     this.source = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -645,6 +695,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
     Expression<String>? imagePath,
     Expression<String>? maleVideoUrl,
     Expression<String>? femaleVideoUrl,
+    Expression<String>? structureJson,
     Expression<String>? source,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -661,6 +712,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
       if (imagePath != null) 'image_path': imagePath,
       if (maleVideoUrl != null) 'male_video_url': maleVideoUrl,
       if (femaleVideoUrl != null) 'female_video_url': femaleVideoUrl,
+      if (structureJson != null) 'structure_json': structureJson,
       if (source != null) 'source': source,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -679,6 +731,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
     Value<String?>? imagePath,
     Value<String?>? maleVideoUrl,
     Value<String?>? femaleVideoUrl,
+    Value<String?>? structureJson,
     Value<String>? source,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -695,6 +748,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
       imagePath: imagePath ?? this.imagePath,
       maleVideoUrl: maleVideoUrl ?? this.maleVideoUrl,
       femaleVideoUrl: femaleVideoUrl ?? this.femaleVideoUrl,
+      structureJson: structureJson ?? this.structureJson,
       source: source ?? this.source,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -733,6 +787,9 @@ class SongsCompanion extends UpdateCompanion<Song> {
     if (femaleVideoUrl.present) {
       map['female_video_url'] = Variable<String>(femaleVideoUrl.value);
     }
+    if (structureJson.present) {
+      map['structure_json'] = Variable<String>(structureJson.value);
+    }
     if (source.present) {
       map['source'] = Variable<String>(source.value);
     }
@@ -763,6 +820,7 @@ class SongsCompanion extends UpdateCompanion<Song> {
           ..write('imagePath: $imagePath, ')
           ..write('maleVideoUrl: $maleVideoUrl, ')
           ..write('femaleVideoUrl: $femaleVideoUrl, ')
+          ..write('structureJson: $structureJson, ')
           ..write('source: $source, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -2000,6 +2058,7 @@ typedef $$SongsTableCreateCompanionBuilder = SongsCompanion Function({
   Value<String?> imagePath,
   Value<String?> maleVideoUrl,
   Value<String?> femaleVideoUrl,
+  Value<String?> structureJson,
   Value<String> source,
   required DateTime createdAt,
   required DateTime updatedAt,
@@ -2016,6 +2075,7 @@ typedef $$SongsTableUpdateCompanionBuilder = SongsCompanion Function({
   Value<String?> imagePath,
   Value<String?> maleVideoUrl,
   Value<String?> femaleVideoUrl,
+  Value<String?> structureJson,
   Value<String> source,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -2116,6 +2176,11 @@ class $$SongsTableFilterComposer extends Composer<_$AppDatabase, $SongsTable> {
 
   ColumnFilters<String> get femaleVideoUrl => $composableBuilder(
     column: $table.femaleVideoUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get structureJson => $composableBuilder(
+    column: $table.structureJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2244,6 +2309,11 @@ class $$SongsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get structureJson => $composableBuilder(
+    column: $table.structureJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get source => $composableBuilder(
     column: $table.source,
     builder: (column) => ColumnOrderings(column),
@@ -2306,6 +2376,11 @@ class $$SongsTableAnnotationComposer
 
   GeneratedColumn<String> get femaleVideoUrl => $composableBuilder(
     column: $table.femaleVideoUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get structureJson => $composableBuilder(
+    column: $table.structureJson,
     builder: (column) => column,
   );
 
@@ -2409,6 +2484,7 @@ class $$SongsTableTableManager
                 Value<String?> imagePath = const Value.absent(),
                 Value<String?> maleVideoUrl = const Value.absent(),
                 Value<String?> femaleVideoUrl = const Value.absent(),
+                Value<String?> structureJson = const Value.absent(),
                 Value<String> source = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -2424,6 +2500,7 @@ class $$SongsTableTableManager
                 imagePath: imagePath,
                 maleVideoUrl: maleVideoUrl,
                 femaleVideoUrl: femaleVideoUrl,
+                structureJson: structureJson,
                 source: source,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -2441,6 +2518,7 @@ class $$SongsTableTableManager
                 Value<String?> imagePath = const Value.absent(),
                 Value<String?> maleVideoUrl = const Value.absent(),
                 Value<String?> femaleVideoUrl = const Value.absent(),
+                Value<String?> structureJson = const Value.absent(),
                 Value<String> source = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -2456,6 +2534,7 @@ class $$SongsTableTableManager
                 imagePath: imagePath,
                 maleVideoUrl: maleVideoUrl,
                 femaleVideoUrl: femaleVideoUrl,
+                structureJson: structureJson,
                 source: source,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

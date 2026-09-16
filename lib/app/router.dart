@@ -12,6 +12,8 @@ import '../features/favorites/presentation/favorites_screen.dart';
 import '../features/songs/presentation/song_detail_screen.dart';
 import '../features/songs/presentation/songs_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
+import '../features/settings/presentation/starter_screen.dart';
+import '../features/settings/presentation/feature_providers.dart';
 import '../shared/presentation/app_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -20,6 +22,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     overridePlatformDefaultLocation: true,
     redirect: (context, state) {
       final uri = state.uri;
+      final onboarding = ref.read(onboardingCompleteProvider).valueOrNull;
+      if (onboarding == false && uri.path != '/starter') return '/starter';
+      if (onboarding != false && uri.path == '/starter') return '/songs';
       final isCollectionAppLink = uri.scheme == 'praise' && uri.host == 'list';
       final isCollectionWebLink =
           uri.scheme == 'https' &&
@@ -28,6 +33,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       return isCollectionAppLink || isCollectionWebLink ? '/songs' : null;
     },
     routes: [
+      GoRoute(
+        path: '/starter',
+        builder: (context, state) => StarterScreen(
+          changeRole: state.uri.queryParameters['change'] == 'true',
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return CollectionLinkHandler(
@@ -114,6 +125,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+  // Refresh redirects when onboarding changes without recreating the router
+  // (which would reset the active shell tab when a Settings toggle changes).
+  ref.listen(onboardingCompleteProvider, (_, _) => router.refresh());
   ref.onDispose(router.dispose);
   return router;
 });

@@ -15,11 +15,14 @@ import '../../favorites/presentation/favorite_button.dart';
 import '../../settings/data/settings_repository.dart';
 import '../../settings/data/telugu_font.dart';
 import '../../settings/presentation/settings_providers.dart';
+import '../../settings/presentation/feature_providers.dart';
+import '../../settings/data/feature_flags.dart';
 import '../../../shared/presentation/action_sheet.dart';
 import '../data/song_sharing_service.dart';
 import 'formatted_lyrics.dart';
 import 'metronome_controller.dart';
 import 'song_providers.dart';
+import 'structured_lyrics.dart';
 
 enum _SongAction {
   copy,
@@ -65,6 +68,11 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
         if (value == null) {
           return const Scaffold(appBar: _LyricsAppBar(), body: _SongNotFound());
         }
+        final metronomeEnabled =
+            ref
+                .watch(featureEnabledProvider(FeatureKey.metronome))
+                .valueOrNull ??
+            true;
         return Scaffold(
           body: _SongReader(
             song: value,
@@ -111,14 +119,15 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
                   onSelected: (action) =>
                       _handleSongAction(context, ref, value, action),
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: _SongAction.metronome,
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.av_timer_outlined),
-                        title: Text('Metronome'),
+                    if (metronomeEnabled)
+                      const PopupMenuItem(
+                        value: _SongAction.metronome,
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.av_timer_outlined),
+                          title: Text('Metronome'),
+                        ),
                       ),
-                    ),
                     if (value.source == 'server')
                       const PopupMenuItem(
                         value: _SongAction.report,
@@ -644,6 +653,16 @@ class _SongReaderState extends ConsumerState<_SongReader> {
         LyricsDisplayMode.both;
     final teluguFont =
         ref.watch(teluguFontProvider).valueOrNull ?? TeluguFont.system;
+    final repeatsEnabled =
+        ref
+            .watch(featureEnabledProvider(FeatureKey.repeatExpansion))
+            .valueOrNull ??
+        true;
+    final videosEnabled =
+        ref
+            .watch(featureEnabledProvider(FeatureKey.practiceVideos))
+            .valueOrNull ??
+        true;
     if (!_loadedFontSize) {
       _fontSize = storedFontSize;
       _scaleStartFontSize = storedFontSize;
@@ -677,11 +696,12 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                   if (hasPrimaryLyrics || englishBody != null)
                     Row(
                       children: [
-                        TextButton.icon(
-                          onPressed: _chooseFontSize,
-                          icon: const Icon(Icons.text_fields, size: 18),
-                          label: Text('Text ${_fontSize.round()}'),
-                        ),
+                        if (repeatsEnabled)
+                          TextButton.icon(
+                            onPressed: _chooseFontSize,
+                            icon: const Icon(Icons.text_fields, size: 18),
+                            label: Text('Text ${_fontSize.round()}'),
+                          ),
                         const Spacer(),
                         TextButton.icon(
                           onPressed: () => setState(() {
@@ -724,8 +744,9 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                     ),
                   ],
                   const SizedBox(height: 24),
-                  if (widget.song.maleVideoUrl != null ||
-                      widget.song.femaleVideoUrl != null) ...[
+                  if (videosEnabled &&
+                      (widget.song.maleVideoUrl != null ||
+                          widget.song.femaleVideoUrl != null)) ...[
                     _PracticeVideos(song: widget.song),
                     const SizedBox(height: 28),
                   ],
@@ -740,7 +761,8 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                       body: widget.song.body,
                       fontSize: _fontSize,
                       fontFamily: teluguFont.fontFamily,
-                      expandCounts: _expandCounts,
+                      expandCounts: repeatsEnabled && _expandCounts,
+                      structuredJson: widget.song.structureJson,
                     ),
                   if (showEnglish) ...[
                     const SizedBox(height: 32),
@@ -752,7 +774,7 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                       body: englishBody,
                       fontSize: _fontSize,
                       fontFamily: null,
-                      expandCounts: _expandCounts,
+                      expandCounts: repeatsEnabled && _expandCounts,
                     ),
                   ],
                 ]),
@@ -854,6 +876,13 @@ class _PracticeVideosState extends State<_PracticeVideos>
       if (widget.song.femaleVideoUrl case final url?)
         _PracticeVideo(label: 'Female', url: url),
     ];
+    // Initialize the first available recording immediately.  Previously the
+    // player remained a placeholder until the user tapped the selector.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _videos.isNotEmpty) {
+        _selectVideo(_videos.first);
+      }
+    });
   }
 
   @override
@@ -1067,6 +1096,7 @@ class _LyricsSection extends StatelessWidget {
     required this.fontSize,
     required this.fontFamily,
     required this.expandCounts,
+    this.structuredJson,
   });
 
   final String label;
@@ -1074,6 +1104,7 @@ class _LyricsSection extends StatelessWidget {
   final double fontSize;
   final String? fontFamily;
   final bool expandCounts;
+  final String? structuredJson;
 
   @override
   Widget build(BuildContext context) {
@@ -1093,13 +1124,20 @@ class _LyricsSection extends StatelessWidget {
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
           alignment: Alignment.topCenter,
-          child: FormattedLyrics(
-            key: ValueKey(expandCounts),
-            body: body,
-            fontSize: fontSize,
-            fontFamily: fontFamily,
-            expandCounts: expandCounts,
-          ),
+          child: structuredJson != null
+              ? StructuredLyrics(
+                  json: structuredJson!,
+                  fontSize: fontSize,
+                  fontFamily: fontFamily,
+                  expandCounts: expandCounts,
+                )
+              : FormattedLyrics(
+                  key: ValueKey(expandCounts),
+                  body: body,
+                  fontSize: fontSize,
+                  fontFamily: fontFamily,
+                  expandCounts: expandCounts,
+                ),
         ),
       ],
     );

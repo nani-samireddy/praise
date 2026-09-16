@@ -156,7 +156,7 @@ void main() {
       songs.where((song) => song.source == 'server'),
       hasLength(bundledSongs.length),
     );
-    expect(marker.value, '5');
+    expect(marker.value, '7');
     expect(upgradedSong.title, firstSong['title']);
     expect(upgradedSong.body, firstSong['body']);
     expect(songs.map((song) => song.id), contains('custom-song'));

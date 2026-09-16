@@ -1,0 +1,28 @@
+{
+  "csv-0042": {
+    "originalKey": "Em",
+    "chordsCredit": "Oliver Paul",
+    "sections": [
+      {
+        "id": "chorus",
+        "type": "chorus",
+        "label": "Chorus",
+        "lines": [
+          {"text":"అంతా నా మేలుకే – ఆరాధన యేసుకే","transliteration":"Anthaa Naa Meluke – Aaraadhana Yesuke","chords":[{"at":0,"chord":"Em"},{"at":9,"chord":"C"},{"at":19,"chord":"Em"},{"at":30,"chord":"D"}]},
+          {"text":"అంతా నా మంచికే – తన చిత్తమునకు తల వంచితే","transliteration":"Anthaa Naa Manchike – Thana Chitthamunaku Thala Vanchithe","chords":[{"at":0,"chord":"Am"},{"at":10,"chord":"C"},{"at":27,"chord":"D"},{"at":45,"chord":"Em"}]},
+          {"text":"తన చిత్తమునకు తల వంచితే","transliteration":"Thana Chitthamunaku Thala Vanchithe","chords":[{"at":0,"chord":"C"},{"at":18,"chord":"Em"}]},
+          {"text":"ఆరాధన ఆపను – స్తుతియించుట మానను","transliteration":"Aaraadhana Aapanu – Stuthiyinchuta Maananu","repeatCount":2,"chords":[{"at":0,"chord":"C"},{"at":10,"chord":"Em"},{"at":25,"chord":"D"}]},
+          {"text":"స్తుతియించుట మానను","transliteration":"Stuthiyinchuta Maananu","chords":[{"at":0,"chord":"C"},{"at":15,"chord":"Em"}]}
+        ]
+      },
+      {
+        "id":"verse-1","type":"verse","number":1,"label":"Verse 1",
+        "lines":[
+          {"text":"అవమానం ఎంతైనా – నా వారే కాదన్నా","transliteration":"Avamaanam Enthainaa – Naa Vaare Kaadannaa","chords":[{"at":0,"chord":"Em"},{"at":10,"chord":"C"},{"at":22,"chord":"Em"},{"at":30,"chord":"C"}]},
+          {"text":"నీవు తప్ప ఎవరున్నారు ఆకాశమందున","transliteration":"Neevu Thappa Evarunnaaru Aakaashamanduna","repeatCount":2,"chords":[{"at":0,"chord":"D"},{"at":12,"chord":"Am"},{"at":26,"chord":"D"},{"at":34,"chord":"Em"}]},
+          {"text":"నీవు నాకుండగా – ఏది నాకక్కర లేదు","transliteration":"Neevu Naakundagaa – Edi Naakakkara Ledu","repeatCount":2,"chords":[{"at":0,"chord":"A"},{"at":20,"chord":"Em"}]}
+        ]
+      }
+    ]
+  }
+}
