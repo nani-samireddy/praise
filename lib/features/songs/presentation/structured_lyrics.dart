@@ -176,7 +176,7 @@ class _Line extends StatelessWidget {
     final copies = expand ? count : 1;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: EdgeInsets.only(bottom: !expand && count > 1 ? 28 : 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

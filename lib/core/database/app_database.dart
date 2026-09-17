@@ -29,6 +29,18 @@ class Songs extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+@DataClassName('SongNote')
+class SongNotes extends Table {
+  TextColumn get songId =>
+      text().references(Songs, #id, onDelete: KeyAction.cascade)();
+  TextColumn get content => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {songId};
+}
+
 class Favorites extends Table {
   TextColumn get songId =>
       text().references(Songs, #id, onDelete: KeyAction.cascade)();
@@ -88,14 +100,21 @@ class SongIndexEntry {
 }
 
 @DriftDatabase(
-  tables: [Songs, Favorites, Collections, CollectionSongs, AppMetadata],
+  tables: [
+    Songs,
+    SongNotes,
+    Favorites,
+    Collections,
+    CollectionSongs,
+    AppMetadata,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'praise'));
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   Stream<List<Song>> watchSongs({String search = ''}) {
     final query = select(songs)
@@ -184,6 +203,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 6) {
         await migrator.addColumn(songs, songs.structureJson);
+      }
+      if (from < 7) {
+        await migrator.createTable(songNotes);
       }
     },
     beforeOpen: (details) async {

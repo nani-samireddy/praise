@@ -7,6 +7,7 @@ import 'package:praise/features/favorites/data/favorites_repository.dart';
 import 'package:praise/features/favorites/presentation/favorite_providers.dart';
 import 'package:praise/features/feedback/data/github_feedback_service.dart';
 import 'package:praise/features/songs/data/song_repository.dart';
+import 'package:praise/features/songs/data/song_notes_repository.dart';
 import 'package:praise/features/songs/data/song_sharing_service.dart';
 import 'package:praise/features/songs/presentation/song_providers.dart';
 import 'package:praise/features/settings/data/settings_repository.dart';
@@ -64,6 +65,9 @@ void main() {
       ProviderScope(
         overrides: [
           songRepositoryProvider.overrideWithValue(_FakeSongRepository(song)),
+          songNotesRepositoryProvider.overrideWithValue(
+            const _FakeSongNotesRepository(),
+          ),
           songSharingServiceProvider.overrideWithValue(sharingService),
           githubFeedbackServiceProvider.overrideWithValue(feedbackService),
           favoritesRepositoryProvider.overrideWithValue(
@@ -85,8 +89,16 @@ void main() {
     expect(find.text('ప్రధాన గీతము'), findsOneWidget);
     expect(find.text('Primary English lyrics'), findsOneWidget);
     expect(find.text('C'), findsNothing);
+    expect(find.text('Notes'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('This song is authored by Test Author.'),
+      400,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(find.text('This song is authored by Test Author.'), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 500));
+    await _pumpFrames(tester);
     await tester.tap(find.text('Song controls'));
     await _pumpFrames(tester);
     expect(find.text('Song controls'), findsOneWidget);
@@ -286,6 +298,19 @@ class _FakeFavoritesRepository implements FavoritesRepository {
 
   @override
   Stream<bool> watchIsFavorite(String songId) => Stream.value(false);
+}
+
+class _FakeSongNotesRepository implements SongNotesRepository {
+  const _FakeSongNotesRepository();
+
+  @override
+  Stream<SongNote?> watchNote(String songId) => Stream.value(null);
+
+  @override
+  Future<void> saveNote(String songId, String content) async {}
+
+  @override
+  Future<void> deleteNote(String songId) async {}
 }
 
 class _FakeSettingsRepository implements SettingsRepository {

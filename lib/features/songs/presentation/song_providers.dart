@@ -3,12 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../custom_songs/data/custom_song_image_store.dart';
 import '../data/song_repository.dart';
+import '../data/song_notes_repository.dart';
 
 final songRepositoryProvider = Provider<SongRepository>((ref) {
   return DriftSongRepository(
     ref.watch(databaseProvider),
     imageStore: LocalCustomSongImageStore(),
   );
+});
+
+final songNotesRepositoryProvider = Provider<SongNotesRepository>((ref) {
+  return DriftSongNotesRepository(ref.watch(databaseProvider));
 });
 
 final songSearchProvider = StateProvider<String>((ref) => '');
@@ -27,6 +32,10 @@ final songsForSearchProvider = StreamProvider.family<List<Song>, String>((
 
 final songProvider = StreamProvider.family<Song?, String>((ref, id) {
   return ref.watch(songRepositoryProvider).watchSong(id);
+});
+
+final songNoteProvider = StreamProvider.family<SongNote?, String>((ref, id) {
+  return ref.watch(songNotesRepositoryProvider).watchNote(id);
 });
 
 class PagedSongsState {

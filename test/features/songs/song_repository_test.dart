@@ -4,14 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:praise/core/database/app_database.dart';
 import 'package:praise/features/custom_songs/data/custom_song_image_store.dart';
 import 'package:praise/features/songs/data/song_repository.dart';
+import 'package:praise/features/songs/data/song_notes_repository.dart';
 
 void main() {
   late AppDatabase database;
   late SongRepository repository;
+  late SongNotesRepository notesRepository;
 
   setUp(() async {
     database = AppDatabase(NativeDatabase.memory());
     repository = DriftSongRepository(database);
+    notesRepository = DriftSongNotesRepository(database);
     final now = DateTime.utc(2026, 8, 13);
 
     await database.batch((batch) {
@@ -201,6 +204,32 @@ void main() {
       ),
       throwsStateError,
     );
+  });
+
+  test('saves, updates, watches, and deletes a private song note', () async {
+    expect(await notesRepository.watchNote('grace').first, isNull);
+
+    await notesRepository.saveNote('grace', '  Start softly  ');
+    var note = await notesRepository.watchNote('grace').first;
+    expect(note?.content, 'Start softly');
+    expect(note?.createdAt, isNot(isNull));
+
+    await notesRepository.saveNote('grace', 'Play with piano');
+    note = await notesRepository.watchNote('grace').first;
+    expect(note?.content, 'Play with piano');
+
+    await notesRepository.saveNote('grace', '   ');
+    expect(await notesRepository.watchNote('grace').first, isNull);
+  });
+
+  test('deleting a song cascades its private note', () async {
+    await notesRepository.saveNote('grace', 'Remember the intro');
+
+    await (database.delete(
+      database.songs,
+    )..where((row) => row.id.equals('grace'))).go();
+
+    expect(await notesRepository.watchNote('grace').first, isNull);
   });
 }
 

@@ -276,7 +276,7 @@ class _BilingualLyricsLines extends StatelessWidget {
       parseRepeatableLyricsLine(primaryLine ?? '')?.repeatCount ?? 1,
       parseRepeatableLyricsLine(englishLine ?? '')?.repeatCount ?? 1,
     ].reduce((left, right) => left > right ? left : right);
-    if (expandCounts && expandLineCounts && previousRepeatCount > 1) {
+    if (previousRepeatCount > 1) {
       return 30;
     }
     return 22;
@@ -601,6 +601,7 @@ class _LyricsLines extends StatelessWidget {
             fontFamily: fontFamily,
             expandCount: expandCounts,
             addExpandedBottomSpacing: index < lastContentIndex,
+            addRepeatBottomSpacing: index < lastContentIndex,
           ),
         ],
       ],
@@ -615,6 +616,7 @@ class _LyricsLine extends StatelessWidget {
     required this.fontFamily,
     required this.expandCount,
     required this.addExpandedBottomSpacing,
+    this.addRepeatBottomSpacing = false,
     this.showRepeatLabel = true,
     this.color,
   });
@@ -624,6 +626,7 @@ class _LyricsLine extends StatelessWidget {
   final String? fontFamily;
   final bool expandCount;
   final bool addExpandedBottomSpacing;
+  final bool addRepeatBottomSpacing;
   final bool showRepeatLabel;
   final Color? color;
 
@@ -645,7 +648,7 @@ class _LyricsLine extends StatelessWidget {
     );
 
     if (!expandCount) {
-      return Wrap(
+      final annotatedLine = Wrap(
         spacing: 8,
         runSpacing: 2,
         crossAxisAlignment: WrapCrossAlignment.center,
@@ -654,6 +657,12 @@ class _LyricsLine extends StatelessWidget {
           if (showRepeatLabel) countLabel,
         ],
       );
+      return addRepeatBottomSpacing
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: annotatedLine,
+            )
+          : annotatedLine;
     }
 
     return Padding(

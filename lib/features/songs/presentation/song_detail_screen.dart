@@ -1130,6 +1130,10 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                       expandCounts: repeatsEnabled && _expandCounts,
                     ),
                   ],
+                  _SongNotesCard(
+                    key: ValueKey(widget.song.id),
+                    songId: widget.song.id,
+                  ),
                   if (author != null && author.trim().isNotEmpty) ...[
                     const SizedBox(height: 36),
                     Padding(
@@ -1214,6 +1218,337 @@ class _SongReaderState extends ConsumerState<_SongReader> {
       _scaleStartFontSize = selected;
     });
     await ref.read(settingsRepositoryProvider).setLyricsFontSize(selected);
+  }
+}
+
+class _SongNotesCard extends ConsumerStatefulWidget {
+  const _SongNotesCard({super.key, required this.songId});
+
+  final String songId;
+
+  @override
+  ConsumerState<_SongNotesCard> createState() => _SongNotesCardState();
+}
+
+class _SongNotesCardState extends ConsumerState<_SongNotesCard> {
+  static const _maximumCharacters = 2000;
+
+  late final TextEditingController _controller;
+  var _isEditing = false;
+  var _isSaving = false;
+  var _hasUnsavedChanges = false;
+  var _hasLoadedNote = false;
+  var _syncingNote = false;
+  String? _loadedContent;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController()..addListener(_handleDraftChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_handleDraftChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final note = ref.watch(songNoteProvider(widget.songId));
+    return note.when(
+      loading: () => const _SongNotesLoadingCard(),
+      error: (error, stackTrace) => _SongNotesErrorCard(
+        onRetry: () => ref.invalidate(songNoteProvider(widget.songId)),
+      ),
+      data: (value) {
+        _syncNote(value?.content);
+        return PopScope(
+          canPop: !_hasUnsavedChanges,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop && _hasUnsavedChanges) _confirmDiscard();
+          },
+          child: _buildCard(context, value),
+        );
+      },
+    );
+  }
+
+  Widget _buildCard(BuildContext context, SongNote? note) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final hasNote = note != null && note.content.trim().isNotEmpty;
+
+    return Card(
+      margin: const EdgeInsets.only(top: 32),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.sticky_note_2_outlined, color: colors.primary),
+                const SizedBox(width: 10),
+                Text(
+                  'Notes',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                if (hasNote && !_isEditing)
+                  IconButton(
+                    tooltip: 'Delete note',
+                    onPressed: _deleteNote,
+                    icon: const Icon(Icons.delete_outline),
+                  ),
+              ],
+            ),
+            if (_isEditing)
+              _buildEditor(context)
+            else if (hasNote)
+              _buildSavedNote(context, note.content)
+            else
+              _buildEmptyState(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Private note — only you can see this.',
+          style: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(color: colors.onSurfaceVariant),
+        ),
+        const SizedBox(height: 10),
+        FilledButton.tonalIcon(
+          onPressed: _startEditing,
+          icon: const Icon(Icons.edit_note_outlined),
+          label: const Text('Add a note'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSavedNote(BuildContext context, String content) {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(content, style: Theme.of(context).textTheme.bodyLarge),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: _startEditing,
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          label: const Text('Edit note'),
+          style: TextButton.styleFrom(foregroundColor: colors.primary),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditor(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _controller,
+          autofocus: true,
+          minLines: 3,
+          maxLines: 8,
+          maxLength: _maximumCharacters,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Song note',
+            hintText: 'Add a private note…',
+            alignLabelWithHint: true,
+            border: OutlineInputBorder(),
+          ),
+        ),
+        Row(
+          children: [
+            TextButton(
+              onPressed: _isSaving ? null : _cancelEditing,
+              child: const Text('Cancel'),
+            ),
+            const Spacer(),
+            FilledButton(
+              onPressed: _isSaving ? null : _saveNote,
+              child: _isSaving
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _syncNote(String? content) {
+    if (_hasLoadedNote && (_isEditing || _loadedContent == content)) return;
+    _loadedContent = content;
+    _syncingNote = true;
+    try {
+      _controller.value = TextEditingValue(
+        text: content ?? '',
+        selection: TextSelection.collapsed(offset: content?.length ?? 0),
+      );
+    } finally {
+      _syncingNote = false;
+    }
+    _hasLoadedNote = true;
+  }
+
+  void _handleDraftChanged() {
+    if (_syncingNote || !_hasLoadedNote || !mounted) return;
+    final draft = _controller.text.trim();
+    setState(() => _hasUnsavedChanges = draft != (_loadedContent ?? ''));
+  }
+
+  void _startEditing() {
+    setState(() => _isEditing = true);
+  }
+
+  void _cancelEditing() {
+    _controller.text = _loadedContent ?? '';
+    setState(() {
+      _isEditing = false;
+      _hasUnsavedChanges = false;
+    });
+  }
+
+  Future<void> _saveNote() async {
+    setState(() => _isSaving = true);
+    try {
+      await ref
+          .read(songNotesRepositoryProvider)
+          .saveNote(widget.songId, _controller.text);
+      if (!mounted) return;
+      setState(() {
+        _loadedContent = _controller.text.trim().isEmpty
+            ? null
+            : _controller.text.trim();
+        _isEditing = false;
+        _isSaving = false;
+        _hasUnsavedChanges = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _loadedContent == null ? 'Note cleared.' : 'Note saved.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Couldn’t save the note.')));
+    }
+  }
+
+  Future<void> _deleteNote() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete this note?'),
+        content: const Text('This private note will be permanently removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref.read(songNotesRepositoryProvider).deleteNote(widget.songId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Note deleted.')));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Couldn’t delete the note.')),
+      );
+    }
+  }
+
+  Future<void> _confirmDiscard() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Discard this note?'),
+        content: const Text('Your unsaved changes will be lost.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep editing'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      setState(() => _hasUnsavedChanges = false);
+      Navigator.of(context).pop();
+    }
+  }
+}
+
+class _SongNotesLoadingCard extends StatelessWidget {
+  const _SongNotesLoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      margin: EdgeInsets.only(top: 32),
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(child: CircularProgressIndicator.adaptive()),
+      ),
+    );
+  }
+}
+
+class _SongNotesErrorCard extends StatelessWidget {
+  const _SongNotesErrorCard({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(top: 32),
+      child: ListTile(
+        leading: const Icon(Icons.sticky_note_2_outlined),
+        title: const Text('Notes unavailable'),
+        subtitle: const Text('Couldn’t load this song’s note.'),
+        trailing: TextButton(onPressed: onRetry, child: const Text('Retry')),
+      ),
+    );
   }
 }
 
