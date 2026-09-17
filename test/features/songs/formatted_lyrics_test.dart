@@ -20,7 +20,7 @@ void main() {
     );
 
     expect(find.text('Sing this line'), findsOneWidget);
-    expect(find.text('×2'), findsOneWidget);
+    expect(find.text('|| 2 ||'), findsOneWidget);
 
     expect(find.text('Sing this line'), findsOneWidget);
     expect(find.text('1/2'), findsNothing);
@@ -76,8 +76,12 @@ void main() {
       findsNWidgets(2),
     );
     expect(
-      tester.widget<Text>(find.text('ఆరాధన')).style?.fontSize,
-      closeTo(14.4, 0.001),
+      tester.widget<Text>(find.text('|| ఆరాధన ||')).style?.fontSize,
+      closeTo(20, 0.001),
+    );
+    expect(
+      tester.widget<Text>(find.text('|| ఆరాధన ||')).style?.fontFamily,
+      'Mandali',
     );
   });
 
@@ -102,7 +106,7 @@ Line two
 
     expect(find.text('Line one'), findsOneWidget);
     expect(find.text('Line two'), findsOneWidget);
-    expect(find.text('×2'), findsOneWidget);
+    expect(find.text('|| 2 ||'), findsOneWidget);
     expect(find.text('[Repeat ×2]'), findsNothing);
     expect(find.text('[/Repeat]'), findsNothing);
 
@@ -122,7 +126,7 @@ Line two
 
     expect(find.text('Line one'), findsNWidgets(2));
     expect(find.text('Line two'), findsNWidgets(2));
-    expect(find.text('×2'), findsNothing);
+    expect(find.text('|| 2 ||'), findsNothing);
     expect(find.text('[Repeat ×2]'), findsNothing);
     expect(find.text('[/Repeat]'), findsNothing);
   });
@@ -157,8 +161,8 @@ English third line''',
     expect(find.text('English first line'), findsOneWidget);
     expect(find.text('తెలుగు రెండవ పంక్తి'), findsOneWidget);
     expect(find.text('English second line'), findsOneWidget);
-    expect(find.text('పాడుదాం'), findsOneWidget);
-    expect(find.text('Paadudam'), findsOneWidget);
+    expect(find.text('|| పాడుదాం ||'), findsOneWidget);
+    expect(find.text('|| Paadudam ||'), findsOneWidget);
     expect(
       find.byWidgetPredicate(
         (widget) => widget is SizedBox && widget.height == 30,

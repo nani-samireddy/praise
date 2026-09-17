@@ -5,46 +5,24 @@ import '../../../core/database/app_database.dart';
 enum PrimaryRole { singer, musician, worshipLeader }
 
 enum FeatureKey {
-  transliteration,
   practiceVideos,
   metronome,
   repeatExpansion,
   chordDisplay,
   chordTranspose,
   capoShapes,
-  stageMode,
-  autoScroll,
-  vocalRange,
-  startingPitch,
   harmony,
-  arrangements,
-  rehearsal,
-  teams,
-  liveWorship,
-  cloudBackup,
-  lumina,
-  catalogueSync,
+  adaptiveSongControls,
 }
 
 class FeatureDefinition {
-  const FeatureDefinition(
-    this.key,
-    this.label,
-    this.description, {
-    this.available = true,
-  });
+  const FeatureDefinition(this.key, this.label, this.description);
   final FeatureKey key;
   final String label;
   final String description;
-  final bool available;
 }
 
 const featureDefinitions = <FeatureDefinition>[
-  FeatureDefinition(
-    FeatureKey.transliteration,
-    'English transliteration',
-    'Show Telugu written in English letters.',
-  ),
   FeatureDefinition(
     FeatureKey.practiceVideos,
     'Practice videos',
@@ -66,11 +44,6 @@ const featureDefinitions = <FeatureDefinition>[
     'Show chord names above the lyrics.',
   ),
   FeatureDefinition(
-    FeatureKey.catalogueSync,
-    'Song library updates',
-    'Check for new and updated songs.',
-  ),
-  FeatureDefinition(
     FeatureKey.chordTranspose,
     'Transpose chords',
     'Change the chord key while reading.',
@@ -81,75 +54,19 @@ const featureDefinitions = <FeatureDefinition>[
     'Show playable shapes for songs with a capo.',
   ),
   FeatureDefinition(
-    FeatureKey.stageMode,
-    'Stage mode',
-    'Distraction-free live display.',
-    available: false,
-  ),
-  FeatureDefinition(
-    FeatureKey.autoScroll,
-    'Auto-scroll',
-    'Scroll lyrics while performing.',
-    available: false,
-  ),
-  FeatureDefinition(
-    FeatureKey.vocalRange,
-    'Vocal range tools',
-    'Track range and suggested keys.',
-    available: false,
-  ),
-  FeatureDefinition(
-    FeatureKey.startingPitch,
-    'Starting pitch',
-    'Play a reference starting note.',
-    available: false,
-  ),
-  FeatureDefinition(
     FeatureKey.harmony,
     'Harmony parts',
     'Practice vocal harmony lines.',
   ),
   FeatureDefinition(
-    FeatureKey.arrangements,
-    'Arrangement builder',
-    'Create service-specific song orders.',
-    available: false,
-  ),
-  FeatureDefinition(
-    FeatureKey.rehearsal,
-    'Rehearsal loops and count-in',
-    'Practice selected sections.',
-    available: false,
-  ),
-  FeatureDefinition(
-    FeatureKey.teams,
-    'Worship teams',
-    'Coordinate musicians and services.',
-    available: false,
-  ),
-  FeatureDefinition(
-    FeatureKey.liveWorship,
-    'Live worship control',
-    'Synchronize the current section.',
-    available: false,
-  ),
-  FeatureDefinition(
-    FeatureKey.cloudBackup,
-    'Cloud backup',
-    'Back up personal data.',
-    available: false,
-  ),
-  FeatureDefinition(
-    FeatureKey.lumina,
-    'Lumina integration',
-    'Present lyrics to Lumina.',
-    available: false,
+    FeatureKey.adaptiveSongControls,
+    'Adaptive song controls',
+    'Move song controls to the easier side while you hold your phone.',
   ),
 ];
 
 Set<FeatureKey> roleDefaults(PrimaryRole role) {
   final enabled = <FeatureKey>{
-    FeatureKey.transliteration,
     FeatureKey.practiceVideos,
     FeatureKey.repeatExpansion,
     FeatureKey.harmony,
@@ -161,9 +78,6 @@ Set<FeatureKey> roleDefaults(PrimaryRole role) {
       FeatureKey.metronome,
       FeatureKey.capoShapes,
     });
-  }
-  if (role == PrimaryRole.worshipLeader) {
-    enabled.add(FeatureKey.catalogueSync);
   }
   return enabled;
 }
@@ -195,8 +109,9 @@ class FeatureSettingsStore {
     }
     return null;
   });
-  Stream<bool> watchFeature(FeatureKey feature) =>
-      watch(key(feature)).map((v) => v == null ? true : v == 'true');
+  Stream<bool> watchFeature(FeatureKey feature) => watch(key(feature)).map(
+    (v) => v == null ? feature != FeatureKey.adaptiveSongControls : v == 'true',
+  );
   Future<void> complete(PrimaryRole role) async {
     await set(roleKey, role.name);
     await set(onboardingKey, 'true');

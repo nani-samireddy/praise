@@ -55,12 +55,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final syncState = ref.watch(catalogueSyncControllerProvider);
     final syncProgress = ref.watch(catalogueSyncProgressProvider);
     final catalogueStatus = ref.watch(catalogueStatusProvider).valueOrNull;
-    final catalogueSyncEnabled =
-        ref
-            .watch(featureEnabledProvider(FeatureKey.catalogueSync))
-            .valueOrNull ??
-        true;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -307,11 +301,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
-                        if (!catalogueSyncEnabled)
-                          Text(
-                            'Song updates are turned off in Features.',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
                         if (syncProgress != null)
                           CatalogueSyncProgressView(
                             progress: syncProgress,
@@ -331,9 +320,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     )
                   else
                     IconButton.filledTonal(
-                      onPressed:
-                          catalogueSyncEnabled &&
-                              AppConfig.isCatalogueSyncConfigured
+                      onPressed: AppConfig.isCatalogueSyncConfigured
                           ? _refreshCatalogue
                           : null,
                       tooltip: 'Refresh songs',
@@ -437,29 +424,19 @@ class _FeatureTile extends ConsumerWidget {
   final FeatureDefinition definition;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final enabled = definition.available
-        ? (ref.watch(featureEnabledProvider(definition.key)).valueOrNull ??
-              true)
-        : false;
+    final enabled =
+        ref.watch(featureEnabledProvider(definition.key)).valueOrNull ?? true;
     return SwitchListTile(
-      secondary: Icon(
-        definition.available ? Icons.toggle_on_outlined : Icons.hourglass_empty,
-      ),
+      secondary: const Icon(Icons.toggle_on_outlined),
       title: Text(definition.label),
-      subtitle: Text(
-        definition.available
-            ? definition.description
-            : '${definition.description} • Not available yet',
-      ),
+      subtitle: Text(definition.description),
       value: enabled,
-      onChanged: definition.available
-          ? (value) => ref
-                .read(featureSettingsStoreProvider)
-                .set(
-                  ref.read(featureSettingsStoreProvider).key(definition.key),
-                  value.toString(),
-                )
-          : null,
+      onChanged: (value) => ref
+          .read(featureSettingsStoreProvider)
+          .set(
+            ref.read(featureSettingsStoreProvider).key(definition.key),
+            value.toString(),
+          ),
     );
   }
 }

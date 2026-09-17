@@ -1,30 +1,595 @@
 {
   "csv-0042": {
-    "originalKey": "Em",
-    "chordsCredit": "Oliver Paul",
-    "sections": [
-      {
-        "id": "chorus",
-        "type": "chorus",
-        "label": "Chorus",
-        "lines": [
-          {"text":"అంతా నా మేలుకే – ఆరాధన యేసుకే","transliteration":"Anthaa Naa Meluke – Aaraadhana Yesuke","segments":[{"text":"అంతా నా","chord":"Em"},{"text":"మేలుకే –","chord":"C"},{"text":"ఆరాధన","chord":"Em"},{"text":"యేసుకే","chord":"D"}]},
-          {"text":"అంతా నా మంచికే – తన చిత్తమునకు తల వంచితే","transliteration":"Anthaa Naa Manchike – Thana Chitthamunaku Thala Vanchithe","segments":[{"text":"అంతా నా","chord":"Am"},{"text":"మంచికే –","chord":"C"},{"text":"తన చిత్తమునకు","chord":"D"},{"text":"తల వంచితే","chord":"Em"}]},
-          {"text":"తన చిత్తమునకు తల వంచితే","transliteration":"Thana Chitthamunaku Thala Vanchithe","segments":[{"text":"తన చిత్తమునకు","chord":"C"},{"text":"తల వంచితే","chord":"Em"}]},
-          {"text":"ఆరాధన ఆపను – స్తుతియించుట మానను","transliteration":"Aaraadhana Aapanu – Stuthiyinchuta Maananu","repeatCount":2,"segments":[{"text":"ఆరాధన ఆపను –","chord":"C"},{"text":"స్తుతియించుట","chord":"Em"},{"text":"మానను","chord":"D"}]},
-          {"text":"స్తుతియించుట మానను","transliteration":"Stuthiyinchuta Maananu","segments":[{"text":"స్తుతియించుట","chord":"C"},{"text":"మానను","chord":"Em"}]}
-        ]
-      },
-      {
-        "id":"verse-1","type":"verse","number":1,"label":"Verse 1",
-        "lines":[
-          {"text":"అవమానం ఎంతైనా – నా వారే కాదన్నా","transliteration":"Avamaanam Enthainaa – Naa Vaare Kaadannaa","segments":[{"text":"అవమానం","chord":"Em"},{"text":"ఎంతైనా –","chord":"C"},{"text":"నా వారే","chord":"Em"},{"text":"కాదన్నా","chord":"C"}]},
-          {"text":"నీవు తప్ప ఎవరున్నారు ఆకాశమందున","transliteration":"Neevu Thappa Evarunnaaru Aakaashamanduna","repeatCount":2,"segments":[{"text":"నీవు తప్ప","chord":"D"},{"text":"ఎవరున్నారు","chord":"Am"},{"text":"ఆకాశ","chord":"D"},{"text":"మందున","chord":"Em"}]},
-          {"text":"నీవు నాకుండగా – ఏది నాకక్కర లేదు","transliteration":"Neevu Naakundagaa – Edi Naakakkara Ledu","repeatCount":2,"segments":[{"text":"నీవు నాకుండగా –","chord":"A"},{"text":"ఏది నాకక్కర","chord":"Em"},{"text":"లేదు"}]}
-        ]
-      }
-    ]
-  },
+  "originalKey": "Em",
+  "capo": 2,
+  "chordsCredit": "Oliver Paul",
+  "sections": [
+    {
+      "id": "chorus",
+      "type": "chorus",
+      "label": "Chorus",
+      "lines": [
+        {
+          "text": "నేనెల్లప్పుడు యెహోవను సన్నుతించెదన్",
+          "transliteration": "Nenellappudu Yehovanu Sannuthinchedan",
+          "segments": [
+            {
+              "text": "నేనెల్లప్పుడు యెహోవను సన్నుతించెదన్",
+              "transliteration": "Nenellappudu Yehovanu Sannuthinchedan"
+            }
+          ]
+        },
+        {
+          "text": "నిత్యము ఆయన కీర్తి నా నోట నుండున్",
+          "transliteration": "Nithyamu Aayana Keerthi Naa Nota Nundun",
+          "segments": [
+            {
+              "text": "నిత్యము ఆయన కీర్తి నా నోట నుండున్",
+              "transliteration": "Nithyamu Aayana Keerthi Naa Nota Nundun"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "అంతా నా మేలుకే – ఆరాధన యేసుకే",
+          "transliteration": "Anthaa Naa Meluke – Aaraadhana Yesuke",
+          "segments": [
+            {
+              "text": "అంతా నా",
+              "transliteration": "Anthaa Naa",
+              "chord": "Em"
+            },
+            {
+              "text": "మేలుకే –",
+              "transliteration": "Meluke –",
+              "chord": "C"
+            },
+            {
+              "text": "ఆరాధన",
+              "transliteration": "Aaraadhana",
+              "chord": "Em"
+            },
+            {
+              "text": "యేసుకే",
+              "transliteration": "Yesuke",
+              "chord": "D"
+            }
+          ]
+        },
+        {
+          "text": "అంతా నా మంచికే – తన చిత్తమునకు తల వంచితే",
+          "transliteration": "Anthaa Naa Manchike – Thana Chitthamunaku Thala Vanchithe",
+          "segments": [
+            {
+              "text": "అంతా నా",
+              "transliteration": "Anthaa Naa",
+              "chord": "Am"
+            },
+            {
+              "text": "మంచికే –",
+              "transliteration": "Manchike –",
+              "chord": "C"
+            },
+            {
+              "text": "తన చిత్తమునకు",
+              "transliteration": "Thana Chitthamunaku",
+              "chord": "D"
+            },
+            {
+              "text": "తల వంచితే",
+              "transliteration": "Thala Vanchithe",
+              "chord": "Em"
+            }
+          ]
+        },
+        {
+          "text": "తన చిత్తమునకు తల వంచితే",
+          "transliteration": "Thana Chitthamunaku Thala Vanchithe",
+          "segments": [
+            {
+              "text": "తన చిత్తమునకు",
+              "transliteration": "Thana Chitthamunaku",
+              "chord": "C"
+            },
+            {
+              "text": "తల వంచితే",
+              "transliteration": "Thala Vanchithe",
+              "chord": "Em"
+            }
+          ]
+        },
+        {
+          "text": "ఆరాధన ఆపను – స్తుతియించుట మానను",
+          "transliteration": "Aaraadhana Aapanu – Stuthiyinchuta Maananu",
+          "segments": [
+            {
+              "text": "ఆరాధన ఆపను –",
+              "transliteration": "Aaraadhana Aapanu –",
+              "chord": "C"
+            },
+            {
+              "text": "స్తుతియించుట",
+              "transliteration": "Stuthiyinchuta",
+              "chord": "Em"
+            },
+            {
+              "text": "మానను",
+              "transliteration": "Maananu",
+              "chord": "D"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "స్తుతియించుట మానను",
+          "transliteration": "Stuthiyinchuta Maananu",
+          "segments": [
+            {
+              "text": "స్తుతియించుట",
+              "transliteration": "Stuthiyinchuta",
+              "chord": "C"
+            },
+            {
+              "text": "మానను",
+              "transliteration": "Maananu",
+              "chord": "Em"
+            }
+          ]
+        },
+        {
+          "text": "కన్నీళ్లే పానములైనా – కఠిన దుఃఖ బాధలైనా",
+          "transliteration": "Kanneelle Paanamulainaa – Katina Dukha Baadhalainaa",
+          "segments": [
+            {
+              "text": "కన్నీళ్లే పానములైనా – కఠిన దుఃఖ బాధలైనా",
+              "transliteration": "Kanneelle Paanamulainaa – Katina Dukha Baadhalainaa"
+            }
+          ]
+        },
+        {
+          "text": "స్థితి గతులే మారినా – అవకాశం చేజారినా",
+          "transliteration": "Sthithi Gathule Maarinaa – Avakaasham Chejaarinaa",
+          "segments": [
+            {
+              "text": "స్థితి గతులే మారినా – అవకాశం చేజారినా",
+              "transliteration": "Sthithi Gathule Maarinaa – Avakaasham Chejaarinaa"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "మారదు యేసు ప్రేమ – నిత్యుడైన తండ్రి ప్రేమ",
+          "transliteration": "Maaradhu Yesu Prema – Nithyudaina Thandri Prema",
+          "segments": [
+            {
+              "text": "మారదు యేసు ప్రేమ – నిత్యుడైన తండ్రి ప్రేమ",
+              "transliteration": "Maaradhu Yesu Prema – Nithyudaina Thandri Prema"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "మారదు యేసు ప్రేమ – నిత్యుడైన తండ్రి ప్రేమ",
+          "transliteration": "Maaradhu Yesu Prema – Nithyudaina Thandri Prema",
+          "segments": [
+            {
+              "text": "మారదు యేసు ప్రేమ – నిత్యుడైన తండ్రి ప్రేమ",
+              "transliteration": "Maaradhu Yesu Prema – Nithyudaina Thandri Prema"
+            }
+          ],
+          "repeatCount": 2
+        }
+      ]
+    },
+    {
+      "id": "repeat-1",
+      "type": "repeat",
+      "label": "[Repeat: అంతా]",
+      "transliterationLabel": "[Repeat: Anthaa]",
+      "lines": []
+    },
+    {
+      "id": "verse-1",
+      "type": "verse",
+      "label": "Verse 1",
+      "lines": [
+        {
+          "text": "ఆస్తులన్ని కోల్పోయినా – కన్నవారే కనుమరుగైనా",
+          "transliteration": "Aasthulanni Kolpoyinaa – Kannavaare Kanumarugainaa",
+          "segments": [
+            {
+              "text": "ఆస్తులన్ని కోల్పోయినా – కన్నవారే కనుమరుగైనా",
+              "transliteration": "Aasthulanni Kolpoyinaa – Kannavaare Kanumarugainaa"
+            }
+          ]
+        },
+        {
+          "text": "ఊపిరి భరువైనా – గుండెలే పగిలినా",
+          "transliteration": "Oopiri Bharuvainaa – Gundele Pagilinaa",
+          "segments": [
+            {
+              "text": "ఊపిరి భరువైనా – గుండెలే పగిలినా",
+              "transliteration": "Oopiri Bharuvainaa – Gundele Pagilinaa"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "యెహోవా ఇచ్చెను – యెహోవా తీసుకొనెను",
+          "transliteration": "Yehovaa Ichchenu – Yehovaa Theesukonenu",
+          "segments": [
+            {
+              "text": "యెహోవా ఇచ్చెను – యెహోవా తీసుకొనెను",
+              "transliteration": "Yehovaa Ichchenu – Yehovaa Theesukonenu"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "ఆయన నామమునకే – స్తుతి కలుగు గాక",
+          "transliteration": "Aayana Naamamunake – Sthuthi Kalugu Gaaka",
+          "segments": [
+            {
+              "text": "ఆయన నామమునకే – స్తుతి కలుగు గాక",
+              "transliteration": "Aayana Naamamunake – Sthuthi Kalugu Gaaka"
+            }
+          ],
+          "repeatCount": 2
+        }
+      ],
+      "number": 1
+    },
+    {
+      "id": "repeat-2",
+      "type": "repeat",
+      "label": "[Repeat: అంతా]",
+      "transliterationLabel": "[Repeat: Anthaa]",
+      "lines": []
+    },
+    {
+      "id": "verse-2",
+      "type": "verse",
+      "label": "Verse 2",
+      "lines": [
+        {
+          "text": "అవమానం ఎంతైనా – నా వారే కాదన్నా",
+          "transliteration": "Avamaanam Enthainaa – Naa Vaare Kaadannaa",
+          "segments": [
+            {
+              "text": "అవమానం",
+              "transliteration": "Avamaanam",
+              "chord": "Em"
+            },
+            {
+              "text": "ఎంతైనా –",
+              "transliteration": "Enthainaa –",
+              "chord": "C"
+            },
+            {
+              "text": "నా వారే",
+              "transliteration": "Naa Vaare",
+              "chord": "Em"
+            },
+            {
+              "text": "కాదన్నా",
+              "transliteration": "Kaadannaa",
+              "chord": "C"
+            }
+          ]
+        },
+        {
+          "text": "నీవు తప్ప ఎవరున్నారు ఆకాశమందున",
+          "transliteration": "Neevu Thappa Evarunnaaru Aakaashamanduna",
+          "segments": [
+            {
+              "text": "నీవు తప్ప",
+              "transliteration": "Neevu Thappa",
+              "chord": "D"
+            },
+            {
+              "text": "ఎవరున్నారు",
+              "transliteration": "Evarunnaaru",
+              "chord": "Am"
+            },
+            {
+              "text": "ఆకాశ",
+              "transliteration": "Aakaasha",
+              "chord": "D"
+            },
+            {
+              "text": "మందున",
+              "transliteration": "Manduna",
+              "chord": "Em"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "నీవు నాకుండగా – ఏది నాకక్కర లేదు",
+          "transliteration": "Neevu Naakundagaa – Edi Naakakkara Ledu",
+          "segments": [
+            {
+              "text": "నీవు నాకుండగా –",
+              "transliteration": "Neevu Naakundagaa –",
+              "chord": "A"
+            },
+            {
+              "text": "ఏది నాకక్కర",
+              "transliteration": "Edi Naakakkara",
+              "chord": "Em"
+            },
+            {
+              "text": "లేదు",
+              "transliteration": "Ledu"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "నీవు నాకుండగా – ఏది నాకక్కర లేదు",
+          "transliteration": "Neevu Naakundagaa – Edi Naakakkara Ledu",
+          "segments": [
+            {
+              "text": "నీవు నాకుండగా –",
+              "transliteration": "Neevu Naakundagaa –",
+              "chord": "A"
+            },
+            {
+              "text": "ఏది నాకక్కర",
+              "transliteration": "Edi Naakakkara",
+              "chord": "Em"
+            },
+            {
+              "text": "లేదు",
+              "transliteration": "Ledu"
+            }
+          ],
+          "repeatCount": 2
+        }
+      ],
+      "number": 2
+    },
+    {
+      "id": "repeat-3",
+      "type": "repeat",
+      "label": "[Repeat: అంతా]",
+      "transliterationLabel": "[Repeat: Anthaa]",
+      "lines": []
+    },
+    {
+      "id": "verse-3",
+      "type": "verse",
+      "label": "Verse 3",
+      "lines": [
+        {
+          "text": "ఆశలే సమాధియైనా – వ్యాధి బాధ వెల్లువైనా",
+          "transliteration": "Aashale Samaadhiyainaa – Vyaadhi Baadha Velluvainaa",
+          "segments": [
+            {
+              "text": "ఆశలే సమాధియైనా – వ్యాధి బాధ వెల్లువైనా",
+              "transliteration": "Aashale Samaadhiyainaa – Vyaadhi Baadha Velluvainaa"
+            }
+          ]
+        },
+        {
+          "text": "అధికారం కొప్పుకొని – రక్షణకై ఆనందింతును",
+          "transliteration": "Adhikaaram Koppukoni – Rakshanakai Aanandinthun",
+          "segments": [
+            {
+              "text": "అధికారం కొప్పుకొని – రక్షణకై ఆనందింతును",
+              "transliteration": "Adhikaaram Koppukoni – Rakshanakai Aanandinthun"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "నాదు మనస్సు నీ మీద – ఆనుకొనగా ఓ నాథా",
+          "transliteration": "Naadu Manassu Nee Meeda – Aanukonagaa O Naathaa",
+          "segments": [
+            {
+              "text": "నాదు మనస్సు నీ మీద – ఆనుకొనగా ఓ నాథా",
+              "transliteration": "Naadu Manassu Nee Meeda – Aanukonagaa O Naathaa"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "పూర్ణ శాంతి నే పొంది – నిన్నే నే కీర్తింతున్",
+          "transliteration": "Poorna Shaanthi Ne Pondi – Ninne Ne Keerthinthun",
+          "segments": [
+            {
+              "text": "పూర్ణ శాంతి నే పొంది – నిన్నే నే కీర్తింతున్",
+              "transliteration": "Poorna Shaanthi Ne Pondi – Ninne Ne Keerthinthun"
+            }
+          ],
+          "repeatCount": 2
+        }
+      ],
+      "number": 3
+    },
+    {
+      "id": "repeat-4",
+      "type": "repeat",
+      "label": "[Repeat: అంతా]",
+      "transliterationLabel": "[Repeat: Anthaa]",
+      "lines": []
+    },
+    {
+      "id": "verse-4",
+      "type": "verse",
+      "label": "Verse 4",
+      "lines": [
+        {
+          "text": "చదువులే రాకున్నా – ఓటమి పాలైనా",
+          "transliteration": "Chaduvule Raakunaa – Otami Paalainaa",
+          "segments": [
+            {
+              "text": "చదువులే రాకున్నా – ఓటమి పాలైనా",
+              "transliteration": "Chaduvule Raakunaa – Otami Paalainaa"
+            }
+          ]
+        },
+        {
+          "text": "ఉద్యోగం లేకున్నా – భూమికే భరువైనా",
+          "transliteration": "Udyogam Lekunnaa – Bhoomike Bharuvainaa",
+          "segments": [
+            {
+              "text": "ఉద్యోగం లేకున్నా – భూమికే భరువైనా",
+              "transliteration": "Udyogam Lekunnaa – Bhoomike Bharuvainaa"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "నా యెడల నీ తలంపులు – ఎంతో ప్రియములు",
+          "transliteration": "Naa Yedala Nee Thalampulu – Entho Priyamulu",
+          "segments": [
+            {
+              "text": "నా యెడల నీ తలంపులు – ఎంతో ప్రియములు",
+              "transliteration": "Naa Yedala Nee Thalampulu – Entho Priyamulu"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "నీవుద్దేశించినది – నిశ్ఫలము కానేరదు",
+          "transliteration": "Neevuddeshinchinadi – Nishphalamu Kaaneradu",
+          "segments": [
+            {
+              "text": "నీవుద్దేశించినది – నిశ్ఫలము కానేరదు",
+              "transliteration": "Neevuddeshinchinadi – Nishphalamu Kaaneradu"
+            }
+          ],
+          "repeatCount": 2
+        }
+      ],
+      "number": 4
+    },
+    {
+      "id": "repeat-5",
+      "type": "repeat",
+      "label": "[Repeat: అంతా]",
+      "transliterationLabel": "[Repeat: Anthaa]",
+      "lines": []
+    },
+    {
+      "id": "verse-5",
+      "type": "verse",
+      "label": "Verse 5",
+      "lines": [
+        {
+          "text": "సంకల్పన పిలుపొంది – నిన్నే ప్రేమించు నాకు",
+          "transliteration": "Sankalpana Pilupondi – Ninne Preminchu Naaku",
+          "segments": [
+            {
+              "text": "సంకల్పన పిలుపొంది – నిన్నే ప్రేమించు నాకు",
+              "transliteration": "Sankalpana Pilupondi – Ninne Preminchu Naaku"
+            }
+          ]
+        },
+        {
+          "text": "సమస్తము సమకూడి – మేలుకై జరుగును",
+          "transliteration": "Samasthamu Samakoodi – Melukai Jarugunu",
+          "segments": [
+            {
+              "text": "సమస్తము సమకూడి – మేలుకై జరుగును",
+              "transliteration": "Samasthamu Samakoodi – Melukai Jarugunu"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "యేసుని సారూప్యము – నేను పొందాలని",
+          "transliteration": "Yeusni Saaroopyamu – Nenu Pondaalani",
+          "segments": [
+            {
+              "text": "యేసుని సారూప్యము – నేను పొందాలని",
+              "transliteration": "Yeusni Saaroopyamu – Nenu Pondaalani"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "అనుమతించిన ఈ – విలువైన సిలువకై",
+          "transliteration": "Anumathinchina Ee – Viluvaina Siluvakai",
+          "segments": [
+            {
+              "text": "అనుమతించిన ఈ – విలువైన సిలువకై",
+              "transliteration": "Anumathinchina Ee – Viluvaina Siluvakai"
+            }
+          ],
+          "repeatCount": 2
+        }
+      ],
+      "number": 5
+    },
+    {
+      "id": "repeat-6",
+      "type": "repeat",
+      "label": "[Repeat: అంతా]",
+      "transliterationLabel": "[Repeat: Anthaa]",
+      "lines": []
+    },
+    {
+      "id": "verse-6",
+      "type": "verse",
+      "label": "Verse 6",
+      "lines": [
+        {
+          "text": "నీవు చేయునది – నాకిప్పుడు తెలియదు",
+          "transliteration": "Neevu Cheyunadi – Naakippudu Theliyadu",
+          "segments": [
+            {
+              "text": "నీవు చేయునది – నాకిప్పుడు తెలియదు",
+              "transliteration": "Neevu Cheyunadi – Naakippudu Theliyadu"
+            }
+          ]
+        },
+        {
+          "text": "ఇక మీదట నేను – తెలిసికొందును",
+          "transliteration": "Ika Meedata Nenu – Thelisikondunu",
+          "segments": [
+            {
+              "text": "ఇక మీదట నేను – తెలిసికొందును",
+              "transliteration": "Ika Meedata Nenu – Thelisikondunu"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "ప్రస్తుతము సమస్తము – దుఃఖ కరమే",
+          "transliteration": "Prasthuthamu Samasthamu – Dukha Karame",
+          "segments": [
+            {
+              "text": "ప్రస్తుతము సమస్తము – దుఃఖ కరమే",
+              "transliteration": "Prasthuthamu Samasthamu – Dukha Karame"
+            }
+          ],
+          "repeatCount": 2
+        },
+        {
+          "text": "అభ్యసించిన నీతి – సమాధాన ఫలమే",
+          "transliteration": "Abhyasinchina Neethi – Samaadhaana Phalame",
+          "segments": [
+            {
+              "text": "అభ్యసించిన నీతి – సమాధాన ఫలమే",
+              "transliteration": "Abhyasinchina Neethi – Samaadhaana Phalame"
+            }
+          ],
+          "repeatCount": 2
+        }
+      ],
+      "number": 6
+    },
+    {
+      "id": "repeat-7",
+      "type": "repeat",
+      "label": "[Repeat: అంతా]",
+      "transliterationLabel": "[Repeat: Anthaa]",
+      "lines": []
+    }
+  ]
+},
   "csv-0463": {
     "originalKey": "Em",
     "sections": [

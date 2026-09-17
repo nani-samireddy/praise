@@ -21,13 +21,31 @@ enum _CollectionAction {
   delete,
 }
 
-class CollectionDetailScreen extends ConsumerWidget {
+class CollectionDetailScreen extends ConsumerStatefulWidget {
   const CollectionDetailScreen({super.key, required this.collectionId});
 
   final String collectionId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CollectionDetailScreen> createState() =>
+      _CollectionDetailScreenState();
+}
+
+class _CollectionDetailScreenState
+    extends ConsumerState<CollectionDetailScreen> {
+  final _searchController = TextEditingController();
+  var _search = '';
+
+  String get collectionId => widget.collectionId;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final collection = ref.watch(collectionProvider(collectionId));
     final songs = ref.watch(collectionSongsProvider(collectionId));
     final value = collection.valueOrNull;
@@ -100,50 +118,39 @@ class CollectionDetailScreen extends ConsumerWidget {
                   : null,
             );
           }
-          if (value?.isSystem != false) {
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
-              itemCount: items.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 6),
-              itemBuilder: (context, index) => SongListCard(song: items[index]),
-            );
-          }
-          return ReorderableListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 112),
-            itemCount: items.length,
-            onReorderItem: (oldIndex, newIndex) =>
-                _reorder(context, ref, items, oldIndex, newIndex),
-            itemBuilder: (context, index) {
-              final song = items[index];
-              return Padding(
-                key: ValueKey(song.id),
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Card(
-                  child: ListTile(
-                    onTap: () => context.push('/songs/${song.id}'),
-                    leading: ReorderableDragStartListener(
-                      index: index,
-                      child: const Icon(Icons.drag_handle),
-                    ),
-                    title: Text(song.title),
-                    subtitle: song.englishTitle == null
-                        ? null
-                        : Text(song.englishTitle!),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FavoriteButton(songId: song.id),
-                        IconButton(
-                          onPressed: () => _remove(context, ref, song.id),
-                          tooltip: 'Remove from list',
-                          icon: const Icon(Icons.remove_circle_outline),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
+          final query = _search.trim().toLowerCase();
+          final filteredItems = query.isEmpty
+              ? items
+              : items
+                    .where(
+                      (song) => [song.title, song.englishTitle, song.author]
+                          .whereType<String>()
+                          .any((value) => value.toLowerCase().contains(query)),
+                    )
+                    .toList();
+          return Column(
+            children: [
+              _SearchField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _search = value),
+                onClear: () => setState(() {
+                  _searchController.clear();
+                  _search = '';
+                }),
+              ),
+              Expanded(
+                child: filteredItems.isEmpty
+                    ? const _NoSongMatches()
+                    : _buildSongList(
+                        context,
+                        ref,
+                        items,
+                        filteredItems,
+                        value?.isSystem != false,
+                        query.isEmpty,
+                      ),
+              ),
+            ],
           );
         },
         loading: () =>
@@ -153,6 +160,71 @@ class CollectionDetailScreen extends ConsumerWidget {
             onPressed: () =>
                 ref.invalidate(collectionSongsProvider(collectionId)),
             child: const Text('Try again'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSongList(
+    BuildContext context,
+    WidgetRef ref,
+    List<Song> allSongs,
+    List<Song> songs,
+    bool isSystem,
+    bool canReorder,
+  ) {
+    if (isSystem || !canReorder) {
+      return ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+        itemCount: songs.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 6),
+        itemBuilder: (context, index) => isSystem
+            ? SongListCard(song: songs[index])
+            : _editableSongCard(context, ref, songs[index]),
+      );
+    }
+
+    return ReorderableListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+      itemCount: songs.length,
+      onReorderItem: (oldIndex, newIndex) =>
+          _reorder(context, ref, allSongs, oldIndex, newIndex),
+      itemBuilder: (context, index) =>
+          _editableSongCard(context, ref, songs[index], reorderIndex: index),
+    );
+  }
+
+  Widget _editableSongCard(
+    BuildContext context,
+    WidgetRef ref,
+    Song song, {
+    int? reorderIndex,
+  }) {
+    return Padding(
+      key: reorderIndex == null ? null : ValueKey(song.id),
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Card(
+        child: ListTile(
+          onTap: () => context.push('/songs/${song.id}'),
+          leading: reorderIndex == null
+              ? null
+              : ReorderableDragStartListener(
+                  index: reorderIndex,
+                  child: const Icon(Icons.drag_handle),
+                ),
+          title: Text(song.title),
+          subtitle: song.englishTitle == null ? null : Text(song.englishTitle!),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FavoriteButton(songId: song.id),
+              IconButton(
+                onPressed: () => _remove(context, ref, song.id),
+                tooltip: 'Remove from list',
+                icon: const Icon(Icons.remove_circle_outline),
+              ),
+            ],
           ),
         ),
       ),
@@ -462,6 +534,52 @@ class CollectionDetailScreen extends ConsumerWidget {
   void _logFailure(Object error, StackTrace stackTrace) {
     debugPrint('Collection detail action failed: $error');
     debugPrintStack(stackTrace: stackTrace);
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  const _SearchField({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: 'Search songs',
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: controller.text.isEmpty
+              ? null
+              : IconButton(
+                  onPressed: onClear,
+                  tooltip: 'Clear search',
+                  icon: const Icon(Icons.close),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NoSongMatches extends StatelessWidget {
+  const _NoSongMatches();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('No matching songs'));
   }
 }
 

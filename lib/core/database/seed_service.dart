@@ -12,7 +12,7 @@ class SeedService {
   static const _assetPath = 'assets/data/songs.json';
   static const _structuresAssetPath = 'assets/data/song_structures.json';
   static const _seedVersionKey = 'bundled_song_catalogue_version';
-  static const _seedVersion = '8';
+  static const _seedVersion = '11';
 
   final AppDatabase _database;
   final AssetBundle _assetBundle;

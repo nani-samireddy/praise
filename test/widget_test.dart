@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -105,6 +107,10 @@ void main() {
     expect(find.text('Text size'), findsOneWidget);
     expect(find.text('Show full lyrics'), findsOneWidget);
     expect(find.text('Lyrics display'), findsOneWidget);
+    expect(
+      find.byTooltip('Lyrics display: Sections. Tap to change.'),
+      findsOneWidget,
+    );
     expect(find.text('Chords'), findsOneWidget);
     expect(find.text('Guitar chord shapes'), findsNothing);
     expect(find.text('Harmony parts'), findsOneWidget);
@@ -124,7 +130,17 @@ void main() {
       isTrue,
     );
     expect(find.text('Guitar chord shapes'), findsOneWidget);
-    await tester.tap(find.text('Line by line'));
+    await tester.tap(
+      find.byTooltip('Lyrics display: Sections. Tap to change.'),
+    );
+    await _pumpFrames(tester);
+    await tester.tap(
+      find.byTooltip('Lyrics display: Original only. Tap to change.'),
+    );
+    await _pumpFrames(tester);
+    await tester.tap(
+      find.byTooltip('Lyrics display: English only. Tap to change.'),
+    );
     await _pumpFrames(tester);
     expect(
       settingsRepository.selectedDisplayMode,
@@ -315,10 +331,15 @@ class _FakeSongNotesRepository implements SongNotesRepository {
 
 class _FakeSettingsRepository implements SettingsRepository {
   LyricsDisplayMode? selectedDisplayMode;
+  LyricsDisplayMode _displayMode = LyricsDisplayMode.both;
+  final _displayModeController =
+      StreamController<LyricsDisplayMode>.broadcast();
 
   @override
   Future<void> setLyricsDisplayMode(LyricsDisplayMode value) async {
     selectedDisplayMode = value;
+    _displayMode = value;
+    _displayModeController.add(value);
   }
 
   @override
@@ -331,8 +352,10 @@ class _FakeSettingsRepository implements SettingsRepository {
   Future<void> setTeluguFont(TeluguFont value) async {}
 
   @override
-  Stream<LyricsDisplayMode> watchLyricsDisplayMode() =>
-      Stream.value(LyricsDisplayMode.both);
+  Stream<LyricsDisplayMode> watchLyricsDisplayMode() async* {
+    yield _displayMode;
+    yield* _displayModeController.stream;
+  }
 
   @override
   Stream<TeluguFont> watchTeluguFont() =>

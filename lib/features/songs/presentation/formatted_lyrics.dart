@@ -485,22 +485,12 @@ class _LyricsBlockView extends StatelessWidget {
           letterSpacing: 1,
         ),
       ),
-      LyricsBlockType.repeat => DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.secondaryContainer.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-          child: Text(
-            block.text,
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontSize: (fontSize * 0.72).clamp(12, 24),
-              fontFamily: fontFamily,
-              color: colors.onSecondaryContainer,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+      LyricsBlockType.repeat => Text(
+        '|| ${block.text} ||',
+        style: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: fontSize,
+          height: 1.6,
         ),
       ),
       LyricsBlockType.repeatBlock => _RepeatBlockView(
@@ -694,23 +684,13 @@ class _RepeatCountLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer
-            .withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-        child: Text(
-          '×$repeatCount',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontSize: (fontSize * 0.72).clamp(12, 24),
-            fontFamily: fontFamily,
-            color: Theme.of(context).colorScheme.onPrimaryContainer,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+    return Text(
+      '|| $repeatCount ||',
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        fontSize: (fontSize * 0.72).clamp(12, 24),
+        fontFamily: fontFamily,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w800,
       ),
     );
   }
