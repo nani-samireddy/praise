@@ -1,12 +1,21 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/database/app_database.dart';
+import '../../collections/presentation/add_to_list_sheet.dart';
 import '../../songs/data/song_repository.dart';
 import '../../songs/presentation/song_providers.dart';
+import '../data/local_song_draft.dart';
 import '../data/scanned_song_draft.dart';
+
+final localSongDraftStoreProvider = Provider<LocalSongDraftStore>((ref) {
+  return LocalSongDraftStore(ref.watch(databaseProvider));
+});
 
 class CustomSongEditorScreen extends ConsumerStatefulWidget {
   const CustomSongEditorScreen({super.key, this.songId, this.scannedDraft});
@@ -31,6 +40,11 @@ class _CustomSongEditorScreenState
   final _femaleVideoUrlController = TextEditingController();
   var _initialized = false;
   var _saving = false;
+  var _detailsExpanded = false;
+  var _draftLoading = false;
+  var _draftRecovered = false;
+  var _draftChanged = false;
+  Timer? _draftSaveTimer;
   String? _newImagePath;
   String? _existingImagePath;
   var _removeImage = false;
@@ -40,6 +54,7 @@ class _CustomSongEditorScreenState
   @override
   void initState() {
     super.initState();
+    _detailsExpanded = widget.songId != null || widget.scannedDraft != null;
     final draft = widget.scannedDraft;
     if (widget.songId == null && draft != null) {
       _titleController.text = draft.title;
@@ -50,10 +65,35 @@ class _CustomSongEditorScreenState
       _newImagePath = draft.imagePath;
       _initialized = true;
     }
+    if (widget.songId == null && draft == null) {
+      _draftLoading = true;
+      unawaited(_loadDraft());
+    }
+  }
+
+  Future<void> _pasteLyrics() async {
+    final clipboard = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
+    final text = clipboard?.text?.trim();
+    if (text == null || text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('There is no text to paste.')),
+      );
+      return;
+    }
+    setState(() {
+      _bodyController.text = text;
+      _bodyController.selection = TextSelection.collapsed(offset: text.length);
+    });
+    _scheduleDraftSave();
   }
 
   @override
   void dispose() {
+    _draftSaveTimer?.cancel();
+    if (widget.songId == null && widget.scannedDraft == null) {
+      unawaited(_persistDraft());
+    }
     _titleController.dispose();
     _englishTitleController.dispose();
     _bodyController.dispose();
@@ -62,6 +102,86 @@ class _CustomSongEditorScreenState
     _maleVideoUrlController.dispose();
     _femaleVideoUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadDraft() async {
+    LocalSongDraft? draft;
+    try {
+      draft = await ref.read(localSongDraftStoreProvider).load();
+    } catch (_) {
+      draft = null;
+    }
+    if (!mounted) return;
+    if (draft != null && !_draftChanged && !draft.isEmpty) {
+      _titleController.text = draft.title;
+      _englishTitleController.text = draft.englishTitle;
+      _bodyController.text = draft.body;
+      _englishBodyController.text = draft.englishBody;
+      _authorController.text = draft.author;
+      _maleVideoUrlController.text = draft.maleVideoUrl;
+      _femaleVideoUrlController.text = draft.femaleVideoUrl;
+      _newImagePath = draft.imagePath;
+      _detailsExpanded = draft.detailsExpanded;
+      _draftRecovered = true;
+    }
+    final changedBeforeLoad = _draftChanged;
+    setState(() => _draftLoading = false);
+    if (changedBeforeLoad) _scheduleDraftSave();
+  }
+
+  void _scheduleDraftSave() {
+    if (_draftLoading || widget.songId != null || widget.scannedDraft != null) {
+      return;
+    }
+    _draftChanged = true;
+    _draftSaveTimer?.cancel();
+    _draftSaveTimer = Timer(
+      const Duration(milliseconds: 500),
+      () => unawaited(_persistDraft()),
+    );
+  }
+
+  Future<void> _persistDraft() async {
+    if (widget.songId != null || widget.scannedDraft != null) return;
+    final draft = LocalSongDraft(
+      title: _titleController.text,
+      englishTitle: _englishTitleController.text,
+      body: _bodyController.text,
+      englishBody: _englishBodyController.text,
+      author: _authorController.text,
+      maleVideoUrl: _maleVideoUrlController.text,
+      femaleVideoUrl: _femaleVideoUrlController.text,
+      imagePath: _activeImagePath,
+      detailsExpanded: _detailsExpanded,
+    );
+    try {
+      final store = ref.read(localSongDraftStoreProvider);
+      if (draft.isEmpty) {
+        await store.clear();
+      } else {
+        await store.save(draft);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _discardDraft() async {
+    try {
+      await ref.read(localSongDraftStoreProvider).clear();
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _titleController.clear();
+      _englishTitleController.clear();
+      _bodyController.clear();
+      _englishBodyController.clear();
+      _authorController.clear();
+      _maleVideoUrlController.clear();
+      _femaleVideoUrlController.clear();
+      _newImagePath = null;
+      _draftRecovered = false;
+      _draftChanged = false;
+      _detailsExpanded = false;
+    });
   }
 
   Future<void> _save() async {
@@ -86,6 +206,18 @@ class _CustomSongEditorScreenState
       final savedId = id ?? await repository.createCustomSong(input);
       if (id != null) await repository.updateCustomSong(id, input);
       if (!mounted) return;
+      try {
+        await ref.read(localSongDraftStoreProvider).clear();
+      } catch (_) {}
+      if (!mounted) return;
+      if (id == null) {
+        await showModalBottomSheet<void>(
+          context: context,
+          showDragHandle: true,
+          builder: (context) => AddToListSheet(songId: savedId),
+        );
+        if (!mounted) return;
+      }
       context.go('/songs/$savedId');
     } catch (_) {
       if (!mounted) return;
@@ -143,6 +275,21 @@ class _CustomSongEditorScreenState
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
           children: [
+            if (_draftRecovered) ...[
+              Card(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                child: ListTile(
+                  leading: const Icon(Icons.restore_outlined),
+                  title: const Text('Unfinished song recovered'),
+                  subtitle: const Text('Continue where you left off.'),
+                  trailing: TextButton(
+                    onPressed: _discardDraft,
+                    child: const Text('Discard'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             if (widget.scannedDraft != null) ...[
               Card(
                 color: Theme.of(context).colorScheme.secondaryContainer,
@@ -161,15 +308,7 @@ class _CustomSongEditorScreenState
               ),
               textInputAction: TextInputAction.next,
               validator: _requiredValidator,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _englishTitleController,
-              decoration: const InputDecoration(
-                labelText: 'English title',
-                hintText: 'Optional',
-              ),
-              textInputAction: TextInputAction.next,
+              onChanged: (_) => _scheduleDraftSave(),
             ),
             const SizedBox(height: 16),
             if (_activeImagePath case final imagePath?) ...[
@@ -178,6 +317,7 @@ class _CustomSongEditorScreenState
                 onRemove: () => setState(() {
                   _newImagePath = null;
                   _removeImage = true;
+                  _scheduleDraftSave();
                 }),
               ),
               const SizedBox(height: 16),
@@ -190,55 +330,88 @@ class _CustomSongEditorScreenState
                     ? 'Lyrics in the original language'
                     : 'Optional when keeping the original photo',
                 alignLabelWithHint: true,
+                suffixIcon: IconButton(
+                  onPressed: _pasteLyrics,
+                  tooltip: 'Paste lyrics',
+                  icon: const Icon(Icons.content_paste_outlined),
+                ),
               ),
               minLines: 8,
               maxLines: null,
               keyboardType: TextInputType.multiline,
               validator: _activeImagePath == null ? _requiredValidator : null,
+              onChanged: (_) => _scheduleDraftSave(),
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _englishBodyController,
-              decoration: const InputDecoration(
-                labelText: 'English lyrics',
-                hintText: 'Optional',
-                alignLabelWithHint: true,
-              ),
-              minLines: 6,
-              maxLines: null,
-              keyboardType: TextInputType.multiline,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _authorController,
-              decoration: const InputDecoration(
-                labelText: 'Author or source',
-                hintText: 'Optional',
-              ),
-              textInputAction: TextInputAction.next,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _maleVideoUrlController,
-              decoration: const InputDecoration(
-                labelText: 'Male practice video',
-                hintText: 'Paste a YouTube link (optional)',
-              ),
-              keyboardType: TextInputType.url,
-              textInputAction: TextInputAction.next,
-              validator: _optionalYoutubeValidator,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _femaleVideoUrlController,
-              decoration: const InputDecoration(
-                labelText: 'Female practice video',
-                hintText: 'Paste a YouTube link (optional)',
-              ),
-              keyboardType: TextInputType.url,
-              textInputAction: TextInputAction.done,
-              validator: _optionalYoutubeValidator,
-              onFieldSubmitted: (_) => _save(),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              initiallyExpanded: _detailsExpanded,
+              onExpansionChanged: (expanded) {
+                setState(() => _detailsExpanded = expanded);
+                _scheduleDraftSave();
+              },
+              leading: const Icon(Icons.tune_outlined),
+              title: const Text('More details'),
+              subtitle: const Text('English title, lyrics, author, and videos'),
+              children: [
+                TextFormField(
+                  controller: _englishTitleController,
+                  decoration: const InputDecoration(
+                    labelText: 'English title',
+                    hintText: 'Optional',
+                  ),
+                  textInputAction: TextInputAction.next,
+                  onChanged: (_) => _scheduleDraftSave(),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _englishBodyController,
+                  decoration: const InputDecoration(
+                    labelText: 'English lyrics',
+                    hintText: 'Optional',
+                    alignLabelWithHint: true,
+                  ),
+                  minLines: 6,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  onChanged: (_) => _scheduleDraftSave(),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _authorController,
+                  decoration: const InputDecoration(
+                    labelText: 'Author or source',
+                    hintText: 'Optional',
+                  ),
+                  textInputAction: TextInputAction.next,
+                  onChanged: (_) => _scheduleDraftSave(),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _maleVideoUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'Male practice video',
+                    hintText: 'Paste a YouTube link (optional)',
+                  ),
+                  keyboardType: TextInputType.url,
+                  textInputAction: TextInputAction.next,
+                  validator: _optionalYoutubeValidator,
+                  onChanged: (_) => _scheduleDraftSave(),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _femaleVideoUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'Female practice video',
+                    hintText: 'Paste a YouTube link (optional)',
+                  ),
+                  keyboardType: TextInputType.url,
+                  textInputAction: TextInputAction.done,
+                  validator: _optionalYoutubeValidator,
+                  onChanged: (_) => _scheduleDraftSave(),
+                  onFieldSubmitted: (_) => _save(),
+                ),
+              ],
             ),
           ],
         ),

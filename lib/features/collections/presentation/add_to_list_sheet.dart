@@ -92,6 +92,11 @@ class AddToListSheet extends ConsumerWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Done'),
+            ),
           ],
         ),
       ),

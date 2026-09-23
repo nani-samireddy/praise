@@ -570,177 +570,198 @@ class _SongControlsPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Song controls',
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: colors.primary,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.1,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.text_fields_outlined),
-              title: const Text('Text size'),
-              subtitle: const Text('Pinch to resize the lyrics'),
-              trailing: OutlinedButton(
-                onPressed: onFontSize,
-                child: Text(fontSize.round().toString()),
-              ),
-            ),
-            if (adaptiveControlsEnabled) ...[
-              const SizedBox(height: 8),
-              _CycleSettingButton<_SongControlsPosition>(
-                label: 'Control position',
-                value: controlsPosition,
-                values: _SongControlsPosition.values,
-                valueLabel: (value) => switch (value) {
-                  _SongControlsPosition.auto => 'Auto',
-                  _SongControlsPosition.left => 'Left',
-                  _SongControlsPosition.right => 'Right',
-                },
-                valueIcon: (value) => switch (value) {
-                  _SongControlsPosition.auto => Icons.auto_mode_outlined,
-                  _SongControlsPosition.left => Icons.format_align_left,
-                  _SongControlsPosition.right => Icons.format_align_right,
-                },
-                onChanged: onControlsPositionChanged,
-              ),
-              if (controlsPosition == _SongControlsPosition.auto)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    'Tilt your phone gently to move the controls.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
+            Row(
+              children: [
+                Icon(Icons.tune, color: colors.primary),
+                const SizedBox(width: 10),
+                Text(
+                  'Song controls',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-            ],
-            if (repeatsEnabled)
-              SwitchListTile(
+              ],
+            ),
+            const SizedBox(height: 8),
+            ListTileTheme(
+              data: ListTileTheme.of(context).copyWith(
                 contentPadding: EdgeInsets.zero,
-                secondary: const Icon(Icons.unfold_more),
-                title: const Text('Show full lyrics'),
-                subtitle: const Text('Expand all repeated lines and sections'),
-                value: expandCounts,
-                onChanged: onFullLyricsChanged,
+                dense: true,
+                visualDensity: const VisualDensity(vertical: -2),
               ),
-            if (hasEnglish) ...[
-              const SizedBox(height: 8),
-              const SizedBox(height: 8),
-              _CycleSettingButton<LyricsDisplayMode>(
-                label: 'Lyrics display',
-                value: displayMode,
-                values: const [
-                  LyricsDisplayMode.both,
-                  LyricsDisplayMode.primary,
-                  LyricsDisplayMode.english,
-                  LyricsDisplayMode.lineByLine,
-                ],
-                valueLabel: (value) => switch (value) {
-                  LyricsDisplayMode.primary => 'Original only',
-                  LyricsDisplayMode.english => 'English only',
-                  LyricsDisplayMode.both => 'Sections',
-                  LyricsDisplayMode.lineByLine => 'Line by line',
-                },
-                valueIcon: (value) => switch (value) {
-                  LyricsDisplayMode.primary => Icons.lyrics_outlined,
-                  LyricsDisplayMode.english => Icons.translate_outlined,
-                  LyricsDisplayMode.both => Icons.view_agenda_outlined,
-                  LyricsDisplayMode.lineByLine => Icons.compare_arrows,
-                },
-                onChanged: onDisplayModeChanged,
-              ),
-            ],
-            if (chordDisplayEnabled)
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                secondary: const Icon(Icons.music_note_outlined),
-                title: const Text('Chords'),
-                subtitle: const Text('Show chord names above the lyrics'),
-                value: showChords,
-                onChanged: onChordsChanged,
-              ),
-            if (capoShapesEnabled && showChords && capo > 0)
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                secondary: const Icon(Icons.music_note_outlined),
-                title: const Text('Guitar chord shapes'),
-                subtitle: Text('Capo $capo · Show playable shapes'),
-                value: showGuitarShapes,
-                onChanged: onGuitarShapesChanged,
-              ),
-            if (harmonyEnabled && hasHarmonyParts)
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                secondary: const Icon(Icons.record_voice_over_outlined),
-                title: const Text('Harmony parts'),
-                subtitle: const Text('Show harmony lines'),
-                value: showHarmonyParts,
-                onChanged: onHarmonyPartsChanged,
-              ),
-            if (chordTransposeEnabled) ...[
-              const SizedBox(height: 12),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.music_note_outlined),
-                title: const Text('Transpose'),
-                subtitle: Text(
-                  targetKey == null
-                      ? _transposeLabel(transposeSemitones)
-                      : '$originalKey → $targetKey',
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      tooltip: 'Lower key',
-                      onPressed: transposeSemitones <= -12
-                          ? null
-                          : () => onTransposeChanged(transposeSemitones - 1),
-                      icon: const Icon(Icons.remove),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (adaptiveControlsEnabled) ...[
+                    const _ControlGroupTitle('Reachability'),
+                    const SizedBox(height: 8),
+                    _CycleSettingButton<_SongControlsPosition>(
+                      label: 'Control position',
+                      value: controlsPosition,
+                      values: _SongControlsPosition.values,
+                      valueLabel: (value) => switch (value) {
+                        _SongControlsPosition.auto => 'Auto',
+                        _SongControlsPosition.left => 'Left',
+                        _SongControlsPosition.right => 'Right',
+                      },
+                      valueIcon: (value) => switch (value) {
+                        _SongControlsPosition.auto => Icons.auto_mode_outlined,
+                        _SongControlsPosition.left => Icons.format_align_left,
+                        _SongControlsPosition.right => Icons.format_align_right,
+                      },
+                      onChanged: onControlsPositionChanged,
                     ),
-                    Text(
-                      _transposeLabel(transposeSemitones),
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
+                    if (controlsPosition == _SongControlsPosition.auto)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          'Tilt your phone gently to move the controls.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                  ],
+                  if (adaptiveControlsEnabled) const _ControlDivider(),
+                  const _ControlGroupTitle('Lyrics'),
+                  ListTile(
+                    leading: const Icon(Icons.text_fields_outlined),
+                    title: const Text('Text size'),
+                    trailing: OutlinedButton(
+                      onPressed: onFontSize,
+                      child: Text(fontSize.round().toString()),
+                    ),
+                  ),
+                  if (repeatsEnabled)
+                    SwitchListTile(
+                      secondary: const Icon(Icons.unfold_more),
+                      title: const Text('Show full lyrics'),
+                      value: expandCounts,
+                      onChanged: onFullLyricsChanged,
+                    ),
+                  if (hasEnglish) ...[
+                    const SizedBox(height: 4),
+                    _CycleSettingButton<LyricsDisplayMode>(
+                      label: 'Lyrics display',
+                      value: displayMode,
+                      values: const [
+                        LyricsDisplayMode.both,
+                        LyricsDisplayMode.primary,
+                        LyricsDisplayMode.english,
+                        LyricsDisplayMode.lineByLine,
+                      ],
+                      valueLabel: (value) => switch (value) {
+                        LyricsDisplayMode.primary => 'Original only',
+                        LyricsDisplayMode.english => 'English only',
+                        LyricsDisplayMode.both => 'Sections',
+                        LyricsDisplayMode.lineByLine => 'Line by line',
+                      },
+                      valueIcon: (value) => switch (value) {
+                        LyricsDisplayMode.primary => Icons.lyrics_outlined,
+                        LyricsDisplayMode.english => Icons.translate_outlined,
+                        LyricsDisplayMode.both => Icons.view_agenda_outlined,
+                        LyricsDisplayMode.lineByLine => Icons.compare_arrows,
+                      },
+                      onChanged: onDisplayModeChanged,
+                    ),
+                  ],
+                  if (chordDisplayEnabled ||
+                      chordTransposeEnabled ||
+                      (harmonyEnabled && hasHarmonyParts)) ...[
+                    const _ControlDivider(),
+                    const _ControlGroupTitle('Music'),
+                  ],
+                  if (chordDisplayEnabled)
+                    SwitchListTile(
+                      secondary: const Icon(Icons.music_note_outlined),
+                      title: const Text('Chords'),
+                      value: showChords,
+                      onChanged: onChordsChanged,
+                    ),
+                  if (capoShapesEnabled && showChords && capo > 0)
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.music_note_outlined),
+                      title: const Text('Guitar chord shapes'),
+                      subtitle: Text('Capo $capo · Show playable shapes'),
+                      value: showGuitarShapes,
+                      onChanged: onGuitarShapesChanged,
+                    ),
+                  if (harmonyEnabled && hasHarmonyParts)
+                    SwitchListTile(
+                      secondary: const Icon(Icons.record_voice_over_outlined),
+                      title: const Text('Harmony parts'),
+                      value: showHarmonyParts,
+                      onChanged: onHarmonyPartsChanged,
+                    ),
+                  if (chordTransposeEnabled) ...[
+                    const SizedBox(height: 12),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.music_note_outlined),
+                      title: const Text('Transpose'),
+                      subtitle: Text(
+                        targetKey == null
+                            ? _transposeLabel(transposeSemitones)
+                            : '$originalKey → $targetKey',
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: 'Lower key',
+                            onPressed: transposeSemitones <= -12
+                                ? null
+                                : () => onTransposeChanged(
+                                    transposeSemitones - 1,
+                                  ),
+                            icon: const Icon(Icons.remove),
+                          ),
+                          Text(
+                            _transposeLabel(transposeSemitones),
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Raise key',
+                            onPressed: transposeSemitones >= 12
+                                ? null
+                                : () => onTransposeChanged(
+                                    transposeSemitones + 1,
+                                  ),
+                            icon: const Icon(Icons.add),
+                          ),
+                        ],
                       ),
                     ),
-                    IconButton(
-                      tooltip: 'Raise key',
-                      onPressed: transposeSemitones >= 12
-                          ? null
-                          : () => onTransposeChanged(transposeSemitones + 1),
-                      icon: const Icon(Icons.add),
+                  ],
+                  if (metronomeEnabled) ...[
+                    const _ControlDivider(),
+                    const _ControlGroupTitle('Practice'),
+                    ListTile(
+                      onTap: onMetronomeDetails,
+                      leading: const Icon(Icons.av_timer_outlined),
+                      title: const Text('Metronome'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: 'Metronome options',
+                            onPressed: onMetronomeDetails,
+                            icon: const Icon(Icons.settings_outlined),
+                          ),
+                          Switch(
+                            value: metronomeRunning,
+                            onChanged: (_) => onMetronomeToggle(),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
-                ),
+                ],
               ),
-            ],
-            if (metronomeEnabled)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                onTap: onMetronomeDetails,
-                leading: const Icon(Icons.av_timer_outlined),
-                title: const Text('Metronome'),
-                subtitle: const Text('Keep a steady practice beat'),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      tooltip: 'Metronome options',
-                      onPressed: onMetronomeDetails,
-                      icon: const Icon(Icons.settings_outlined),
-                    ),
-                    Switch(
-                      value: metronomeRunning,
-                      onChanged: (_) => onMetronomeToggle(),
-                    ),
-                  ],
-                ),
-              ),
+            ),
           ],
         ),
       ),
@@ -750,6 +771,31 @@ class _SongControlsPanel extends StatelessWidget {
   String _transposeLabel(int semitones) {
     if (semitones == 0) return 'Original';
     return '${semitones > 0 ? '+' : ''}$semitones';
+  }
+}
+
+class _ControlGroupTitle extends StatelessWidget {
+  const _ControlGroupTitle(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.labelMedium
+          ?.copyWith(color: colors.primary, fontWeight: FontWeight.w800),
+    );
+  }
+}
+
+class _ControlDivider extends StatelessWidget {
+  const _ControlDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(height: 20);
   }
 }
 

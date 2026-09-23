@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class AppShell extends StatelessWidget {
+  static const _tabCount = 4;
+
   const AppShell({
     super.key,
     required this.navigationShell,
@@ -13,8 +15,29 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final body = showBottomNavigationBar
+        ? GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragEnd: (details) {
+              final velocity = details.primaryVelocity ?? 0;
+              if (velocity.abs() < 300) return;
+
+              final currentIndex = navigationShell.currentIndex;
+              final direction = velocity < 0 ? 1 : -1;
+              final targetIndex = currentIndex + direction;
+              if (targetIndex < 0 || targetIndex >= _tabCount) return;
+
+              navigationShell.goBranch(
+                targetIndex,
+                initialLocation: targetIndex == currentIndex,
+              );
+            },
+            child: navigationShell,
+          )
+        : navigationShell;
+
     return Scaffold(
-      body: navigationShell,
+      body: body,
       bottomNavigationBar: showBottomNavigationBar
           ? NavigationBar(
               selectedIndex: navigationShell.currentIndex,
