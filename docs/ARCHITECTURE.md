@@ -484,21 +484,18 @@ executor; bundled `tel` and `eng` fast models provide Telugu and English
 recognition without uploading the selected image.
 
 The recognized string crosses back into Flutter, where line endings and excess
-blank space are normalized. On Android devices with a supported AICore/Gemini
-Nano model, the scan screen offers a user-controlled second stage. ML Kit's
-Prompt API receives only the OCR text and uses a Kotlin Structured Output schema
-to extract title, English title, ordered primary/English stanza lists, and
-author. Native formatting joins lines inside each stanza and inserts exactly one
-blank line between stanzas. Common OCR repetition suffixes (`x2`, `*2`, and
-standalone `×2`) are normalized to a trailing `×2` cue that the song-level
-compact/expand control understands. Model download, status checks, and inference
-remain on-device. This integration raises the Android minimum SDK to API 26.
+blank space are normalized. When the user requests **Read from image**, Praise
+requests acceptance of the Gemma terms and retrieves its pinned Gemma 3 1B
+model through the `gemma_model` on-demand Play Asset Pack. LiteRT-LM receives
+only the OCR text and extracts the title, English transliteration, ordered
+lyrics, and author. Native formatting keeps each lyric line and stanza break.
+The model is about 584 MB; Play may wait for Wi-Fi before delivering it. OCR and
+inference remain on-device. The Android minimum SDK is API 26.
 
-If Gemini Nano or Structured Output is unavailable, still downloading, over
-quota, or returns invalid fields, Flutter immediately falls back to the simple
-parser: the first non-empty line becomes the suggested title and the complete
-recognized text remains the primary lyrics body. The review screen identifies
-whether AI organization succeeded or the OCR fallback was used.
+If the user declines the terms, Play cannot deliver the pack, or Gemma returns
+invalid fields, Flutter keeps the OCR text for review and leaves the title
+unidentified rather than promoting arbitrary OCR noise to a title. The review
+screen identifies when AI organization was unsuccessful.
 
 Before accepting AI output, Flutter compares its normalized content coverage
 with the original OCR string. A substantially shortened or invented result is

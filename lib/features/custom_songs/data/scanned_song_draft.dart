@@ -20,6 +20,17 @@ class ScannedSongDraft {
   final String? imagePath;
   final bool aiEnhanced;
   final bool aiFallback;
+
+  ScannedSongDraft withImagePath(String path) => ScannedSongDraft(
+    title: title,
+    body: body,
+    englishTitle: englishTitle,
+    englishBody: englishBody,
+    author: author,
+    imagePath: path,
+    aiEnhanced: aiEnhanced,
+    aiFallback: aiFallback,
+  );
 }
 
 ScannedSongDraft createPhotoSongDraft(String imagePath) {
@@ -31,13 +42,17 @@ ScannedSongDraft createScannedSongDraft(
   bool aiFallback = false,
 }) {
   final normalized = normalizeScannedLyrics(recognizedText);
-  final title = normalized
-      .split('\n')
-      .map((line) => line.trim())
-      .firstWhere((line) => line.isNotEmpty, orElse: () => 'Scanned song');
+  final title = aiFallback
+      ? ''
+      : normalized
+            .split('\n')
+            .map((line) => line.trim())
+            .firstWhere(_isMeaningfulTitleLine, orElse: () => 'Scanned song');
   return ScannedSongDraft(
     title: title,
+    englishTitle: aiFallback ? '' : _englishTitleFor(title),
     body: normalized,
+    englishBody: aiFallback ? '' : transliterateTeluguLyrics(normalized),
     aiFallback: aiFallback,
   );
 }
@@ -46,27 +61,38 @@ ScannedSongDraft createAiScannedSongDraft(
   Map<Object?, Object?> value, {
   required String recognizedText,
 }) {
-  final title = _normalizedField(value['title']);
   final body = normalizeScannedLyrics(_normalizedField(value['body']) ?? '');
-  if (title == null || body.isEmpty) {
+  if (body.isEmpty) {
     throw const FormatException('On-device AI returned an incomplete song.');
   }
+  final extractedTitle = _normalizedField(value['title']);
+  if (extractedTitle == null ||
+      !_isPlausibleSongTitle(extractedTitle, body, recognizedText)) {
+    throw const FormatException(
+      'Couldn’t identify a credible song title from this scan.',
+    );
+  }
+  final title = extractedTitle;
   final extractedEnglishTitle = _normalizedField(value['englishTitle']);
   final sourceEnglishTitle =
       extractedEnglishTitle != null &&
-          _appearsInOcr(extractedEnglishTitle, recognizedText)
+          _isPlausibleEnglishTitle(extractedEnglishTitle, title, recognizedText)
       ? extractedEnglishTitle
       : null;
-  final englishTitle = sourceEnglishTitle ?? transliterateTeluguTitle(title);
-  final englishBody = _normalizedField(value['englishBody']);
-  final author = _normalizedField(value['author']);
-  final acceptedSourceText = [
-    body,
-    ?sourceEnglishTitle,
-    ?englishBody,
-    ?author,
-  ].join('\n');
-  if (!_hasAdequateCoverage(acceptedSourceText, recognizedText)) {
+  final englishTitle = sourceEnglishTitle ?? _englishTitleFor(title);
+  final extractedEnglishBody = _normalizedField(value['englishBody']);
+  final englishBody =
+      extractedEnglishBody != null &&
+          _isPlausibleEnglishText(extractedEnglishBody)
+      ? extractedEnglishBody
+      : null;
+  final extractedAuthor = _normalizedField(value['author']);
+  final author =
+      extractedAuthor != null &&
+          _containsPhrase(recognizedText, extractedAuthor)
+      ? extractedAuthor
+      : null;
+  if (!_hasAdequateCoverage(body, recognizedText)) {
     throw const FormatException(
       'On-device AI omitted or invented too much song text.',
     );
@@ -75,11 +101,79 @@ ScannedSongDraft createAiScannedSongDraft(
     title: title,
     englishTitle: englishTitle,
     body: body,
-    englishBody: englishBody,
+    englishBody: englishBody ?? transliterateTeluguLyrics(body),
     author: author,
     aiEnhanced: true,
   );
 }
+
+bool _isMeaningfulTitleLine(String line) =>
+    line.runes.where(_isTeluguOrLatinLetter).length >= 3;
+
+bool _isPlausibleSongTitle(
+  String candidate,
+  String body,
+  String recognizedText,
+) {
+  final bodyHasTelugu = body.runes.any(_isTeluguRune);
+  final candidateHasTelugu = candidate.runes.any(_isTeluguRune);
+  if (bodyHasTelugu && !candidateHasTelugu) return false;
+  if (!_isMeaningfulTitleLine(candidate)) return false;
+  return _containsPhrase(recognizedText, candidate) ||
+      _containsPhrase(body, candidate);
+}
+
+bool _isPlausibleEnglishText(String candidate) {
+  final letters = candidate.runes.where(_isLatinLetter).length;
+  final visibleCharacters = candidate.runes
+      .where(
+        (rune) =>
+            rune != 0x20 &&
+            rune != 0x09 &&
+            rune != 0x0a &&
+            rune != 0x0d &&
+            rune != 0x00d7,
+      )
+      .length;
+  return letters >= 2 &&
+      visibleCharacters > 0 &&
+      letters / visibleCharacters >= 0.7;
+}
+
+bool _isPlausibleEnglishTitle(
+  String candidate,
+  String title,
+  String recognizedText,
+) {
+  if (!_isPlausibleEnglishText(candidate)) return false;
+  return _containsPhrase(recognizedText, candidate) ||
+      _normalizeForPhraseMatch(candidate) ==
+          _normalizeForPhraseMatch(_englishTitleFor(title));
+}
+
+String _englishTitleFor(String title) =>
+    title.runes.any(_isTeluguRune) ? transliterateTeluguTitle(title) : title;
+
+bool _containsPhrase(String source, String candidate) {
+  final normalizedSource = _normalizeForPhraseMatch(source);
+  final normalizedCandidate = _normalizeForPhraseMatch(candidate);
+  return normalizedCandidate.isNotEmpty &&
+      normalizedSource.contains(normalizedCandidate);
+}
+
+String _normalizeForPhraseMatch(String value) => value
+    .toLowerCase()
+    .replaceAll(RegExp(r'[^a-z0-9\u0c00-\u0c7f]+'), ' ')
+    .trim()
+    .replaceAll(RegExp(r'\s+'), ' ');
+
+bool _isTeluguOrLatinLetter(int rune) =>
+    _isTeluguRune(rune) || _isLatinLetter(rune);
+
+bool _isTeluguRune(int rune) => rune >= 0x0c00 && rune <= 0x0c7f;
+
+bool _isLatinLetter(int rune) =>
+    (rune >= 0x41 && rune <= 0x5a) || (rune >= 0x61 && rune <= 0x7a);
 
 String normalizeScannedLyrics(String value) {
   final lines = <String>[];
@@ -96,8 +190,61 @@ String normalizeScannedLyrics(String value) {
   return lines.join('\n').replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
 }
 
+String prepareOcrTextForSongAi(String value) {
+  final lines = <String>[];
+  for (final rawLine in value.replaceAll('\r', '').split('\n')) {
+    final line = _normalizeScannedLine(rawLine);
+    if (line.isEmpty || _isLikelyScanChrome(line)) continue;
+    lines.add(line);
+  }
+  return lines.join('\n').replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
+}
+
+bool _isLikelyScanChrome(String line) {
+  final normalized = line
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z]+'), ' ')
+      .trim();
+  const interfaceLabels = [
+    'lyrics',
+    'song controls',
+    'review scanned lyrics',
+    'search google photos',
+    'photos',
+    'collections',
+    'scan a song',
+    'take a photo',
+    'choose from gallery',
+    'keep the photo',
+    'original photo',
+    'more details',
+    'save song',
+  ];
+  if (interfaceLabels.any(
+    (label) => normalized == label || normalized.contains(label),
+  )) {
+    return true;
+  }
+  if (line.runes.any(_isTeluguRune) ||
+      RegExp(r'^(?:[xX*×✕])\s*([2-9]|1[0-2])$').hasMatch(line.trim())) {
+    return false;
+  }
+  final runes = line.runes
+      .where((rune) => rune != 0x20 && rune != 0x09)
+      .toList();
+  if (runes.isEmpty) return true;
+  final noisyCharacters = runes.where((rune) {
+    final isLetter = _isLatinLetter(rune);
+    final isDigit = rune >= 0x30 && rune <= 0x39;
+    return !isLetter && !isDigit;
+  }).length;
+  final letters = runes.where(_isLatinLetter).length;
+  final digits = runes.where((rune) => rune >= 0x30 && rune <= 0x39).length;
+  return letters < 20 && (noisyCharacters + digits) / runes.length >= 0.4;
+}
+
 String _normalizeScannedLine(String line) {
-  final trimmed = line.trimRight();
+  final trimmed = line.trim().replaceAll(RegExp(r'[ \t]+'), ' ');
   final inlineCount = RegExp(r'^(.+?\S)\s*(?:[xX*]|✕)\s*([2-9]|1[0-2])\s*$')
       .firstMatch(trimmed);
   return inlineCount == null
@@ -113,24 +260,23 @@ String? _normalizedField(Object? value) {
   return normalized.isEmpty ? null : normalized;
 }
 
-bool _appearsInOcr(String candidate, String recognizedText) {
-  final sourceWords = _latinWords(recognizedText).toSet();
-  final candidateWords = _latinWords(candidate)
-      .where((word) => word.length > 1)
-      .toList(growable: false);
-  return candidateWords.isNotEmpty &&
-      candidateWords.every(sourceWords.contains);
-}
-
-Iterable<String> _latinWords(String value) sync* {
-  for (final match in RegExp(r'[A-Za-z]+').allMatches(value.toLowerCase())) {
-    yield match[0]!;
-  }
-}
-
 bool _hasAdequateCoverage(String result, String source) {
-  final sourceCharacters = _contentCharacters(source);
-  final resultCharacters = _contentCharacters(result);
+  final sourceAllCharacters = _contentCharacters(source);
+  final sourceTeluguCharacters = sourceAllCharacters
+      .where((character) => character.runes.single >= 0x0c00)
+      .toList(growable: false);
+  final useTeluguCoverage =
+      sourceTeluguCharacters.length >= 10 &&
+      sourceTeluguCharacters.length / sourceAllCharacters.length >= 0.25;
+  final sourceCharacters = useTeluguCoverage
+      ? sourceTeluguCharacters
+      : sourceAllCharacters;
+  final allResultCharacters = _contentCharacters(result);
+  final resultCharacters = useTeluguCoverage
+      ? allResultCharacters
+            .where((character) => character.runes.single >= 0x0c00)
+            .toList(growable: false)
+      : allResultCharacters;
   if (sourceCharacters.length < 10) return true;
   if (resultCharacters.isEmpty) return false;
   final remaining = <String, int>{};

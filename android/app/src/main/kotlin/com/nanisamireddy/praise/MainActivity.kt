@@ -2,6 +2,7 @@ package com.nanisamireddy.praise
 
 import android.media.AudioAttributes
 import android.media.SoundPool
+import android.util.Log
 import com.googlecode.tesseract.android.TessBaseAPI
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -17,7 +18,9 @@ import kotlinx.coroutines.launch
 class MainActivity : FlutterActivity() {
     private val ocrExecutor = Executors.newSingleThreadExecutor()
     private val aiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val songStructuringService = SongStructuringService()
+    private val songStructuringService by lazy {
+        SongStructuringService(applicationContext)
+    }
     private lateinit var metronomeSoundPool: SoundPool
     private var metronomeTickSoundId = 0
     private var metronomeAccentSoundId = 0
@@ -32,6 +35,7 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "recognize" -> recognize(call.argument("imagePath"), result)
                 "aiStatus" -> aiStatus(result)
+                "downloadAiModel" -> downloadAiModel(result)
                 "structure" -> structure(call.argument("ocrText"), result)
                 else -> result.notImplemented()
             }
@@ -94,6 +98,17 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun downloadAiModel(result: MethodChannel.Result) {
+        aiScope.launch {
+            try {
+                songStructuringService.downloadModel()
+                result.success(null)
+            } catch (error: Exception) {
+                result.error("ai_download_failed", error.message, null)
+            }
+        }
+    }
+
     private fun structure(ocrText: String?, result: MethodChannel.Result) {
         if (ocrText.isNullOrBlank()) {
             result.error("invalid_text", "The OCR text is empty.", null)
@@ -103,6 +118,7 @@ class MainActivity : FlutterActivity() {
             try {
                 result.success(songStructuringService.structure(ocrText))
             } catch (error: Exception) {
+                Log.e("SongScan", "On-device song structuring failed", error)
                 result.error("ai_failed", error.message, null)
             }
         }

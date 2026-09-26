@@ -85,6 +85,7 @@ flutter:
     - assets/data/songs.json
     - assets/data/song_structures.json
     - assets/fonts/licenses/
+    - assets/model_licenses/
     - assets/tessdata_config.json
     - assets/tessdata/
 

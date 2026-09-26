@@ -114,8 +114,9 @@ tests alongside the behavior they protect.
 - Add an Extract text / Keep photo choice. Persist kept photos in app-private
   support storage, store their local paths on custom songs, and remove managed
   files when a photo is replaced or its song is deleted.
-- Detect Gemini Nano availability and offer optional on-device structured song
-  extraction after OCR, with ordinary OCR parsing as the mandatory fallback.
+- Deliver the pinned Gemma 3 1B model through an on-demand Play Asset Pack and
+  run structured song extraction locally after user consent. Keep the OCR text
+  visible for review whenever the AI asset or structuring is unavailable.
 - Request ordered stanza/line arrays rather than a free-form body, render one
   blank line between stanzas, and normalize OCR repetition cues to `×N`.
 - Reject AI formatting when content-coverage checks indicate that a substantial

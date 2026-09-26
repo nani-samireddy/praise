@@ -1,55 +1,44 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../data/custom_song_image_store.dart';
 import '../data/scanned_song_draft.dart';
-import '../data/song_scan_service.dart';
 
-enum _ScanResultType { extractText, keepPhoto }
-
-class ScanSongScreen extends ConsumerStatefulWidget {
+class ScanSongScreen extends StatefulWidget {
   const ScanSongScreen({super.key});
 
   @override
-  ConsumerState<ScanSongScreen> createState() => _ScanSongScreenState();
+  State<ScanSongScreen> createState() => _ScanSongScreenState();
 }
 
-class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
+class _ScanSongScreenState extends State<ScanSongScreen> {
   final _picker = ImagePicker();
   XFile? _image;
   bool _recognizing = false;
-  bool _checkingAi = true;
-  bool _useAi = false;
-  var _resultType = _ScanResultType.extractText;
-  OnDeviceAiStatus _aiStatus = OnDeviceAiStatus.unavailable;
-  String _progressMessage = 'Reading Telugu and English text…';
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    _recoverLostImage();
-    _checkAiStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openGalleryOnEntry());
   }
 
-  Future<void> _checkAiStatus() async {
-    final status = await ref.read(songScanServiceProvider).getAiStatus();
-    if (!mounted) return;
-    setState(() {
-      _aiStatus = status;
-      _checkingAi = false;
-      _useAi = status != OnDeviceAiStatus.unavailable;
-    });
+  Future<void> _openGalleryOnEntry() async {
+    final recoveredImage = await _recoverLostImage();
+    if (!mounted || recoveredImage) return;
+    await _pick(ImageSource.gallery);
   }
 
-  Future<void> _recoverLostImage() async {
+  Future<bool> _recoverLostImage() async {
     final response = await _picker.retrieveLostData();
-    if (!mounted || response.isEmpty) return;
+    if (!mounted || response.isEmpty) return false;
     final image = response.files?.firstOrNull;
-    if (image != null) await _process(image);
+    if (image == null) return false;
+    await _process(image);
+    return true;
   }
 
   Future<void> _pick(ImageSource source) async {
@@ -70,48 +59,28 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
   Future<void> _process(XFile image) async {
     setState(() {
       _image = image;
-      _recognizing = _resultType == _ScanResultType.extractText;
-      _progressMessage = 'Reading Telugu and English text…';
+      _recognizing = true;
       _error = null;
     });
-    if (_resultType == _ScanResultType.keepPhoto) {
-      context.pushReplacement(
-        '/custom-song/new',
-        extra: createPhotoSongDraft(image.path),
-      );
-      return;
-    }
+    String? storedPath;
     try {
-      final text = await ref
-          .read(songScanServiceProvider)
-          .recognize(image.path);
-      if (!mounted) return;
-      if (text.trim().isEmpty) {
-        setState(() {
-          _recognizing = false;
-          _error = 'No readable Telugu or English text was found.';
-        });
+      storedPath = await LocalCustomSongImageStore().save(image.path);
+      if (!mounted) {
+        await LocalCustomSongImageStore().delete(storedPath);
         return;
       }
-      var draft = createScannedSongDraft(text);
-      if (_useAi && _aiStatus != OnDeviceAiStatus.unavailable) {
-        setState(
-          () => _progressMessage = 'Organizing the song on this device…',
-        );
-        try {
-          draft = await ref.read(songScanServiceProvider).structure(text);
-        } catch (_) {
-          draft = createScannedSongDraft(text, aiFallback: true);
-        }
-      }
-      if (!mounted) return;
-      context.pushReplacement('/custom-song/new', extra: draft);
+      context.pushReplacement(
+        '/custom-song/new',
+        extra: createPhotoSongDraft(storedPath),
+      );
     } catch (_) {
+      if (storedPath != null) {
+        await LocalCustomSongImageStore().delete(storedPath);
+      }
       if (!mounted) return;
       setState(() {
         _recognizing = false;
-        _error =
-            'We couldn’t read that photo. Try a clearer, straighter photo.';
+        _error = 'Couldn’t save this photo. Try another one.';
       });
     }
   }
@@ -119,179 +88,79 @@ class _ScanSongScreenState extends ConsumerState<ScanSongScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan a song')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        children: [
-          if (_image == null)
-            const _ScanInstructions()
-          else
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 360),
-                child: Image.file(File(_image!.path), fit: BoxFit.contain),
-              ),
-            ),
-          const SizedBox(height: 24),
-          SegmentedButton<_ScanResultType>(
-            segments: const [
-              ButtonSegment(
-                value: _ScanResultType.extractText,
-                icon: Icon(Icons.text_snippet_outlined),
-                label: Text('Read text'),
-              ),
-              ButtonSegment(
-                value: _ScanResultType.keepPhoto,
-                icon: Icon(Icons.image_outlined),
-                label: Text('Keep the photo'),
-              ),
-            ],
-            selected: {_resultType},
-            onSelectionChanged: _recognizing
-                ? null
-                : (selection) => setState(() => _resultType = selection.single),
-          ),
-          const SizedBox(height: 20),
-          if (_resultType == _ScanResultType.extractText)
-            _AiOrganizationOption(
-              checking: _checkingAi,
-              status: _aiStatus,
-              enabled: _useAi,
-              onChanged: _recognizing || _checkingAi
-                  ? null
-                  : (value) => setState(() => _useAi = value),
-            )
-          else
-            const Card(
-              child: ListTile(
-                leading: Icon(Icons.photo_outlined),
-                title: Text('Keep the original photo'),
-                subtitle: Text(
-                  'We won’t read the photo. Add a title and it will stay '
-                  'private on this device.',
+      appBar: AppBar(title: const Text('Add song from photo')),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          children: [
+            if (_image case final image?) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 360),
+                  child: Image.file(File(image.path), fit: BoxFit.contain),
                 ),
               ),
-            ),
-          const SizedBox(height: 20),
-          if (_recognizing) ...[
-            const Center(child: CircularProgressIndicator.adaptive()),
-            const SizedBox(height: 14),
-            Text(_progressMessage, textAlign: TextAlign.center),
-          ] else ...[
-            FilledButton.icon(
-              onPressed: () => _pick(ImageSource.camera),
-              icon: const Icon(Icons.photo_camera_outlined),
-              label: const Text('Take a photo'),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => _pick(ImageSource.gallery),
-              icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('Choose from gallery'),
-            ),
-          ],
-          if (_error case final error?) ...[
-            const SizedBox(height: 20),
-            Card(
-              color: Theme.of(context).colorScheme.errorContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  error,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onErrorContainer,
+              const SizedBox(height: 24),
+            ] else ...[
+              const SizedBox(height: 72),
+              Icon(
+                Icons.photo_library_outlined,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Choose a song photo',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Pick a clear photo of the lyrics to add them to your songs.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 28),
+            ],
+            if (_recognizing) ...[
+              const Center(child: CircularProgressIndicator.adaptive()),
+              const SizedBox(height: 14),
+              const Text('Adding photo…', textAlign: TextAlign.center),
+            ] else ...[
+              FilledButton.icon(
+                onPressed: () => _pick(ImageSource.gallery),
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text('Choose photo'),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => _pick(ImageSource.camera),
+                icon: const Icon(Icons.photo_camera_outlined),
+                label: const Text('Take a photo instead'),
+              ),
+            ],
+            if (_error case final error?) ...[
+              const SizedBox(height: 16),
+              Card(
+                color: Theme.of(context).colorScheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    error,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-          const SizedBox(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.offline_bolt_outlined, size: 20),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  _resultType == _ScanResultType.extractText
-                      ? 'The photo stays on this device. Check the title and lyrics before saving.'
-                      : 'The photo stays on this device and is copied into Praise only when you save.',
-                ),
-              ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AiOrganizationOption extends StatelessWidget {
-  const _AiOrganizationOption({
-    required this.checking,
-    required this.status,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  final bool checking;
-  final OnDeviceAiStatus status;
-  final bool enabled;
-  final ValueChanged<bool>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final unavailable = !checking && status == OnDeviceAiStatus.unavailable;
-    final subtitle = switch (status) {
-      OnDeviceAiStatus.available =>
-        'Organize the title, lyrics, English text, and author automatically.',
-      OnDeviceAiStatus.downloadable =>
-        'A one-time download is needed before the first scan.',
-      OnDeviceAiStatus.downloading => 'The model is downloading now.',
-      OnDeviceAiStatus.unavailable =>
-        checking
-            ? 'Checking availability…'
-            : 'Not available here. Standard offline scanning will still work.',
-    };
-    return Card(
-      child: SwitchListTile.adaptive(
-        value: unavailable ? false : enabled,
-        onChanged: unavailable ? null : onChanged,
-        secondary: const Icon(Icons.auto_awesome_outlined),
-        title: const Text('Organize lyrics automatically'),
-        subtitle: Text(subtitle),
-      ),
-    );
-  }
-}
-
-class _ScanInstructions extends StatelessWidget {
-  const _ScanInstructions();
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Icon(
-              Icons.document_scanner_outlined,
-              size: 56,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
-              'Take a photo of the lyrics or choose one',
+              'Your photo stays on this device. You can review everything before saving.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Read the lyrics offline, or keep the photo if the text may not '
-              'be clear.',
-              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),

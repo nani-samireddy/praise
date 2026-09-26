@@ -47,6 +47,8 @@ app.*.map.json
 /android/key.properties
 /android/*.jks
 /android/*.keystore
+/android/gemma_model/src/main/assets/models/*.litertlm
+/android/gemma_model/src/main/assets/GEMMA_NOTICE.txt
 
 # Widget Preview related
 .widget_preview/
@@ -58,3 +60,9 @@ app.*.map.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+/lyric-video-studio/.venv/
+/lyric-video-studio/.local-data/
+/lyric-video-studio/web/dist/
+/lyric-video-studio/web/test-results/
+/lyric-video-studio/web/playwright-report/

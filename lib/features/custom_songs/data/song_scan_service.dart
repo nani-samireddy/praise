@@ -10,6 +10,8 @@ abstract interface class SongScanService {
 
   Future<OnDeviceAiStatus> getAiStatus();
 
+  Future<void> downloadAiModel();
+
   Future<ScannedSongDraft> structure(String recognizedText);
 }
 
@@ -42,15 +44,24 @@ class TesseractSongScanService implements SongScanService {
   }
 
   @override
+  Future<void> downloadAiModel() async {
+    await _channel.invokeMethod<void>('downloadAiModel');
+  }
+
+  @override
   Future<ScannedSongDraft> structure(String recognizedText) async {
+    final songText = prepareOcrTextForSongAi(recognizedText);
+    if (songText.isEmpty) {
+      throw const FormatException('No likely song text was found in the scan.');
+    }
     final value = await _channel.invokeMapMethod<Object?, Object?>(
       'structure',
-      {'ocrText': recognizedText},
+      {'ocrText': songText},
     );
     if (value == null) {
       throw const FormatException('On-device AI returned no song.');
     }
-    return createAiScannedSongDraft(value, recognizedText: recognizedText);
+    return createAiScannedSongDraft(value, recognizedText: songText);
   }
 }
 

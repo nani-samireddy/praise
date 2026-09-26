@@ -3,7 +3,6 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
-    id("com.google.devtools.ksp")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -46,6 +45,8 @@ android {
         versionName = flutter.versionName
     }
 
+    assetPacks += listOf(":gemma_model")
+
     signingConfigs {
         if (keystorePropertiesFile.exists()) {
             create("release") {
@@ -81,8 +82,7 @@ flutter {
 
 dependencies {
     implementation("cz.adaptech.tesseract4android:tesseract4android:4.9.0")
-    implementation("com.google.mlkit:genai-prompt:1.0.0-beta4")
-    implementation("com.google.mlkit:genai-schema:1.0.0-alpha1")
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.17.1")
+    implementation("com.google.android.play:asset-delivery-ktx:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
-    ksp("com.google.mlkit:genai-schema-compiler:1.0.0-alpha1")
 }

@@ -88,6 +88,35 @@ const _teluguDigits = <String, String>{
 
 /// Produces a readable Latin-script title without using a network service.
 String transliterateTeluguTitle(String value) {
+  return _titleCase(
+    _applyCommonRomanization(_transliterateTeluguText(value).trim()),
+  );
+}
+
+String transliterateTeluguLyrics(String value) =>
+    value.split('\n').map(_transliterateLyricLine).join('\n');
+
+String _transliterateLyricLine(String value) {
+  if (!value.runes.any((rune) => rune >= 0x0c00 && rune <= 0x0c7f)) {
+    return value;
+  }
+  final transliterated = _applyCommonRomanization(
+    _transliterateTeluguText(value),
+  );
+  return transliterated.replaceFirstMapped(
+    RegExp(r'^([^A-Za-z]*)([a-z])'),
+    (match) => '${match[1]}${match[2]!.toUpperCase()}',
+  );
+}
+
+String _applyCommonRomanization(String value) => value
+    .replaceAllMapped(RegExp(r'\bante\b', caseSensitive: false), (_) => 'Anthe')
+    .replaceAllMapped(
+      RegExp(r'\bento\b', caseSensitive: false),
+      (_) => 'Entho',
+    );
+
+String _transliterateTeluguText(String value) {
   final characters = value.runes
       .map(String.fromCharCode)
       .toList(growable: false);
@@ -129,7 +158,7 @@ String transliterateTeluguTitle(String value) {
       output.write(_teluguDigits[character] ?? character);
     }
   }
-  return _titleCase(output.toString().trim());
+  return output.toString();
 }
 
 String _anusvara(String? next) {

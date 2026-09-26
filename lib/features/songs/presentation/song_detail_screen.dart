@@ -1347,11 +1347,6 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                     _PracticeVideos(song: widget.song),
                     const SizedBox(height: 28),
                   ],
-                  if (imagePath != null) ...[
-                    _SongPhoto(imagePath: imagePath),
-                    if (hasPrimaryLyrics || showEnglish)
-                      const SizedBox(height: 28),
-                  ],
                   if (showLineByLine && hasPrimaryLyrics)
                     _LineByLineLyricsSection(
                       primaryBody: widget.song.body,
@@ -1425,6 +1420,10 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                             ?.copyWith(color: colorScheme.onSurfaceVariant),
                       ),
                     ),
+                  ],
+                  if (imagePath != null) ...[
+                    const SizedBox(height: 28),
+                    _SongPhotoAccordion(imagePath: imagePath),
                   ],
                 ]),
               ),
@@ -1600,16 +1599,9 @@ class _SongNotesCardState extends ConsumerState<_SongNotesCard> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Private note — only you can see this.',
-          style: Theme.of(context).textTheme.bodySmall
-              ?.copyWith(color: colors.onSurfaceVariant),
-        ),
-        const SizedBox(height: 10),
         FilledButton.tonalIcon(
           onPressed: _startEditing,
           icon: const Icon(Icons.edit_note_outlined),
@@ -2019,53 +2011,101 @@ class _PracticeVideo {
   final String url;
 }
 
-class _SongPhoto extends StatelessWidget {
-  const _SongPhoto({required this.imagePath});
+class _SongPhotoAccordion extends StatelessWidget {
+  const _SongPhotoAccordion({required this.imagePath});
 
   final String imagePath;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Saved photo',
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: colorScheme.primary,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.1,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: ColoredBox(
-            color: colorScheme.surfaceContainerHighest,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minWidth: double.infinity,
-                maxHeight: 640,
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        leading: const Icon(Icons.photo_outlined),
+        title: const Text('Original scanned photo'),
+        subtitle: const Text('Tap to preview'),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          Semantics(
+            button: true,
+            label: 'Open original scanned photo',
+            child: InkWell(
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  fullscreenDialog: true,
+                  builder: (context) =>
+                      _FullScreenSongPhoto(imagePath: imagePath),
+                ),
               ),
-              child: Image.file(
-                File(imagePath),
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 64, horizontal: 24),
-                  child: Column(
-                    children: [
-                      Icon(Icons.broken_image_outlined, size: 48),
-                      SizedBox(height: 12),
-                      Text('Couldn’t open the saved song photo.'),
-                    ],
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: ColoredBox(
+                  color: colorScheme.surfaceContainerHighest,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: double.infinity,
+                      maxHeight: 420,
+                    ),
+                    child: Image.file(
+                      File(imagePath),
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 56,
+                              horizontal: 24,
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(Icons.broken_image_outlined, size: 48),
+                                SizedBox(height: 12),
+                                Text('Couldn’t open the saved song photo.'),
+                              ],
+                            ),
+                          ),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FullScreenSongPhoto extends StatelessWidget {
+  const _FullScreenSongPhoto({required this.imagePath});
+
+  final String imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Original scanned photo'),
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          tooltip: 'Close photo',
+          icon: const Icon(Icons.close),
         ),
-      ],
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.8,
+          maxScale: 5,
+          child: Image.file(
+            File(imagePath),
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const Padding(
+              padding: EdgeInsets.all(24),
+              child: Text('Couldn’t open the saved song photo.'),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

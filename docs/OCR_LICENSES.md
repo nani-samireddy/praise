@@ -23,9 +23,8 @@ These files came from the `main` branch of the official Tesseract
 
 ## Optional on-device AI organization
 
-On supported Android devices, Praise can pass OCR text to ML Kit GenAI Prompt
-`1.0.0-beta4` with the Structured Output schema API `1.0.0-alpha1`. Inference
-runs through Android AICore/Gemini Nano; Praise does not bundle that model and
-does not send OCR text to an application server. This optional integration is
-subject to the [ML Kit GenAI API terms](https://developers.google.com/ml-kit/terms/genai).
-Ordinary Tesseract OCR remains available when this feature cannot run.
+Praise uses Gemma 3 1B through LiteRT-LM for local song organization. The pinned
+model is distributed with the app as an on-demand Play Asset Pack, and the user
+accepts the Gemma terms before the app requests that pack. The pack includes
+Gemma's required notice. OCR text remains on the device; ordinary Tesseract
+results remain available if model delivery or AI organization fails.
