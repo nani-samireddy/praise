@@ -6,6 +6,8 @@ import 'scanned_song_draft.dart';
 enum OnDeviceAiStatus { available, downloadable, downloading, unavailable }
 
 abstract interface class SongScanService {
+  Stream<String> get aiProgress;
+
   Future<String> recognize(String imagePath);
 
   Future<OnDeviceAiStatus> getAiStatus();
@@ -19,6 +21,15 @@ class TesseractSongScanService implements SongScanService {
   const TesseractSongScanService();
 
   static const _channel = MethodChannel('com.nanisamireddy.praise/song_scan');
+  static const _progressChannel = EventChannel(
+    'com.nanisamireddy.praise/song_scan_progress',
+  );
+
+  @override
+  Stream<String> get aiProgress => _progressChannel
+      .receiveBroadcastStream()
+      .where((event) => event is String)
+      .cast<String>();
 
   @override
   Future<String> recognize(String imagePath) async {

@@ -1,6 +1,7 @@
 package com.nanisamireddy.praise
 
 import android.content.Context
+import android.util.Log
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.ConversationConfig
@@ -73,16 +74,21 @@ class SongStructuringService(context: Context) {
         }
     }
 
-    suspend fun structure(ocrText: String): Map<String, Any?> {
+    suspend fun structure(
+        ocrText: String,
+        onProgress: (String) -> Unit,
+    ): Map<String, Any?> {
         val modelFile = gemmaAssetFile()
             ?: error("Download the song AI model from Google Play before scanning.")
-        return structureWithGemma(modelFile, ocrText)
+        return structureWithModel(modelFile, ocrText, onProgress)
     }
 
-    private suspend fun structureWithGemma(
+    private suspend fun structureWithModel(
         modelFile: File,
         ocrText: String,
+        onProgress: (String) -> Unit,
     ): Map<String, Any?> = withContext(Dispatchers.IO) {
+        onProgress("Loading the on-device model…")
         val engine = Engine(
             EngineConfig(
                 modelPath = modelFile.absolutePath,
@@ -108,11 +114,21 @@ class SongStructuringService(context: Context) {
                 ),
             )
             try {
-                val response = conversation.sendMessage(
+                val response = StringBuilder()
+                var lastReportedLength = 0
+                onProgress("AI is organizing the lyrics…")
+                conversation.sendMessageAsync(
                     buildPrompt(ocrText),
                     maxOutputToken = 1200,
-                ).toString()
-                parseGemmaResponse(response)
+                ).collect { message ->
+                    response.append(message.toString())
+                    if (response.length - lastReportedLength >= progressUpdateInterval) {
+                        lastReportedLength = response.length
+                        onProgress("AI is responding… ${response.length} characters received")
+                    }
+                }
+                val responseText = response.toString()
+                parseModelResponse(responseText)
             } finally {
                 conversation.close()
             }
@@ -121,7 +137,7 @@ class SongStructuringService(context: Context) {
         }
     }
 
-    private fun parseGemmaResponse(response: String): Map<String, Any?> {
+    private fun parseModelResponse(response: String): Map<String, Any?> {
         val jsonStart = response.indexOf('{')
         val jsonEnd = response.lastIndexOf('}')
         check(jsonStart >= 0 && jsonEnd > jsonStart) {
@@ -177,6 +193,7 @@ class SongStructuringService(context: Context) {
         const val gemmaAssetPackName = "gemma_model"
         const val gemmaAssetRelativePath = "models/gemma3-1b-it-int4.litertlm"
         const val gemmaModelSize = 584_417_280L
+        const val progressUpdateInterval = 64
         const val gemmaDownloadTimeoutMillis = 30 * 60 * 1000L
         const val gemmaDownloadPollMillis = 1000L
     }

@@ -6,6 +6,7 @@ import android.util.Log
 import com.googlecode.tesseract.android.TessBaseAPI
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.util.concurrent.Executors
@@ -21,6 +22,7 @@ class MainActivity : FlutterActivity() {
     private val songStructuringService by lazy {
         SongStructuringService(applicationContext)
     }
+    private var songAiProgressSink: EventChannel.EventSink? = null
     private lateinit var metronomeSoundPool: SoundPool
     private var metronomeTickSoundId = 0
     private var metronomeAccentSoundId = 0
@@ -28,6 +30,18 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         configureMetronomeSounds()
+        EventChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "com.nanisamireddy.praise/song_scan_progress",
+        ).setStreamHandler(object : EventChannel.StreamHandler {
+            override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                songAiProgressSink = events
+            }
+
+            override fun onCancel(arguments: Any?) {
+                songAiProgressSink = null
+            }
+        })
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             "com.nanisamireddy.praise/song_scan",
@@ -116,7 +130,11 @@ class MainActivity : FlutterActivity() {
         }
         aiScope.launch {
             try {
-                result.success(songStructuringService.structure(ocrText))
+                result.success(
+                    songStructuringService.structure(ocrText) { progress ->
+                        runOnUiThread { songAiProgressSink?.success(progress) }
+                    },
+                )
             } catch (error: Exception) {
                 Log.e("SongScan", "On-device song structuring failed", error)
                 result.error("ai_failed", error.message, null)

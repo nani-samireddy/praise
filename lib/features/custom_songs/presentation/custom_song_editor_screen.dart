@@ -169,13 +169,18 @@ class _CustomSongEditorScreenState
       }
       if (aiAvailable) {
         if (mounted) {
-          setState(() => _scanProgress = 'Organizing the song on this device…');
+          setState(() => _scanProgress = 'Starting on-device AI…');
         }
+        final progressSubscription = service.aiProgress.listen((progress) {
+          if (mounted) setState(() => _scanProgress = progress);
+        });
         try {
           draft = await service.structure(recognizedText);
         } catch (error) {
           debugPrint('On-device song structuring failed: $error');
           aiMessage = 'Couldn’t organize this song. The OCR text is shown below; check it and add the title before saving.';
+        } finally {
+          await progressSubscription.cancel();
         }
       }
       if (!mounted) return;
