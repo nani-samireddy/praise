@@ -221,6 +221,9 @@ class _FakeSongScanService implements SongScanService {
   var downloadCalls = 0;
 
   @override
+  Stream<String> get aiProgress => const Stream.empty();
+
+  @override
   Future<String> recognize(String imagePath) async {
     recognizeCalls++;
     return 'తెలుగు పాట శీర్షిక\nమొదటి పాట పంక్తి';
