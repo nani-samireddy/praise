@@ -180,7 +180,7 @@ class _CustomSongEditorScreenState
           debugPrint('On-device song structuring failed: $error');
           aiMessage = 'Couldn’t organize this song. The OCR text is shown below; check it and add the title before saving.';
         } finally {
-          await progressSubscription.cancel();
+          unawaited(progressSubscription.cancel());
         }
       }
       if (!mounted) return;
