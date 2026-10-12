@@ -24,7 +24,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       final uri = state.uri;
       final onboarding = ref.read(onboardingCompleteProvider).valueOrNull;
       if (onboarding == false && uri.path != '/starter') return '/starter';
-      if (onboarding != false && uri.path == '/starter') return '/songs';
+      if (onboarding != false &&
+          uri.path == '/starter' &&
+          uri.queryParameters['change'] != 'true') {
+        return '/songs';
+      }
       final isCollectionAppLink = uri.scheme == 'praise' && uri.host == 'list';
       final isCollectionWebLink =
           uri.scheme == 'https' &&
@@ -36,7 +40,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/starter',
         builder: (context, state) => StarterScreen(
-          changeRole: state.uri.queryParameters['change'] == 'true',
+          changeRole:
+              ref.read(onboardingCompleteProvider).valueOrNull == true &&
+              state.uri.queryParameters['change'] == 'true',
         ),
       ),
       StatefulShellRoute.indexedStack(

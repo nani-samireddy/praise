@@ -71,11 +71,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               leading: const Icon(Icons.tune),
               title: const Text('Your role'),
               subtitle: Text(
-                ref.watch(primaryRoleProvider).valueOrNull?.name ??
+                ref.watch(primaryRoleProvider).valueOrNull?.label ??
                     'Choose a role to personalize your features',
               ),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.go('/starter?change=true'),
+              onTap: () => context.push('/starter?change=true'),
             ),
           ),
           const SizedBox(height: 20),

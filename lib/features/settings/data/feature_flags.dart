@@ -2,7 +2,17 @@ import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
 
-enum PrimaryRole { singer, musician, worshipLeader }
+enum PrimaryRole {
+  singer,
+  musician,
+  worshipLeader;
+
+  String get label => switch (this) {
+    singer => 'Singer',
+    musician => 'Musician',
+    worshipLeader => 'Worship leader',
+  };
+}
 
 enum FeatureKey {
   practiceVideos,
@@ -112,16 +122,19 @@ class FeatureSettingsStore {
   Stream<bool> watchFeature(FeatureKey feature) => watch(key(feature)).map(
     (v) => v == null ? feature != FeatureKey.adaptiveSongControls : v == 'true',
   );
-  Future<void> complete(PrimaryRole role) async {
+
+  /// Applying a role deliberately replaces all customized feature switches.
+  Future<void> complete(PrimaryRole role) => database.transaction(() async {
+    final defaults = roleDefaults(role);
     await set(roleKey, role.name);
-    await set(onboardingKey, 'true');
-    for (final f in featureDefinitions) {
+    for (final feature in featureDefinitions) {
       await set(
-        key(f.key),
-        roleDefaults(role).contains(f.key) ? 'true' : 'false',
+        key(feature.key),
+        defaults.contains(feature.key) ? 'true' : 'false',
       );
     }
-  }
+    await set(onboardingKey, 'true');
+  });
 
   Future<void> reset() => set(onboardingKey, 'false');
 }

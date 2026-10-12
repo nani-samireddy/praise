@@ -14,77 +14,128 @@ class StarterScreen extends ConsumerStatefulWidget {
 
 class _StarterScreenState extends ConsumerState<StarterScreen> {
   PrimaryRole? selected;
+  bool saving = false;
+
+  void _cancel() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/settings');
+    }
+  }
+
+  Future<void> _continue() async {
+    setState(() => saving = true);
+    try {
+      await ref.read(featureSettingsStoreProvider).complete(selected!);
+      if (!mounted) return;
+      if (widget.changeRole) {
+        _cancel();
+      } else {
+        context.go('/songs');
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not save your role. Please try again.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
+  }
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Padding(
+  Widget build(BuildContext context) => PopScope(
+    canPop: widget.changeRole && !saving,
+    onPopInvokedWithResult: (didPop, result) {
+      if (!didPop && widget.changeRole && !saving) _cancel();
+    },
+    child: Scaffold(
+      appBar: widget.changeRole
+          ? AppBar(
+              automaticallyImplyLeading: false,
+              leading: IconButton(
+                tooltip: 'Cancel role change',
+                onPressed: saving ? null : _cancel,
+                icon: const Icon(Icons.close),
+              ),
+              title: const Text('Change role'),
+            )
+          : null,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  widget.changeRole ? 'Change role' : 'Welcome to Praise',
-                  style: Theme.of(context).textTheme.headlineMedium
-                      ?.copyWith(fontWeight: FontWeight.w800),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: FocusTraversalGroup(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        widget.changeRole
+                            ? 'Choose your role'
+                            : 'Welcome to Praise',
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        widget.changeRole
+                            ? 'Continuing replaces all your feature switches, including custom choices, with defaults for the selected role. Cancel keeps your current settings.'
+                            : 'Choose how you use Praise. You can change these features later in Settings.',
+                      ),
+                      const SizedBox(height: 28),
+                      for (final role in PrimaryRole.values)
+                        _role(context, role),
+                      const SizedBox(height: 20),
+                      FilledButton(
+                        onPressed: selected == null || saving
+                            ? null
+                            : _continue,
+                        child: Text(saving ? 'Saving…' : 'Continue'),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  widget.changeRole
-                      ? 'Choose a role to update your feature defaults.'
-                      : 'Choose how you use Praise. You can change these features later in Settings.',
-                ),
-                const SizedBox(height: 28),
-                for (final role in PrimaryRole.values) _role(context, role),
-                const SizedBox(height: 20),
-                FilledButton(
-                  onPressed: selected == null
-                      ? null
-                      : () async {
-                          await ref
-                              .read(featureSettingsStoreProvider)
-                              .complete(selected!);
-                          if (context.mounted) context.go('/songs');
-                        },
-                  child: const Text('Continue'),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     ),
   );
+
   Widget _role(BuildContext context, PrimaryRole role) {
-    final labels = {
-      PrimaryRole.singer: 'Singer',
-      PrimaryRole.musician: 'Musician',
-      PrimaryRole.worshipLeader: 'Worship leader',
+    final icon = switch (role) {
+      PrimaryRole.singer => Icons.mic,
+      PrimaryRole.musician => Icons.music_note,
+      PrimaryRole.worshipLeader => Icons.groups,
     };
-    final icons = {
-      PrimaryRole.singer: Icons.mic,
-      PrimaryRole.musician: Icons.music_note,
-      PrimaryRole.worshipLeader: Icons.groups,
+    final description = switch (role) {
+      PrimaryRole.singer => 'Lyrics and singing',
+      PrimaryRole.musician => 'Chords and tempo',
+      PrimaryRole.worshipLeader => 'Lists and service planning',
     };
-    return Card(
-      color: selected == role
-          ? Theme.of(context).colorScheme.primaryContainer
-          : null,
-      child: ListTile(
-        leading: Icon(icons[role]),
-        title: Text(labels[role]!),
-        subtitle: Text(
-          role == PrimaryRole.singer
-              ? 'Lyrics and singing'
-              : role == PrimaryRole.musician
-              ? 'Chords and tempo'
-              : 'Lists and service planning',
+    return Semantics(
+      selected: selected == role,
+      child: Card(
+        color: selected == role
+            ? Theme.of(context).colorScheme.primaryContainer
+            : null,
+        child: ListTile(
+          enabled: !saving,
+          selected: selected == role,
+          leading: Icon(icon),
+          title: Text(role.label),
+          subtitle: Text(description),
+          trailing: selected == role ? const Icon(Icons.check) : null,
+          onTap: saving ? null : () => setState(() => selected = role),
         ),
-        trailing: selected == role ? const Icon(Icons.check) : null,
-        onTap: () => setState(() => selected = role),
       ),
     );
   }
