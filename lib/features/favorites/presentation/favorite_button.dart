@@ -14,33 +14,37 @@ class FavoriteButton extends ConsumerWidget {
     final favorite = ref.watch(isFavoriteProvider(songId));
 
     return favorite.when(
-      data: (isFavorite) => IconButton(
-        onPressed: () async {
-          try {
-            await ref
-                .read(favoritesRepositoryProvider)
-                .setFavorite(songId, isFavorite: !isFavorite);
-            await HapticFeedback.selectionClick();
-          } catch (error, stackTrace) {
-            debugPrint('Favorite update failed: $error');
-            debugPrintStack(stackTrace: stackTrace);
-            if (!context.mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Couldn’t update favorites.')),
-            );
-          }
-        },
-        tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
-        icon: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          transitionBuilder: (child, animation) =>
-              ScaleTransition(scale: animation, child: child),
-          child: Icon(
-            isFavorite ? Icons.favorite : Icons.favorite_outline,
-            key: ValueKey(isFavorite),
+      data: (isFavorite) => Semantics(
+        container: true,
+        child: IconButton(
+          isSelected: isFavorite,
+          onPressed: () async {
+            try {
+              await ref
+                  .read(favoritesRepositoryProvider)
+                  .setFavorite(songId, isFavorite: !isFavorite);
+              await HapticFeedback.selectionClick();
+            } catch (error, stackTrace) {
+              debugPrint('Favorite update failed: $error');
+              debugPrintStack(stackTrace: stackTrace);
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Couldn’t update favorites.')),
+              );
+            }
+          },
+          tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
+          icon: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            transitionBuilder: (child, animation) =>
+                ScaleTransition(scale: animation, child: child),
+            child: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_outline,
+              key: ValueKey(isFavorite),
+            ),
           ),
+          color: isFavorite ? Theme.of(context).colorScheme.primary : null,
         ),
-        color: isFavorite ? Theme.of(context).colorScheme.primary : null,
       ),
       loading: () => const IconButton(
         onPressed: null,
