@@ -1,6 +1,7 @@
 import '../../../core/database/app_database.dart';
 import '../../../core/text/telugu_transliterator.dart';
 import '../../custom_songs/data/custom_song_image_store.dart';
+import '../../custom_songs/data/local_song_draft.dart';
 
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
@@ -16,6 +17,7 @@ class SongInput {
     this.maleVideoUrl,
     this.femaleVideoUrl,
     this.removeImage = false,
+    this.expectedUpdatedAt,
   });
 
   final String title;
@@ -27,6 +29,7 @@ class SongInput {
   final String? maleVideoUrl;
   final String? femaleVideoUrl;
   final bool removeImage;
+  final DateTime? expectedUpdatedAt;
 }
 
 abstract interface class SongRepository {
@@ -160,6 +163,10 @@ class DriftSongRepository implements SongRepository {
     if (existing == null) {
       throw StateError('Only existing custom songs can be edited.');
     }
+    if (input.expectedUpdatedAt != null &&
+        existing.updatedAt != input.expectedUpdatedAt) {
+      throw StateError('This song changed since editing began.');
+    }
     final title = _required(input.title, 'Title');
     final replacementImagePath = await _saveImage(input.newImagePath);
     final imagePath =
@@ -175,7 +182,10 @@ class DriftSongRepository implements SongRepository {
     try {
       affected =
           await (_database.update(_database.songs)..where(
-                (row) => row.id.equals(id) & row.source.equals('custom'),
+                (row) =>
+                    row.id.equals(id) &
+                    row.source.equals('custom') &
+                    row.updatedAt.equals(existing.updatedAt),
               ))
               .write(
                 SongsCompanion(
@@ -189,7 +199,15 @@ class DriftSongRepository implements SongRepository {
                   femaleVideoUrl: Value(
                     _optionalVideoUrl(input.femaleVideoUrl),
                   ),
-                  updatedAt: Value(DateTime.now().toUtc()),
+                  // Drift stores timestamps in seconds. Advance at least one
+                  // second so rapid saves still have distinct revisions.
+                  updatedAt: Value(
+                    DateTime.now().toUtc().isAfter(
+                          existing.updatedAt.add(const Duration(seconds: 1)),
+                        )
+                        ? DateTime.now().toUtc()
+                        : existing.updatedAt.add(const Duration(seconds: 1)),
+                  ),
                 ),
               );
     } catch (_) {
@@ -276,7 +294,10 @@ class DriftSongRepository implements SongRepository {
   Future<void> _deleteImage(String? storedPath) async {
     if (storedPath == null) return;
     try {
-      await imageStore?.delete(storedPath);
+      if (imageStore != null) {
+        await LocalSongDraftStore(_database)
+            .deleteUnreferencedImage(storedPath, imageStore: imageStore);
+      }
     } catch (_) {
       // The database is authoritative; a cleanup failure must not undo a save
       // or make a successfully deleted song appear to remain.

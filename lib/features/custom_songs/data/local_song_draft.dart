@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import 'custom_song_image_store.dart';
 
 class LocalSongDraft {
   const LocalSongDraft({
@@ -15,11 +16,13 @@ class LocalSongDraft {
     required this.femaleVideoUrl,
     required this.imagePath,
     required this.detailsExpanded,
+    this.baseUpdatedAt,
     this.isScanned = false,
     this.aiEnhanced = false,
     this.aiFallback = false,
   });
 
+  final String? baseUpdatedAt;
   final String title;
   final String englishTitle;
   final String body;
@@ -36,6 +39,7 @@ class LocalSongDraft {
   @override
   bool operator ==(Object other) =>
       other is LocalSongDraft &&
+      other.baseUpdatedAt == baseUpdatedAt &&
       other.title == title &&
       other.englishTitle == englishTitle &&
       other.body == body &&
@@ -51,6 +55,7 @@ class LocalSongDraft {
 
   @override
   int get hashCode => Object.hash(
+    baseUpdatedAt,
     title,
     englishTitle,
     body,
@@ -76,6 +81,7 @@ class LocalSongDraft {
       imagePath == null;
 
   Map<String, Object?> toJson() => {
+    'baseUpdatedAt': baseUpdatedAt,
     'title': title,
     'englishTitle': englishTitle,
     'body': body,
@@ -94,6 +100,7 @@ class LocalSongDraft {
     String value(String key) => json[key] is String ? json[key] as String : '';
 
     return LocalSongDraft(
+      baseUpdatedAt: json['baseUpdatedAt'] as String?,
       title: value('title'),
       englishTitle: value('englishTitle'),
       body: value('body'),
@@ -119,10 +126,13 @@ class LocalSongDraftStore {
 
   final AppDatabase _database;
 
-  Future<LocalSongDraft?> load() async {
+  String _key(String? songId) =>
+      songId == null ? _metadataKey : '${_metadataKey}_edit_$songId';
+
+  Future<LocalSongDraft?> load({String? songId}) async {
     final row = await (_database.select(
       _database.appMetadata,
-    )..where((item) => item.key.equals(_metadataKey))).getSingleOrNull();
+    )..where((item) => item.key.equals(_key(songId)))).getSingleOrNull();
     if (row == null) return null;
 
     try {
@@ -134,12 +144,12 @@ class LocalSongDraftStore {
     }
   }
 
-  Future<void> save(LocalSongDraft draft) async {
+  Future<void> save(LocalSongDraft draft, {String? songId}) async {
     await _database
         .into(_database.appMetadata)
         .insert(
           AppMetadataCompanion.insert(
-            key: _metadataKey,
+            key: _key(songId),
             value: jsonEncode(draft.toJson()),
             updatedAt: DateTime.now().toUtc(),
           ),
@@ -147,9 +157,33 @@ class LocalSongDraftStore {
         );
   }
 
-  Future<void> clear() async {
+  Future<void> deleteUnreferencedImage(
+    String? imagePath, {
+    CustomSongImageStore? imageStore,
+  }) async {
+    if (imagePath == null) return;
+    final songs = await (_database.select(
+      _database.songs,
+    )..where((song) => song.imagePath.equals(imagePath))).get();
+    if (songs.isNotEmpty) return;
+    final rows = await (_database.select(
+      _database.appMetadata,
+    )..where((row) => row.key.like('custom_song_draft%'))).get();
+    for (final row in rows) {
+      try {
+        final json = jsonDecode(row.value);
+        if (json is Map && json['imagePath'] == imagePath) return;
+      } catch (_) {
+        // Unknown draft contents must not cause destructive cleanup.
+        return;
+      }
+    }
+    await (imageStore ?? LocalCustomSongImageStore()).delete(imagePath);
+  }
+
+  Future<void> clear({String? songId}) async {
     await (_database.delete(
       _database.appMetadata,
-    )..where((item) => item.key.equals(_metadataKey))).go();
+    )..where((item) => item.key.equals(_key(songId)))).go();
   }
 }
