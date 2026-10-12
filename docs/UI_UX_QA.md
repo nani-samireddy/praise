@@ -4,7 +4,7 @@ Baseline: `b1251cc`; isolated branch `codex/accessibility-qa`. This is a
 host/widget review, not a hardware release sign-off. The untracked original
 `APP_AUDIT_2026-10-12.md` was read before creating the worktree. No AGENTS.md
 was found in the project/parent search. Other implementation branches own
-onboarding, search, controls, online photo scanning, drafts, sharing/imports and reading mode.
+onboarding, search, controls, local photo saving, drafts, sharing/imports and reading mode.
 
 ## Repeatable checks
 
@@ -48,6 +48,7 @@ codec and export content; they are not full visual/accessibility coverage.
 | QA-07 | Share anchoring | Source passes nullable Rect through song/list services; song screen uses RenderBox origin. Actual popover/native share sheet unverified. | All entry points provide finite non-empty on-screen origin on tablet/rotation, no crash. |
 | QA-08 | Focus/contrast/photo labels | Paste and refresh have tooltips; camera/gallery/native controls and full traversal need hardware review. No pass claimed. | Follow checklist below; attach screenshots/traversal notes and defect IDs. |
 | QA-10 | PDF accessibility | Poppler reports untagged PDF. Visual rendering does not prove accessible document reading order. | Assess exported text selection/reading order in PDF screen reader; document supported behavior. |
+| QA-11 | Local photo-only scope | Baseline photo flow still contains recognition UI; removal belongs to photo branch and is not verified in this isolated checkout. | Integrated camera/gallery, lost-picker recovery, durable images, create/edit/replace/remove and cancel/draft checks pass; no active extraction, model, quota or Scan/OCR controls. |
 | QA-09 | Long PDF boundaries | MultiPage divides lyrics at blank paragraphs; a very large uninterrupted paragraph remains a boundary-risk requiring dedicated review. | No missing lines, orphan section headings, clipped header/footer, malformed Telugu or unexpected empty pages. |
 
 Do not count an expected defective behavior assertion as an acceptance pass.
@@ -56,7 +57,7 @@ Do not silently disable new failures after integrating another branch.
 ## Physical Android / TalkBack checklist (NOT EXECUTED)
 
 Record commit, APK/AAB hash, model, Android version, TalkBack version, display
-size/font scale, locale, installation channel, quota state and screenshots for each run.
+size/font scale, locale, installation channel and screenshots for each run.
 Use a spare/test profile with synthetic data, plus an upgrade test with existing
 favorites/lists/custom songs/photos/notes/settings. Preserve production data.
 
@@ -82,24 +83,23 @@ favorites/lists/custom songs/photos/notes/settings. Preserve production data.
    controls and no misleading availability on unarranged songs.
 6. Settings: headings, role, switches and their on/off states, font/theme/display
    selections, refresh busy/error/completion announcements, reachable support.
-7. Custom/photo: create/edit, paste, required fields, validation focus, keyboard
-   obscuration, Save/Cancel/back, recovery/discard, photo description, permission
-   denial, picker cancellation and process death. Keep photo and manual entry
-   remain available. Online extraction requires explicit upload consent; verify
-   consent wording announces exactly what is uploaded. No internet must show a
-   readable retry state and preserve the local photo and all manually typed text.
-8. Online Gemini scanning: use a fake adapter and fake quota service until a
-   Gemini project, credentials and verified limits exist. Production scanning
-   stays disabled until configured; no live-provider pass is claimed. Check
-   scans remaining/monthly reset date (including month boundary/timezone),
-   per-installation server quota and shared pool exhaustion, denied consent,
-   retry/idempotency (one scan charged), concurrent requests, timeout/cancel,
-   malformed responses and restart. Ensure cancellation preserves photo/text,
-   results do not overwrite intervening edits, and errors do not expose secrets.
-   Expected scale is more than 500 scanning users/month; fake tests cannot prove
-   configured provider capacity or monthly pool sufficiency. Use Play internal
-   testing for release installation/upgrade and native picker/share workflows;
-   there is no offline Tesseract/Gemma/model-download acceptance gate in this flow.
+7. Custom/photo: verify camera and gallery entry points have distinct labels and
+   adequate targets. Deny permissions, cancel picker and simulate process death;
+   lost-picker recovery must restore the pending image without duplicate songs.
+   Save a photo-only song; restart offline and verify its durable private image
+   remains readable after the picker/cache source is removed. Add optional manual
+   Telugu/English text and preserve it through Save, edit, back and cancellation.
+8. Photo lifecycle/accessibility: edit a saved photo-only song; replace and remove
+   its photo, then cancel or save each operation. Cancel must preserve the previous
+   persisted photo/text; Save must apply exactly the reviewed change. Test new and
+   existing-song draft recovery/discard, including retained photos and interrupted
+   saves. Preview must expose a meaningful photo description, labeled replace/remove
+   actions, reachable zoom/back controls and sensible focus return. Repeat with
+   200% text, both themes, rotation and a small phone. Local photo saving and manual
+   entry must work without internet. Verify the integrated active flow has no text
+   extraction/recognition buttons, model downloads, provider quota/reset displays
+   or misleading Scan/OCR wording. Recognition and model benchmarking are deferred
+   product work, not release acceptance; no provider/model setup is needed.
 9. Preview/share: song and list, text/image/PDF, photo-plus-text, language options,
    oversized-image PDF alternative; cancel leaves data intact. On tablet and
    landscape verify share origin/popover placement, screen-reader dismissal and
@@ -124,7 +124,7 @@ states (loading/data/empty/error), selected controls, focus traversal and keyboa
 insets. Extend/review full-screen goldens with real bundled Telugu fonts on a pinned
 Flutter/OS runner; avoid approving Ahem glyph snapshots as Telugu validation.
 Resolve QA-01/03/04/05/06 with acceptance tests supplied by their owners, and probe
-QA-07/08/09 on device/rendered artifacts. Re-render exports after any content-model
+QA-07/08/09/11 on device/rendered artifacts. Re-render exports after any content-model
 change. Perform the physical checklist using the integrated Play build, attach
 evidence, and keep unresolved defects visible before release sign-off.
 
@@ -136,7 +136,7 @@ Telugu text, contained content and separated footers. This sampling is not a
 complete glyph-accuracy or every-page sign-off. PDF metadata reports `Tagged: no`;
 PDF screen-reader reading order is therefore unverified and should be assessed
 separately from visual rendering. The renderer rejected the same document as an
-oversized single image. No physical Android, TalkBack, Play or live Gemini checks
+oversized single image. No physical Android, TalkBack, Play checks
 were executed. Review artifacts are reproducible via the opt-in command above.
 
 Verified branch checks: `dart format --output=none --set-exit-if-changed lib test`
@@ -146,3 +146,14 @@ focused `flutter test --no-pub test/qa` also passed all 17. Earlier exploratory
 semantics/golden runs failed while the fixture was being corrected; the final
 suite used the reviewed real-font goldens and passed. No production data,
 network service, model download or provider credentials were used by these tests.
+
+Scope update: local photo saving and manual entry supersede both offline and
+online recognition plans. Existing baseline recognition tests/results above
+are historical checks of this branch, not acceptance for the new flow. After
+integrating the photo branch, use fakes for camera/gallery cancellation, lost
+picker data, durable file copying and draft persistence; assert no extraction,
+model-download or quota widgets are present in the create/edit/preview screens.
+Search active presentation/routes for `scan`, `OCR`, `extract`, `Gemma`, `Gemini`,
+`Tesseract` and quota terminology, review each match in context, then check visible
+strings and semantic labels on device. Historical documentation and deferred
+benchmark notes may mention recognition; they must not appear as active actions.
