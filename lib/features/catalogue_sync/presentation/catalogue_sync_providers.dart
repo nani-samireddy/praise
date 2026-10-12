@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/network/network_providers.dart';
+import '../../songs/presentation/song_providers.dart';
 import '../data/catalogue_remote_data_source.dart';
 import '../data/catalogue_store.dart';
 import '../data/catalogue_sync_service.dart';
@@ -41,8 +42,13 @@ final catalogueSyncControllerProvider =
     );
 
 class CatalogueSyncController extends AsyncNotifier<CatalogueSyncResult?> {
+  Timer? _progressDismissTimer;
+
   @override
-  FutureOr<CatalogueSyncResult?> build() => null;
+  FutureOr<CatalogueSyncResult?> build() {
+    ref.onDispose(() => _progressDismissTimer?.cancel());
+    return null;
+  }
 
   Future<CatalogueSyncResult> sync() async {
     ref
@@ -68,6 +74,7 @@ class CatalogueSyncController extends AsyncNotifier<CatalogueSyncResult?> {
             : 'Song library update complete.',
         progress: 1,
       );
+      ref.read(songIndexRevisionProvider.notifier).state++;
       state = AsyncData(result);
       return result;
     } on Object catch (error, stackTrace) {
@@ -75,8 +82,9 @@ class CatalogueSyncController extends AsyncNotifier<CatalogueSyncResult?> {
       state = AsyncError(error, stackTrace);
       rethrow;
     } finally {
-      Future<void>.delayed(const Duration(milliseconds: 650), () {
-        if (ref.read(catalogueSyncControllerProvider).isLoading) return;
+      _progressDismissTimer?.cancel();
+      _progressDismissTimer = Timer(const Duration(milliseconds: 650), () {
+        if (state.isLoading) return;
         ref.read(catalogueSyncProgressProvider.notifier).state = null;
       });
     }

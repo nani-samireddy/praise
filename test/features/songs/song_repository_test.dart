@@ -55,6 +55,36 @@ void main() {
     expect(author.single.id, 'grace');
   });
 
+  test(
+    'search preserves Telugu and treats wildcard punctuation literally',
+    () async {
+      expect(
+        await repository.fetchSongIndexPage(search: '%', limit: 60, offset: 0),
+        isEmpty,
+      );
+      expect(
+        await repository.fetchSongIndexPage(search: '_', limit: 60, offset: 0),
+        isEmpty,
+      );
+      expect(
+        (await repository.fetchSongIndexPage(
+          search: '  అద్భుత  ',
+          limit: 60,
+          offset: 0,
+        )).single.id,
+        'grace',
+      );
+      expect(
+        (await repository.fetchSongIndexPage(
+          search: 'Holy,',
+          limit: 60,
+          offset: 0,
+        )).single.id,
+        'holy',
+      );
+    },
+  );
+
   test('does not return deleted songs', () async {
     await (database.update(database.songs)
           ..where((row) => row.id.equals('grace')))

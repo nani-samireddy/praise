@@ -48,12 +48,17 @@ abstract interface class SongRepository {
 }
 
 class DriftSongRepository implements SongRepository {
-  DriftSongRepository(this._database, {Uuid? uuid, this.imageStore})
-    : _uuid = uuid ?? const Uuid();
+  DriftSongRepository(
+    this._database, {
+    Uuid? uuid,
+    this.imageStore,
+    this.onChanged,
+  }) : _uuid = uuid ?? const Uuid();
 
   final AppDatabase _database;
   final Uuid _uuid;
   final CustomSongImageStore? imageStore;
+  final void Function()? onChanged;
 
   static const mySongsCollectionId = 'system-my-songs';
 
@@ -148,6 +153,7 @@ class DriftSongRepository implements SongRepository {
       await _deleteImage(imagePath);
       rethrow;
     }
+    onChanged?.call();
     return id;
   }
 
@@ -200,6 +206,7 @@ class DriftSongRepository implements SongRepository {
       await _deleteImage(replacementImagePath);
       throw StateError('Only existing custom songs can be edited.');
     }
+    onChanged?.call();
     if (existing.imagePath != imagePath) {
       await _deleteImage(existing.imagePath);
     }
@@ -220,6 +227,7 @@ class DriftSongRepository implements SongRepository {
     if (affected != 1) {
       throw StateError('Only existing custom songs can be deleted.');
     }
+    onChanged?.call();
     await _deleteImage(existing.imagePath);
   }
 
