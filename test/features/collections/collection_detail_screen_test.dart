@@ -43,6 +43,9 @@ void main() {
     expect(find.text('Songs and lyrics'), findsOneWidget);
     await tester.tap(find.text('Songs and lyrics'));
     await tester.pumpAndSettle();
+    expect(sharing.pdfIncludesSongs, isNull);
+    await tester.tap(find.text('Continue to share'));
+    await tester.pumpAndSettle();
     expect(sharing.pdfIncludesSongs, isTrue);
 
     await tester.tap(find.byTooltip('Share list'));
@@ -50,6 +53,9 @@ void main() {
     await tester.tap(find.text('Share as image'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Song titles only'));
+    await tester.pumpAndSettle();
+    expect(sharing.imageIncludesSongs, isNull);
+    await tester.tap(find.text('Continue to share'));
     await tester.pumpAndSettle();
     expect(sharing.imageIncludesSongs, isFalse);
   });
@@ -101,6 +107,9 @@ class _FakeCollectionSharingService implements CollectionSharingService {
 }
 
 class _FakeCollectionsRepository implements CollectionsRepository {
+  @override
+  Future<CollectionImportPreview> previewImport(List<String> ids) async =>
+      const CollectionImportPreview(songs: [], missingIds: []);
   const _FakeCollectionsRepository(this.collection);
 
   final SongCollection collection;

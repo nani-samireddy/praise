@@ -108,6 +108,26 @@ Future<Uint8List> _buildPhotoSongPdf(Song song, Uint8List imageBytes) async {
       ),
     ),
   );
+  if (song.body.trim().isNotEmpty ||
+      (song.englishBody?.trim().isNotEmpty ?? false)) {
+    pdf.addPage(
+      pw.MultiPage(
+        theme: pw.ThemeData.withFont(base: font, bold: font),
+        maxPages: 500,
+        build: (_) => [
+          for (final section in buildSongExportDocument(song).sections) ...[
+            pw.Text(
+              section.title ?? '',
+              style: const pw.TextStyle(fontSize: 17),
+            ),
+            for (final line in section.body.split('\n'))
+              pw.Text(line, style: const pw.TextStyle(fontSize: 12)),
+            pw.SizedBox(height: 16),
+          ],
+        ],
+      ),
+    );
+  }
   return pdf.save();
 }
 

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/collection_link_codec.dart';
+import '../../catalogue_sync/presentation/catalogue_sync_providers.dart';
 import 'collection_providers.dart';
 
 class CollectionLinkHandler extends ConsumerStatefulWidget {
@@ -46,37 +47,81 @@ class _CollectionLinkHandlerState extends ConsumerState<CollectionLinkHandler> {
     late final SharedCollectionPayload payload;
     try {
       payload = parseCollectionLink(uri);
-    } on CollectionLinkException {
+    } on CollectionLinkException catch (error) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.message)));
       return;
     }
     _handling = true;
     try {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Add shared list?'),
-          content: Text(
-            '"${payload.name}" contains ${payload.songIds.length} songs. '
-            'This will create a new list on your device.',
+      while (mounted) {
+        final preview = await ref
+            .read(collectionsRepositoryProvider)
+            .previewImport(payload.songIds);
+        if (!mounted) return;
+        final decision = await showDialog<String>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text('Add "${payload.name}"?'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${preview.songs.length} matching songs • ${preview.missingIds.length} missing • ${payload.duplicateCount} duplicates removed. Creates a new local list.',
+                  ),
+                  for (var i = 0; i < preview.songs.length; i++)
+                    Text('${i + 1}. ${preview.songs[i].title}'),
+                  if (preview.missingIds.isNotEmpty)
+                    Text(
+                      'Missing IDs: ${preview.missingIds.join(", ")}\nRefresh songs, then retry this link, or explicitly add only the matches.',
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, 'retry'),
+                child: const Text('Retry matches'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, 'refresh'),
+                child: const Text('Refresh songs'),
+              ),
+              if (preview.songs.isNotEmpty)
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, 'add'),
+                  child: Text(
+                    preview.missingIds.isEmpty
+                        ? 'Add list'
+                        : 'Add matching songs only',
+                  ),
+                ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Add list'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !mounted) return;
-      final id = await ref
-          .read(collectionsRepositoryProvider)
-          .importCollection(name: payload.name, songIds: payload.songIds);
+        );
+        if (decision == 'refresh') {
+          await ref.read(catalogueSyncControllerProvider.notifier).sync();
+          continue;
+        }
+        if (decision == 'retry') continue;
+        if (decision != 'add' || !mounted) return;
+        final id = await ref
+            .read(collectionsRepositoryProvider)
+            .importCollection(
+              name: payload.name,
+              songIds: preview.songs.map((song) => song.id).toList(),
+            );
+        if (!mounted) return;
+        context.go('/lists/$id');
+        break;
+      }
       if (!mounted) return;
-      context.go('/lists/$id');
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Added "${payload.name}".')));
     } catch (_) {

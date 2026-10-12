@@ -21,6 +21,7 @@ import '../../settings/presentation/settings_providers.dart';
 import '../../settings/presentation/feature_providers.dart';
 import '../../settings/data/feature_flags.dart';
 import '../../../shared/presentation/action_sheet.dart';
+import '../../../shared/presentation/export_preview.dart';
 import '../data/song_sharing_service.dart';
 import 'formatted_lyrics.dart';
 import 'chord_transposer.dart';
@@ -260,6 +261,16 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
         }
         return;
       case _SongAction.shareText:
+        if (!await confirmExportPreview(
+              context,
+              title: song.title,
+              content:
+                  'Original and available English lyrics. Photo omitted.\n\n${buildSongShareText(song)}',
+              image: false,
+            ) ||
+            !context.mounted) {
+          return;
+        }
         try {
           await ref
               .read(songSharingServiceProvider)
@@ -272,6 +283,17 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
         }
         return;
       case _SongAction.shareImage:
+        if (!await confirmExportPreview(
+              context,
+              title: song.title,
+              content: song.imagePath != null
+                  ? 'Original photo included. Accompanying typed and English lyrics are omitted. Use PDF to include them.'
+                  : 'Original and available English lyrics included.\n\n${buildSongShareText(song)}',
+              image: true,
+            ) ||
+            !context.mounted) {
+          return;
+        }
         _showPreparingShareMessage(context, 'Preparing image…');
         var keepResultMessageVisible = false;
         try {
@@ -303,6 +325,16 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
         }
         return;
       case _SongAction.sharePdf:
+        if (!await confirmExportPreview(
+              context,
+              title: song.title,
+              content:
+                  'Original and available English lyrics included. ${song.imagePath != null ? "Photo included when available." : "No photo."}\n\n${buildSongShareText(song)}',
+              image: false,
+            ) ||
+            !context.mounted) {
+          return;
+        }
         _showPreparingShareMessage(context, 'Preparing PDF…');
         var keepResultMessageVisible = false;
         try {
@@ -339,12 +371,7 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
     }
   }
 
-  Rect? _shareOrigin(BuildContext context) {
-    final renderBox = context.findRenderObject() as RenderBox?;
-    return renderBox == null
-        ? null
-        : renderBox.localToGlobal(Offset.zero) & renderBox.size;
-  }
+  Rect? _shareOrigin(BuildContext context) => exportShareOrigin(context);
 
   void _showPreparingShareMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context)

@@ -3,10 +3,15 @@ import 'dart:convert';
 import '../../../core/database/app_database.dart';
 
 class SharedCollectionPayload {
-  const SharedCollectionPayload({required this.name, required this.songIds});
+  const SharedCollectionPayload({
+    required this.name,
+    required this.songIds,
+    this.duplicateCount = 0,
+  });
 
   final String name;
   final List<String> songIds;
+  final int duplicateCount;
 }
 
 class CollectionLinkException implements Exception {
@@ -18,6 +23,9 @@ class CollectionLinkException implements Exception {
   String toString() => message;
 }
 
+const maximumCollectionLinkSongs = 300;
+const maximumCollectionLinkLength = 12000;
+
 Uri buildCollectionLink(SongCollection collection, List<Song> songs) {
   final catalogueSongs = songs
       .where((song) => song.source == 'server' && !song.isDeleted)
@@ -25,6 +33,11 @@ Uri buildCollectionLink(SongCollection collection, List<Song> songs) {
   if (catalogueSongs.isEmpty) {
     throw const CollectionLinkException(
       'Only catalogue songs can be shared as an import link.',
+    );
+  }
+  if (catalogueSongs.length > maximumCollectionLinkSongs) {
+    throw const CollectionLinkException(
+      "Share at most 300 catalogue songs per link.",
     );
   }
   final payload = {
@@ -35,12 +48,21 @@ Uri buildCollectionLink(SongCollection collection, List<Song> songs) {
   final encoded = base64Url
       .encode(utf8.encode(jsonEncode(payload)))
       .replaceAll('=', '');
-  return Uri(
+  if (encoded.length > maximumCollectionLinkLength ||
+      collection.name.trim().isEmpty) {
+    throw const CollectionLinkException(
+      "This list is too large for an import link. Use a text or PDF export.",
+    );
+  }
+  final link = Uri(
     scheme: 'https',
     host: 'nani-samireddy.github.io',
     path: '/praise-catalog/list',
     queryParameters: {'p': encoded},
   );
+  // Keep the producer and consumer contract identical, including ID validation.
+  parseCollectionLink(link);
+  return link;
 }
 
 SharedCollectionPayload parseCollectionLink(Uri uri) {
@@ -48,7 +70,7 @@ SharedCollectionPayload parseCollectionLink(Uri uri) {
     throw const CollectionLinkException('This is not a Praise list link.');
   }
   final encoded = (uri.queryParameters['p'] ?? uri.fragment).trim();
-  if (encoded.isEmpty || encoded.length > 12000) {
+  if (encoded.isEmpty || encoded.length > maximumCollectionLinkLength) {
     throw const CollectionLinkException('This Praise list link is invalid.');
   }
 
@@ -70,7 +92,9 @@ SharedCollectionPayload parseCollectionLink(Uri uri) {
   if (name is! String || name.trim().isEmpty) {
     throw const CollectionLinkException('This Praise list is missing a name.');
   }
-  if (songs is! List<Object?> || songs.isEmpty || songs.length > 300) {
+  if (songs is! List<Object?> ||
+      songs.isEmpty ||
+      songs.length > maximumCollectionLinkSongs) {
     throw const CollectionLinkException(
       'This Praise list has an invalid size.',
     );
@@ -86,7 +110,11 @@ SharedCollectionPayload parseCollectionLink(Uri uri) {
     final id = value.trim();
     if (seen.add(id)) ids.add(id);
   }
-  return SharedCollectionPayload(name: name.trim(), songIds: ids);
+  return SharedCollectionPayload(
+    name: name.trim(),
+    songIds: ids,
+    duplicateCount: songs.length - ids.length,
+  );
 }
 
 bool _isPraiseCollectionLink(Uri uri) {
