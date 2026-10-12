@@ -27,48 +27,11 @@ import 'chord_transposer.dart';
 import 'metronome_controller.dart';
 import 'song_providers.dart';
 import 'structured_lyrics.dart';
+import 'song_arrangement.dart';
 
 enum _SongAction { copy, shareText, shareImage, sharePdf, report, edit, delete }
 
 enum _SongControlsPosition { auto, left, right }
-
-String? _extractOriginalKey(String? structureJson) {
-  if (structureJson == null) return null;
-  try {
-    final decoded = jsonDecode(structureJson);
-    final key = decoded is Map ? decoded['originalKey'] : null;
-    return key is String && key.trim().isNotEmpty ? key : null;
-  } on Object {
-    return null;
-  }
-}
-
-int _extractCapo(String? structureJson) {
-  if (structureJson == null) return 0;
-  try {
-    final decoded = jsonDecode(structureJson);
-    final capo = decoded is Map ? decoded['capo'] : null;
-    return capo is num ? capo.toInt().clamp(0, 12) : 0;
-  } on Object {
-    return 0;
-  }
-}
-
-bool _hasHarmonyParts(String? structureJson) {
-  if (structureJson == null) return false;
-  try {
-    final decoded = jsonDecode(structureJson);
-    final parts = decoded is Map ? decoded['harmonyParts'] : null;
-    if (parts is! List) return false;
-    return parts.any((part) {
-      if (part is! Map) return false;
-      final lines = part['lines'];
-      return lines is List && lines.whereType<Map>().isNotEmpty;
-    });
-  } on Object {
-    return false;
-  }
-}
 
 bool _hasStructuredTransliteration(String? structureJson) {
   if (structureJson == null) return false;
@@ -586,8 +549,8 @@ class _SongControlsPanel extends StatelessWidget {
             ListTileTheme(
               data: ListTileTheme.of(context).copyWith(
                 contentPadding: EdgeInsets.zero,
-                dense: true,
-                visualDensity: const VisualDensity(vertical: -2),
+                dense: false,
+                minVerticalPadding: 8,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -674,7 +637,7 @@ class _SongControlsPanel extends StatelessWidget {
                   if (chordDisplayEnabled)
                     SwitchListTile(
                       secondary: const Icon(Icons.music_note_outlined),
-                      title: const Text('Chords'),
+                      title: const Text('Show chords'),
                       value: showChords,
                       onChanged: onChordsChanged,
                     ),
@@ -690,7 +653,7 @@ class _SongControlsPanel extends StatelessWidget {
                   if (harmonyEnabled && hasHarmonyParts)
                     SwitchListTile(
                       secondary: const Icon(Icons.record_voice_over_outlined),
-                      title: const Text('Harmony parts'),
+                      title: const Text('Show harmony parts'),
                       value: showHarmonyParts,
                       onChanged: onHarmonyPartsChanged,
                     ),
@@ -702,14 +665,14 @@ class _SongControlsPanel extends StatelessWidget {
                       title: const Text('Transpose'),
                       subtitle: Text(
                         targetKey == null
-                            ? _transposeLabel(transposeSemitones)
+                            ? 'Key not provided · Shift by semitones'
                             : '$originalKey → $targetKey',
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            tooltip: 'Lower key',
+                            tooltip: 'Lower chords by one semitone',
                             onPressed: transposeSemitones <= -12
                                 ? null
                                 : () => onTransposeChanged(
@@ -724,7 +687,7 @@ class _SongControlsPanel extends StatelessWidget {
                             ),
                           ),
                           IconButton(
-                            tooltip: 'Raise key',
+                            tooltip: 'Raise chords by one semitone',
                             onPressed: transposeSemitones >= 12
                                 ? null
                                 : () => onTransposeChanged(
@@ -743,6 +706,11 @@ class _SongControlsPanel extends StatelessWidget {
                       onTap: onMetronomeDetails,
                       leading: const Icon(Icons.av_timer_outlined),
                       title: const Text('Metronome'),
+                      subtitle: Text(
+                        metronomeRunning
+                            ? 'Playing · Practice beat'
+                            : 'Practice beat',
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -751,9 +719,12 @@ class _SongControlsPanel extends StatelessWidget {
                             onPressed: onMetronomeDetails,
                             icon: const Icon(Icons.settings_outlined),
                           ),
-                          Switch(
-                            value: metronomeRunning,
-                            onChanged: (_) => onMetronomeToggle(),
+                          Semantics(
+                            label: 'Metronome practice beat',
+                            child: Switch(
+                              value: metronomeRunning,
+                              onChanged: (_) => onMetronomeToggle(),
+                            ),
                           ),
                         ],
                       ),
@@ -1173,7 +1144,8 @@ class _SongReaderState extends ConsumerState<_SongReader> {
             .watch(featureEnabledProvider(FeatureKey.chordDisplay))
             .valueOrNull ??
         true;
-    final capo = _extractCapo(widget.song.structureJson);
+    final arrangement = SongArrangement.parse(widget.song.structureJson);
+    final capo = arrangement.capo;
     final capoShapesEnabled =
         ref.watch(featureEnabledProvider(FeatureKey.capoShapes)).valueOrNull ??
         true;
@@ -1190,7 +1162,7 @@ class _SongReaderState extends ConsumerState<_SongReader> {
         if (mounted) _syncAdaptiveControls(adaptiveSongControlsEnabled);
       });
     }
-    final hasHarmonyParts = _hasHarmonyParts(widget.song.structureJson);
+    final hasHarmonyParts = arrangement.hasHarmony;
     final chordTransposeEnabled =
         ref
             .watch(featureEnabledProvider(FeatureKey.chordTranspose))
@@ -1232,36 +1204,42 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                   if (hasPrimaryLyrics || englishBody != null) ...[
                     SizedBox(
                       width: double.infinity,
-                      child: TextButton(
-                        onPressed: () => setState(() {
-                          _showSongControls = !_showSongControls;
-                        }),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                        ),
-                        child: AnimatedAlign(
-                          duration: const Duration(milliseconds: 280),
-                          curve: Curves.easeOutCubic,
-                          alignment: controlsAlignment,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _showSongControls
-                                    ? Icons.tune
-                                    : Icons.tune_outlined,
-                                size: 18,
+                      child: MergeSemantics(
+                        child: Semantics(
+                          expanded: _showSongControls,
+                          child: TextButton(
+                            onPressed: () => setState(() {
+                              _showSongControls = !_showSongControls;
+                            }),
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(48, 48),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _showSongControls
-                                    ? 'Hide controls'
-                                    : 'Song controls',
+                            ),
+                            child: AnimatedAlign(
+                              duration: const Duration(milliseconds: 280),
+                              curve: Curves.easeOutCubic,
+                              alignment: controlsAlignment,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _showSongControls
+                                        ? Icons.tune
+                                        : Icons.tune_outlined,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _showSongControls
+                                        ? 'Hide controls'
+                                        : 'Song controls',
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -1282,25 +1260,26 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                                   hasEnglish: englishBody != null,
                                   displayMode: displayMode,
                                   transposeSemitones: widget.transposeSemitones,
-                                  originalKey: _extractOriginalKey(
-                                    widget.song.structureJson,
-                                  ),
-                                  chordDisplayEnabled:
-                                      chordDisplayEnabled &&
-                                      widget.song.structureJson != null,
+                                  originalKey: arrangement.originalKey,
+                                  chordDisplayEnabled: arrangement
+                                      .chordsAvailable(chordDisplayEnabled),
                                   showChords: _showChords,
-                                  capoShapesEnabled:
-                                      chordDisplayEnabled && capoShapesEnabled,
+                                  capoShapesEnabled: arrangement
+                                      .shapesAvailable(
+                                        chordDisplayEnabled,
+                                        capoShapesEnabled,
+                                      ),
                                   capo: capo,
                                   showGuitarShapes: _showGuitarShapes,
                                   harmonyEnabled: harmonyEnabled,
                                   hasHarmonyParts: hasHarmonyParts,
                                   showHarmonyParts: _showHarmonyParts,
                                   chordTransposeEnabled:
-                                      chordDisplayEnabled &&
                                       _showChords &&
-                                      chordTransposeEnabled &&
-                                      widget.song.structureJson != null,
+                                      arrangement.transposeAvailable(
+                                        chordDisplayEnabled,
+                                        chordTransposeEnabled,
+                                      ),
                                   metronomeEnabled: metronomeEnabled,
                                   metronomeRunning:
                                       widget.metronomeController.isRunning,
@@ -1352,18 +1331,22 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                       primaryBody: widget.song.body,
                       englishBody: englishBody,
                       structuredJson: hasStructuredTransliteration
-                          ? widget.song.structureJson
+                          ? arrangement.usableJson
                           : null,
                       fontSize: _fontSize,
                       primaryFontFamily: teluguFont.fontFamily,
                       expandCounts: _expandCounts,
                       transposeSemitones: widget.transposeSemitones,
-                      showChords: chordDisplayEnabled && _showChords,
+                      showChords:
+                          arrangement.chordsAvailable(chordDisplayEnabled) &&
+                          _showChords,
                       showGuitarShapes:
                           chordDisplayEnabled &&
                           capoShapesEnabled &&
                           _showGuitarShapes,
-                      showHarmonyParts: harmonyEnabled && _showHarmonyParts,
+                      showHarmonyParts:
+                          arrangement.harmonyAvailable(harmonyEnabled) &&
+                          _showHarmonyParts,
                     ),
                   if (!showLineByLine && showPrimary && hasPrimaryLyrics)
                     _LyricsSection(
@@ -1372,14 +1355,18 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                       fontSize: _fontSize,
                       fontFamily: teluguFont.fontFamily,
                       expandCounts: repeatsEnabled && _expandCounts,
-                      structuredJson: widget.song.structureJson,
+                      structuredJson: arrangement.usableJson,
                       transposeSemitones: widget.transposeSemitones,
-                      showChords: chordDisplayEnabled && _showChords,
+                      showChords:
+                          arrangement.chordsAvailable(chordDisplayEnabled) &&
+                          _showChords,
                       showGuitarShapes:
                           chordDisplayEnabled &&
                           capoShapesEnabled &&
                           _showGuitarShapes,
-                      showHarmonyParts: harmonyEnabled && _showHarmonyParts,
+                      showHarmonyParts:
+                          arrangement.harmonyAvailable(harmonyEnabled) &&
+                          _showHarmonyParts,
                     ),
                   if (!showLineByLine && showEnglish) ...[
                     const SizedBox(height: 32),
@@ -1393,16 +1380,20 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                       fontFamily: null,
                       expandCounts: repeatsEnabled && _expandCounts,
                       structuredJson: hasStructuredTransliteration
-                          ? widget.song.structureJson
+                          ? arrangement.usableJson
                           : null,
                       showTransliterationOnly: hasStructuredTransliteration,
                       transposeSemitones: widget.transposeSemitones,
-                      showChords: chordDisplayEnabled && _showChords,
+                      showChords:
+                          arrangement.chordsAvailable(chordDisplayEnabled) &&
+                          _showChords,
                       showGuitarShapes:
                           chordDisplayEnabled &&
                           capoShapesEnabled &&
                           _showGuitarShapes,
-                      showHarmonyParts: harmonyEnabled && _showHarmonyParts,
+                      showHarmonyParts:
+                          arrangement.harmonyAvailable(harmonyEnabled) &&
+                          _showHarmonyParts,
                     ),
                   ],
                   _SongNotesCard(
