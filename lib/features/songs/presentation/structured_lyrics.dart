@@ -1,8 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 import 'chord_transposer.dart';
+import 'song_arrangement.dart';
 
 class StructuredLyrics extends StatelessWidget {
   const StructuredLyrics({
@@ -32,15 +31,15 @@ class StructuredLyrics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final decoded = jsonDecode(json);
-    final sections = decoded is Map ? decoded['sections'] : null;
+    final decoded = SongArrangement.parse(json).data;
+    final sections = decoded['sections'];
     if (sections is! List) return const SizedBox.shrink();
     final lyricSections = sections.whereType<Map>().toList();
-    final originalKey = decoded is Map && decoded['originalKey'] is String
+    final originalKey = decoded['originalKey'] is String
         ? decoded['originalKey'] as String
         : null;
     final targetKey = transposeKey(originalKey ?? '', transposeSemitones);
-    final rawCapo = decoded is Map ? decoded['capo'] : null;
+    final rawCapo = decoded['capo'];
     final capo = rawCapo is num ? rawCapo.toInt().clamp(0, 12).toInt() : 0;
 
     return Column(
@@ -52,7 +51,7 @@ class StructuredLyrics extends StatelessWidget {
           sectionIndex++
         )
           ..._buildSection(lyricSections, sectionIndex, targetKey, capo),
-        if (showHarmonyParts && decoded is Map)
+        if (showHarmonyParts)
           for (final part
               in (decoded['harmonyParts'] is List
                       ? decoded['harmonyParts'] as List

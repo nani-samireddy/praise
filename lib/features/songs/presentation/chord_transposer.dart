@@ -125,3 +125,6 @@ bool _usesFlats(String? key) {
   };
   return flatKeys.contains(normalized);
 }
+
+bool isSupportedChord(String chord) => _chordPattern.hasMatch(chord.trim());
+bool isSupportedKey(String key) => _keyPattern.hasMatch(key.trim());
