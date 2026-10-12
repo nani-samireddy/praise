@@ -111,21 +111,25 @@ void main() {
       find.byTooltip('Lyrics display: Sections. Tap to change.'),
       findsOneWidget,
     );
-    expect(find.text('Chords'), findsOneWidget);
+    expect(find.text('Show chords'), findsOneWidget);
     expect(find.text('Guitar chord shapes'), findsNothing);
-    expect(find.text('Harmony parts'), findsOneWidget);
+    expect(find.text('Show harmony parts'), findsOneWidget);
     expect(find.text('Metronome'), findsOneWidget);
     expect(
       tester
-          .widget<SwitchListTile>(find.widgetWithText(SwitchListTile, 'Chords'))
+          .widget<SwitchListTile>(
+            find.widgetWithText(SwitchListTile, 'Show chords'),
+          )
           .value,
       isFalse,
     );
-    await tester.tap(find.text('Chords'));
+    await tester.tap(find.text('Show chords'));
     await _pumpFrames(tester);
     expect(
       tester
-          .widget<SwitchListTile>(find.widgetWithText(SwitchListTile, 'Chords'))
+          .widget<SwitchListTile>(
+            find.widgetWithText(SwitchListTile, 'Show chords'),
+          )
           .value,
       isTrue,
     );
@@ -165,17 +169,26 @@ void main() {
     await _pumpFrames(tester);
     await tester.tap(find.text('Share as text'));
     await _pumpFrames(tester);
+    expect(sharingService.sharedSong, isNull);
+    await tester.tap(find.text('Continue to share'));
+    await _pumpFrames(tester);
     expect(sharingService.sharedSong, song);
 
     await tester.tap(find.byTooltip('Share'));
     await _pumpFrames(tester);
     await tester.tap(find.text('Share as image'));
     await _pumpFrames(tester);
+    expect(sharingService.sharedImageSong, isNull);
+    await tester.tap(find.text('Continue to share'));
+    await _pumpFrames(tester);
     expect(sharingService.sharedImageSong, song);
 
     await tester.tap(find.byTooltip('Share'));
     await _pumpFrames(tester);
     await tester.tap(find.text('Share as PDF'));
+    await _pumpFrames(tester);
+    expect(sharingService.sharedPdfSong, isNull);
+    await tester.tap(find.text('Continue to share'));
     await _pumpFrames(tester);
     expect(sharingService.sharedPdfSong, song);
 
