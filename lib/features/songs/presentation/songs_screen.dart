@@ -20,6 +20,12 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
   final _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _searchController.text = ref.read(songSearchProvider);
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -67,7 +73,6 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
     );
     if (route != null && mounted) {
       await context.push(route);
-      if (mounted) ref.invalidate(pagedSongsProvider);
     }
   }
 
@@ -80,7 +85,6 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(catalogueSyncSuccessMessage(result))),
       );
-      ref.invalidate(pagedSongsProvider);
     } on Object catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -137,11 +141,16 @@ class _SongsScreenState extends ConsumerState<SongsScreen> {
             ),
             if (syncProgress != null)
               CatalogueSyncProgressView(progress: syncProgress),
+            if (songs.valueOrNull?.isSearching == true)
+              const LinearProgressIndicator(semanticsLabel: 'Searching songs'),
             Expanded(
               child: songs.when(
                 data: (state) => _SongList(
                   items: state.items,
-                  search: search,
+                  search: state.search,
+                  error: state.error,
+                  isSearching: state.isSearching,
+                  onRetry: () => ref.read(pagedSongsProvider.notifier).retry(),
                   hasMore: state.hasMore,
                   isLoadingMore: state.isLoadingMore,
                   onLoadMore: () =>
@@ -262,8 +271,14 @@ class _SongList extends StatelessWidget {
     required this.isLoadingMore,
     required this.onLoadMore,
     required this.onRefresh,
+    required this.error,
+    required this.isSearching,
+    required this.onRetry,
   });
 
+  final Object? error;
+  final bool isSearching;
+  final VoidCallback onRetry;
   final List<SongIndexEntry> items;
   final String search;
   final bool hasMore;
@@ -281,7 +296,13 @@ class _SongList extends StatelessWidget {
           padding: const EdgeInsets.all(32),
           children: [
             SizedBox(height: MediaQuery.sizeOf(context).height * 0.18),
-            _EmptySongs(hasSearch: search.trim().isNotEmpty),
+            if (error != null)
+              TextButton(
+                onPressed: onRetry,
+                child: const Text('Couldn’t load songs. Retry'),
+              )
+            else if (!isSearching)
+              _EmptySongs(hasSearch: search.trim().isNotEmpty),
           ],
         ),
       );
@@ -291,6 +312,8 @@ class _SongList extends StatelessWidget {
       onNotification: (notification) {
         if (notification.metrics.extentAfter < 480 &&
             hasMore &&
+            error == null &&
+            !isSearching &&
             !isLoadingMore) {
           onLoadMore();
         }
@@ -302,10 +325,18 @@ class _SongList extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
-          itemCount: items.length + (hasMore || isLoadingMore ? 1 : 0),
+          itemCount:
+              items.length +
+              (hasMore || isLoadingMore || error != null ? 1 : 0),
           separatorBuilder: (context, index) => const SizedBox(height: 6),
           itemBuilder: (context, index) {
             if (index >= items.length) {
+              if (error != null) {
+                return TextButton(
+                  onPressed: onRetry,
+                  child: const Text('Couldn’t load songs. Retry'),
+                );
+              }
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: 18),
                 child: Center(child: CircularProgressIndicator.adaptive()),
@@ -318,6 +349,7 @@ class _SongList extends StatelessWidget {
               englishTitle: song.englishTitle,
               author: song.author,
               source: song.source,
+              search: search,
             );
           },
         ),

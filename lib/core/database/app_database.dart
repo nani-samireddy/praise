@@ -121,16 +121,20 @@ class AppDatabase extends _$AppDatabase {
       ..where((row) {
         final active = row.isDeleted.equals(false);
         final term = search.trim().toLowerCase();
+        // Keep Telugu marks and punctuation intact; escape SQL wildcards only.
+        final pattern =
+            '%${term.replaceAll("!", "!!").replaceAll("%", "!%").replaceAll("_", "!_")}%';
         if (term.isEmpty) return active;
 
         return active &
-            (row.title.lower().contains(term) |
-                row.englishTitle.lower().contains(term) |
-                row.author.lower().contains(term));
+            (row.title.lower().like(pattern, escapeChar: '!') |
+                row.englishTitle.lower().like(pattern, escapeChar: '!') |
+                row.author.lower().like(pattern, escapeChar: '!'));
       })
       ..orderBy([
         (row) => OrderingTerm.asc(row.title),
         (row) => OrderingTerm.asc(row.englishTitle),
+        (row) => OrderingTerm.asc(row.id),
       ]);
 
     return query.watch();
@@ -152,16 +156,20 @@ class AppDatabase extends _$AppDatabase {
       ..where(() {
         final active = songs.isDeleted.equals(false);
         final term = search.trim().toLowerCase();
+        // Keep Telugu marks and punctuation intact; escape SQL wildcards only.
+        final pattern =
+            '%${term.replaceAll("!", "!!").replaceAll("%", "!%").replaceAll("_", "!_")}%';
         if (term.isEmpty) return active;
 
         return active &
-            (songs.title.lower().contains(term) |
-                songs.englishTitle.lower().contains(term) |
-                songs.author.lower().contains(term));
+            (songs.title.lower().like(pattern, escapeChar: '!') |
+                songs.englishTitle.lower().like(pattern, escapeChar: '!') |
+                songs.author.lower().like(pattern, escapeChar: '!'));
       }())
       ..orderBy([
         OrderingTerm.asc(songs.title),
         OrderingTerm.asc(songs.englishTitle),
+        OrderingTerm.asc(songs.id),
       ])
       ..limit(limit, offset: offset);
 

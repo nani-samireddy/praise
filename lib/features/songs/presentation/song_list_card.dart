@@ -13,7 +13,8 @@ class SongListCard extends ConsumerWidget {
       title = song.title,
       englishTitle = song.englishTitle,
       author = song.author,
-      source = song.source;
+      source = song.source,
+      search = '';
 
   const SongListCard.index({
     super.key,
@@ -22,8 +23,10 @@ class SongListCard extends ConsumerWidget {
     required this.source,
     this.englishTitle,
     this.author,
+    this.search = '',
   });
 
+  final String search;
   final String id;
   final String title;
   final String? englishTitle;
@@ -73,8 +76,26 @@ class SongListCard extends ConsumerWidget {
             : Padding(
                 padding: const EdgeInsets.only(top: 3),
                 child: Text(
-                  [?englishTitle, ?author].join('  •  '),
-                  maxLines: 1,
+                  [
+                    if (englishTitle != null)
+                      (search.isNotEmpty &&
+                              !title.toLowerCase().contains(
+                                search.toLowerCase(),
+                              ) &&
+                              englishTitle!.toLowerCase().contains(
+                                search.toLowerCase(),
+                              )
+                          ? 'Title: $englishTitle'
+                          : englishTitle!),
+                    if (author != null)
+                      (search.isNotEmpty &&
+                              author!.toLowerCase().contains(
+                                search.toLowerCase(),
+                              )
+                          ? 'Author: $author'
+                          : author!),
+                  ].join('  •  '),
+                  maxLines: search.isEmpty ? 1 : 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
