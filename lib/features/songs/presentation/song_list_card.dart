@@ -8,7 +8,7 @@ import '../../settings/data/telugu_font.dart';
 import '../../settings/presentation/settings_providers.dart';
 
 class SongListCard extends ConsumerWidget {
-  SongListCard({super.key, required Song song})
+  SongListCard({super.key, required Song song, this.collectionId})
     : id = song.id,
       title = song.title,
       englishTitle = song.englishTitle,
@@ -22,9 +22,11 @@ class SongListCard extends ConsumerWidget {
     required this.source,
     this.englishTitle,
     this.author,
+    this.collectionId,
   });
 
   final String id;
+  final String? collectionId;
   final String title;
   final String? englishTitle;
   final String? author;
@@ -38,7 +40,14 @@ class SongListCard extends ConsumerWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: ListTile(
-        onTap: () => context.push('/songs/$id'),
+        onTap: () => context.push(
+          Uri(
+            path: '/songs/$id',
+            queryParameters: collectionId == null
+                ? null
+                : {'list': collectionId},
+          ).toString(),
+        ),
         contentPadding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
         minVerticalPadding: 8,
         visualDensity: const VisualDensity(vertical: -1),
