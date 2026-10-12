@@ -36,6 +36,48 @@ void main() {
     await database.close();
   });
 
+  test(
+    'import preview preserves order and reports missing IDs without mutations',
+    () async {
+      final preview = await repository.previewImport([
+        'two',
+        'absent',
+        'one',
+        'two',
+      ]);
+      expect(preview.songs.map((song) => song.id), ['two', 'one']);
+      expect(preview.missingIds, ['absent']);
+      expect(await database.select(database.collections).get(), isEmpty);
+      final id = await repository.importCollection(
+        name: 'Partial',
+        songIds: preview.songs.map((song) => song.id).toList(),
+      );
+      expect(
+        (await repository.watchCollectionSongs(id).first).map(
+          (song) => song.id,
+        ),
+        ['two', 'one'],
+      );
+    },
+  );
+
+  test('import preview excludes deleted and custom songs', () async {
+    await (database.update(database.songs)
+          ..where((song) => song.id.equals('one')))
+        .write(const SongsCompanion(isDeleted: Value(true)));
+    await (database.update(database.songs)
+          ..where((song) => song.id.equals('two')))
+        .write(const SongsCompanion(source: Value('custom')));
+    final preview = await repository.previewImport(['one', 'two']);
+    expect(preview.songs, isEmpty);
+    expect(preview.missingIds, ['one', 'two']);
+    await expectLater(
+      repository.importCollection(name: 'No match', songIds: ['two']),
+      throwsStateError,
+    );
+    expect(await database.select(database.collections).get(), isEmpty);
+  });
+
   test('creates, renames, populates, reorders, and deletes a list', () async {
     final id = await repository.createCollection('  Sunday Worship  ');
     await repository.addSong(id, 'one');

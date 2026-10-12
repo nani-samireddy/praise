@@ -53,6 +53,9 @@ void main() {
 }
 
 class _FakeCollectionsRepository implements CollectionsRepository {
+  @override
+  Future<CollectionImportPreview> previewImport(List<String> ids) async =>
+      const CollectionImportPreview(songs: [], missingIds: []);
   const _FakeCollectionsRepository(this.collection);
 
   final SongCollection collection;

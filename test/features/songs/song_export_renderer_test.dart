@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:praise/core/database/app_database.dart';
+import 'package:praise/core/export/export_document_renderer.dart';
 import 'package:praise/features/songs/data/song_export_renderer.dart';
 
 void main() {
@@ -32,6 +34,20 @@ void main() {
       expect(String.fromCharCodes(pdf.take(4)), '%PDF');
       expect(document.sections, hasLength(2));
       expect(document.sections.first.body, contains('×2'));
+    });
+  });
+
+  testWidgets('long image content requires PDF alternative', (tester) async {
+    await tester.runAsync(() async {
+      await expectLater(
+        renderExportDocumentImage(
+          ExportDocument(
+            title: 'Long song',
+            sections: [ExportSection(body: 'Long lyric line\n' * 2000)],
+          ),
+        ),
+        throwsA(isA<ExportImageTooLargeException>()),
+      );
     });
   });
 
@@ -71,6 +87,15 @@ void main() {
 
       expect(String.fromCharCodes(pdf.take(4)), '%PDF');
       expect(pdf.length, greaterThan(1000));
+      final withText = await buildSongPdfBytes(
+        song.copyWith(
+          body: 'Accompanying lyrics',
+          englishBody: const Value('English lyrics'),
+        ),
+      );
+      final pagePattern = RegExp(r'/Type\s*/Page(?:\s|/|>)');
+      expect(pagePattern.allMatches(latin1.decode(pdf)).length, 1);
+      expect(pagePattern.allMatches(latin1.decode(withText)).length, 2);
     });
   });
 }

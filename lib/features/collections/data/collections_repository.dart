@@ -3,6 +3,15 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/database/app_database.dart';
 
+class CollectionImportPreview {
+  const CollectionImportPreview({
+    required this.songs,
+    required this.missingIds,
+  });
+  final List<Song> songs;
+  final List<String> missingIds;
+}
+
 class CollectionSummary {
   const CollectionSummary({required this.collection, required this.songCount});
 
@@ -30,6 +39,8 @@ abstract interface class CollectionsRepository {
   Future<void> removeSong(String collectionId, String songId);
 
   Future<void> reorderSongs(String collectionId, List<String> songIds);
+
+  Future<CollectionImportPreview> previewImport(List<String> songIds);
 
   Future<String> importCollection({
     required String name,
@@ -220,6 +231,30 @@ class DriftCollectionsRepository implements CollectionsRepository {
   }
 
   @override
+  Future<CollectionImportPreview> previewImport(List<String> songIds) async {
+    final ids = songIds.map((id) => id.trim()).toSet().toList();
+    final rows =
+        await (_database.select(_database.songs)..where(
+              (row) =>
+                  row.id.isIn(ids) &
+                  row.isDeleted.equals(false) &
+                  row.source.equals('server'),
+            ))
+            .get();
+    final matches = {for (final song in rows) song.id: song};
+    return CollectionImportPreview(
+      songs: [
+        for (final id in ids)
+          if (matches[id] != null) matches[id]!,
+      ],
+      missingIds: [
+        for (final id in ids)
+          if (!matches.containsKey(id)) id,
+      ],
+    );
+  }
+
+  @override
   Future<String> importCollection({
     required String name,
     required List<String> songIds,
@@ -236,7 +271,10 @@ class DriftCollectionsRepository implements CollectionsRepository {
 
     final existingRows =
         await (_database.select(_database.songs)..where(
-              (row) => row.id.isIn(cleanedIds) & row.isDeleted.equals(false),
+              (row) =>
+                  row.id.isIn(cleanedIds) &
+                  row.isDeleted.equals(false) &
+                  row.source.equals('server'),
             ))
             .get();
     final existingIds = existingRows.map((song) => song.id).toSet();

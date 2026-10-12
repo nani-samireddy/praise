@@ -1,8 +1,47 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:praise/core/database/app_database.dart';
 import 'package:praise/features/collections/data/collection_link_codec.dart';
 
 void main() {
+  Uri link(Object payload) => Uri(
+    scheme: 'praise',
+    host: 'list',
+    queryParameters: {'p': base64Url.encode(utf8.encode(jsonEncode(payload)))},
+  );
+  test('reports duplicates while preserving first occurrence order', () {
+    final result = parseCollectionLink(
+      link({
+        'v': 1,
+        'name': 'List',
+        'songs': ['two', 'one', 'two'],
+      }),
+    );
+    expect(result.songIds, ['two', 'one']);
+    expect(result.duplicateCount, 1);
+  });
+  test('rejects empty, oversized and unsupported payloads', () {
+    for (final payload in [
+      {'v': 1, 'name': 'List', 'songs': []},
+      {
+        'v': 2,
+        'name': 'List',
+        'songs': ['one'],
+      },
+      {'v': 1, 'name': 'List', 'songs': List.generate(301, (i) => '$i')},
+    ]) {
+      expect(
+        () => parseCollectionLink(link(payload)),
+        throwsA(isA<CollectionLinkException>()),
+      );
+    }
+    expect(
+      () => parseCollectionLink(Uri.parse('praise://list')),
+      throwsA(isA<CollectionLinkException>()),
+    );
+  });
+
   test('builds and parses a compact shareable collection link', () {
     final collection = SongCollection(
       id: 'list-1',
@@ -32,6 +71,21 @@ void main() {
       ),
     ];
 
+    expect(
+      () => buildCollectionLink(
+        collection,
+        List.generate(301, (i) => songs.first.copyWith(id: 'song-$i')),
+      ),
+      throwsA(isA<CollectionLinkException>()),
+    );
+    expect(
+      () => buildCollectionLink(collection.copyWith(name: 'x' * 13000), songs),
+      throwsA(isA<CollectionLinkException>()),
+    );
+    expect(
+      () => buildCollectionLink(collection, []),
+      throwsA(isA<CollectionLinkException>()),
+    );
     final link = buildCollectionLink(collection, songs);
     final payload = parseCollectionLink(link);
 

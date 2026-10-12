@@ -7,7 +7,10 @@ import '../../../core/export/export_document_renderer.dart';
 import '../../favorites/presentation/favorite_button.dart';
 import '../../songs/presentation/song_list_card.dart';
 import '../../../shared/presentation/action_sheet.dart';
+import '../../../shared/presentation/export_preview.dart';
 import '../data/collection_sharing_service.dart';
+import '../data/collection_export_renderer.dart';
+import '../data/collection_link_codec.dart';
 import 'collection_dialogs.dart';
 import 'collection_providers.dart';
 
@@ -291,11 +294,17 @@ class _CollectionDetailScreenState
         }
         return;
       case _CollectionAction.shareText:
+        if (!await confirmExportPreview(
+              context,
+              title: collection.name,
+              content:
+                  'List index: original and available English titles. Lyrics and photos omitted.\n\n${buildCollectionShareText(collection, songs)}',
+            ) ||
+            !context.mounted) {
+          return;
+        }
         try {
-          final renderBox = context.findRenderObject() as RenderBox?;
-          final origin = renderBox == null
-              ? null
-              : renderBox.localToGlobal(Offset.zero) & renderBox.size;
+          final origin = _shareOrigin(context);
           await ref
               .read(collectionSharingServiceProvider)
               .shareCollection(collection, songs, sharePositionOrigin: origin);
@@ -304,6 +313,22 @@ class _CollectionDetailScreenState
         }
         return;
       case _CollectionAction.shareLink:
+        try {
+          buildCollectionLink(collection, songs);
+        } on CollectionLinkException catch (error) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(error.message)));
+          return;
+        }
+        if (!await confirmExportPreview(
+              context,
+              title: collection.name,
+              content:
+                  'Catalogue songs only, in list order. Custom songs, photos and lyrics omitted.\n${songs.where((song) => song.source == "server" && !song.isDeleted).map((song) => song.title).join("\n")}',
+            ) ||
+            !context.mounted) {
+          return;
+        }
         try {
           await ref
               .read(collectionSharingServiceProvider)
@@ -319,6 +344,16 @@ class _CollectionDetailScreenState
       case _CollectionAction.shareImage:
         final includeSongs = await _chooseExportContent(context, 'image');
         if (includeSongs == null || !context.mounted) return;
+        if (!await confirmExportPreview(
+              context,
+              title: collection.name,
+              content:
+                  '${includeSongs ? "Full lyrics: original and available English text. Photos omitted; photo-only songs show a placeholder." : "List index: original and available English titles. Lyrics and photos omitted."}\n\n${includeSongs ? buildCollectionExportDocument(collection, songs, includeSongs: true).sections.map((section) => '${section.title}\n${section.body}').join('\n\n') : buildCollectionShareText(collection, songs)}',
+              image: action == _CollectionAction.shareImage,
+            ) ||
+            !context.mounted) {
+          return;
+        }
         _showPreparingShareMessage(context, 'Preparing image...');
         var keepResultMessageVisible = false;
         try {
@@ -351,6 +386,16 @@ class _CollectionDetailScreenState
       case _CollectionAction.sharePdf:
         final includeSongs = await _chooseExportContent(context, 'PDF');
         if (includeSongs == null || !context.mounted) return;
+        if (!await confirmExportPreview(
+              context,
+              title: collection.name,
+              content:
+                  '${includeSongs ? "Full lyrics: original and available English text. Photos omitted; photo-only songs show a placeholder." : "List index: original and available English titles. Lyrics and photos omitted."}\n\n${includeSongs ? buildCollectionExportDocument(collection, songs, includeSongs: true).sections.map((section) => '${section.title}\n${section.body}').join('\n\n') : buildCollectionShareText(collection, songs)}',
+              image: action == _CollectionAction.shareImage,
+            ) ||
+            !context.mounted) {
+          return;
+        }
         _showPreparingShareMessage(context, 'Preparing PDF...');
         var keepResultMessageVisible = false;
         try {
@@ -419,12 +464,7 @@ class _CollectionDetailScreenState
     );
   }
 
-  Rect? _shareOrigin(BuildContext context) {
-    final renderBox = context.findRenderObject() as RenderBox?;
-    return renderBox == null
-        ? null
-        : renderBox.localToGlobal(Offset.zero) & renderBox.size;
-  }
+  Rect? _shareOrigin(BuildContext context) => exportShareOrigin(context);
 
   void _showPreparingShareMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
