@@ -53,6 +53,7 @@ dependencies:
   youtube_player_iframe: ^6.0.2
   app_links: ^7.2.1
   sensors_plus: ^7.1.0
+  wakelock_plus: ^1.8.1
 
 dev_dependencies:
   flutter_test:

@@ -58,6 +58,17 @@ class _CollectionDetailScreenState
       appBar: AppBar(
         title: Text(value?.name ?? 'List'),
         actions: [
+          if (songItems != null && songItems.isNotEmpty)
+            IconButton(
+              tooltip: 'Perform this list',
+              icon: const Icon(Icons.slideshow_outlined),
+              onPressed: () => context.push(
+                Uri(
+                  path: '/perform/${songItems.first.id}',
+                  queryParameters: {'list': collectionId},
+                ).toString(),
+              ),
+            ),
           if (value != null && songItems != null)
             Builder(
               builder: (actionContext) => IconButton(
@@ -183,7 +194,7 @@ class _CollectionDetailScreenState
         itemCount: songs.length,
         separatorBuilder: (context, index) => const SizedBox(height: 6),
         itemBuilder: (context, index) => isSystem
-            ? SongListCard(song: songs[index])
+            ? SongListCard(song: songs[index], collectionId: collectionId)
             : _editableSongCard(context, ref, songs[index]),
       );
     }
@@ -209,7 +220,12 @@ class _CollectionDetailScreenState
       padding: const EdgeInsets.only(bottom: 6),
       child: Card(
         child: ListTile(
-          onTap: () => context.push('/songs/${song.id}'),
+          onTap: () => context.push(
+            Uri(
+              path: '/songs/${song.id}',
+              queryParameters: {'list': collectionId},
+            ).toString(),
+          ),
           leading: reorderIndex == null
               ? null
               : ReorderableDragStartListener(

@@ -10,6 +10,7 @@ import '../features/collections/presentation/collections_screen.dart';
 import '../features/collections/presentation/add_songs_screen.dart';
 import '../features/favorites/presentation/favorites_screen.dart';
 import '../features/songs/presentation/song_detail_screen.dart';
+import '../features/performance/presentation/performance_screen.dart';
 import '../features/songs/presentation/songs_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/settings/presentation/starter_screen.dart';
@@ -37,6 +38,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       return isCollectionAppLink || isCollectionWebLink ? '/songs' : null;
     },
     routes: [
+      GoRoute(
+        path: '/perform/:id',
+        builder: (context, state) => PerformanceScreen(
+          songId: state.pathParameters['id']!,
+          collectionId: state.uri.queryParameters['list'],
+        ),
+      ),
       GoRoute(
         path: '/starter',
         builder: (context, state) => StarterScreen(
@@ -70,6 +78,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) {
                       return SongDetailScreen(
                         songId: state.pathParameters['id']!,
+                        collectionId: state.uri.queryParameters['list'],
                       );
                     },
                   ),

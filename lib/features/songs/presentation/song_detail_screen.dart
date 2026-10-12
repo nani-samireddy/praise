@@ -66,9 +66,10 @@ bool _hasStructuredTransliteration(String? structureJson) {
 }
 
 class SongDetailScreen extends ConsumerStatefulWidget {
-  const SongDetailScreen({super.key, required this.songId});
+  const SongDetailScreen({super.key, required this.songId, this.collectionId});
 
   final String songId;
+  final String? collectionId;
 
   @override
   ConsumerState<SongDetailScreen> createState() => _SongDetailScreenState();
@@ -121,6 +122,19 @@ class _SongDetailScreenState extends ConsumerState<SongDetailScreen> {
                 englishTitle: value.englishTitle,
               ),
               actions: [
+                IconButton(
+                  tooltip: 'Enter performance mode',
+                  icon: const Icon(Icons.slideshow_outlined),
+                  onPressed: () => context.push(
+                    Uri(
+                      path: '/perform/${value.id}',
+                      queryParameters: {
+                        if (widget.collectionId != null)
+                          'list': widget.collectionId!,
+                      },
+                    ).toString(),
+                  ),
+                ),
                 FavoriteButton(songId: value.id),
                 IconButton(
                   onPressed: () => showModalBottomSheet<void>(
