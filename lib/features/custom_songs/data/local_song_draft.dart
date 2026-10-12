@@ -17,9 +17,6 @@ class LocalSongDraft {
     required this.imagePath,
     required this.detailsExpanded,
     this.baseUpdatedAt,
-    this.isScanned = false,
-    this.aiEnhanced = false,
-    this.aiFallback = false,
   });
 
   final String? baseUpdatedAt;
@@ -32,9 +29,6 @@ class LocalSongDraft {
   final String femaleVideoUrl;
   final String? imagePath;
   final bool detailsExpanded;
-  final bool isScanned;
-  final bool aiEnhanced;
-  final bool aiFallback;
 
   @override
   bool operator ==(Object other) =>
@@ -48,10 +42,7 @@ class LocalSongDraft {
       other.maleVideoUrl == maleVideoUrl &&
       other.femaleVideoUrl == femaleVideoUrl &&
       other.imagePath == imagePath &&
-      other.detailsExpanded == detailsExpanded &&
-      other.isScanned == isScanned &&
-      other.aiEnhanced == aiEnhanced &&
-      other.aiFallback == aiFallback;
+      other.detailsExpanded == detailsExpanded;
 
   @override
   int get hashCode => Object.hash(
@@ -65,9 +56,6 @@ class LocalSongDraft {
     femaleVideoUrl,
     imagePath,
     detailsExpanded,
-    isScanned,
-    aiEnhanced,
-    aiFallback,
   );
 
   bool get isEmpty =>
@@ -91,9 +79,6 @@ class LocalSongDraft {
     'femaleVideoUrl': femaleVideoUrl,
     'imagePath': imagePath,
     'detailsExpanded': detailsExpanded,
-    'isScanned': isScanned,
-    'aiEnhanced': aiEnhanced,
-    'aiFallback': aiFallback,
   };
 
   factory LocalSongDraft.fromJson(Map<Object?, Object?> json) {
@@ -112,9 +97,6 @@ class LocalSongDraft {
           ? json['imagePath'] as String
           : null,
       detailsExpanded: json['detailsExpanded'] == true,
-      isScanned: json['isScanned'] == true,
-      aiEnhanced: json['aiEnhanced'] == true,
-      aiFallback: json['aiFallback'] == true,
     );
   }
 }

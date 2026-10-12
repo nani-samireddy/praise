@@ -7,7 +7,6 @@ import 'package:praise/core/database/app_database.dart';
 import 'package:praise/features/songs/data/song_repository.dart';
 import 'package:praise/features/custom_songs/data/local_song_draft.dart';
 import 'package:praise/features/custom_songs/data/scanned_song_draft.dart';
-import 'package:praise/features/custom_songs/data/song_scan_service.dart';
 import 'package:praise/features/custom_songs/presentation/custom_song_editor_screen.dart';
 
 void main() {
@@ -242,39 +241,6 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets(
-    'extraction failure preserves existing fields and retained photo',
-    (tester) async {
-      final scanService = _FakeSongScanService(failRecognition: true);
-      const draft = ScannedSongDraft(
-        title: 'Keep title',
-        body: 'Keep lyrics',
-        imagePath: '/missing/retained.jpg',
-      );
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            databaseProvider.overrideWithValue(testDatabase),
-            songScanServiceProvider.overrideWithValue(scanService),
-          ],
-          child: const MaterialApp(
-            home: CustomSongEditorScreen(scannedDraft: draft),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Read from image'));
-      await tester.pumpAndSettle();
-      expect(find.widgetWithText(TextFormField, 'Keep title'), findsOneWidget);
-      expect(find.widgetWithText(TextFormField, 'Keep lyrics'), findsOneWidget);
-      expect(find.text('Original photo'), findsOneWidget);
-      expect(
-        (await LocalSongDraftStore(testDatabase).load())!.imagePath,
-        draft.imagePath,
-      );
-    },
-  );
-
   testWidgets('starts manual entry with only the essential fields', (
     tester,
   ) async {
@@ -335,7 +301,9 @@ void main() {
     );
   });
 
-  testWidgets('opens recognized text for review before saving', (tester) async {
+  testWidgets('keeps incoming text for manual editing without recognition UI', (
+    tester,
+  ) async {
     const draft = ScannedSongDraft(
       title: 'పదే పదే నేను పాడుకోనా',
       body: 'పదే పదే నేను పాడుకోనా\nప్రతి చోట నీ మాట',
@@ -351,8 +319,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Review scanned lyrics'), findsOneWidget);
-    expect(find.textContaining('organized on this device'), findsOneWidget);
+    expect(find.text('Add a song'), findsOneWidget);
+    expect(find.textContaining('organized on this device'), findsNothing);
     expect(find.widgetWithText(TextFormField, draft.title), findsOneWidget);
     expect(find.widgetWithText(TextFormField, draft.body), findsOneWidget);
     expect(
@@ -364,170 +332,31 @@ void main() {
     expect(find.widgetWithText(TextFormField, 'Test Author'), findsOneWidget);
   });
 
-  testWidgets('reviews a kept photo without requiring OCR lyrics', (
-    tester,
-  ) async {
-    const draft = ScannedSongDraft(
-      title: '',
-      body: '',
-      imagePath: '/missing/test-photo.jpg',
-    );
+  testWidgets(
+    'keeps a photo with optional manual lyrics and no recognition controls',
+    (tester) async {
+      const draft = ScannedSongDraft(
+        title: '',
+        body: '',
+        imagePath: '/missing/test-photo.jpg',
+      );
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [databaseProvider.overrideWithValue(testDatabase)],
-        child: MaterialApp(home: CustomSongEditorScreen(scannedDraft: draft)),
-      ),
-    );
-    await tester.pump();
-
-    expect(find.text('Original photo'), findsOneWidget);
-    expect(find.text('Read from image'), findsOneWidget);
-    expect(find.text('Lyrics'), findsOneWidget);
-    expect(
-      find.text('Optional when keeping the original photo'),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('reads a photo only after the user taps Read from image', (
-    tester,
-  ) async {
-    final scanService = _FakeSongScanService();
-    const draft = ScannedSongDraft(
-      title: '',
-      body: '',
-      imagePath: '/missing/test-photo.jpg',
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          databaseProvider.overrideWithValue(testDatabase),
-          songScanServiceProvider.overrideWithValue(scanService),
-        ],
-        child: const MaterialApp(
-          home: CustomSongEditorScreen(scannedDraft: draft),
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [databaseProvider.overrideWithValue(testDatabase)],
+          child: MaterialApp(home: CustomSongEditorScreen(scannedDraft: draft)),
         ),
-      ),
-    );
-    await tester.pump();
+      );
+      await tester.pump();
 
-    expect(scanService.recognizeCalls, 0);
-    await tester.tap(find.text('Read from image'));
-    await tester.pumpAndSettle();
-
-    expect(scanService.recognizeCalls, 1);
-    expect(
-      find.widgetWithText(TextFormField, 'తెలుగు పాట శీర్షిక'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('organized on this device'), findsOneWidget);
-  });
-
-  testWidgets('gets the Gemma Play Asset only after terms are accepted', (
-    tester,
-  ) async {
-    final scanService = _FakeSongScanService(
-      status: OnDeviceAiStatus.downloadable,
-    );
-    const draft = ScannedSongDraft(
-      title: '',
-      body: '',
-      imagePath: '/missing/test-photo.jpg',
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          databaseProvider.overrideWithValue(testDatabase),
-          songScanServiceProvider.overrideWithValue(scanService),
-        ],
-        child: const MaterialApp(
-          home: CustomSongEditorScreen(scannedDraft: draft),
-        ),
-      ),
-    );
-    await tester.tap(find.text('Read from image'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.text('Get on-device song AI?'), findsOneWidget);
-    expect(scanService.downloadCalls, 0);
-    await tester.tap(find.byType(CheckboxListTile));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
-
-    expect(scanService.downloadCalls, 1);
-    expect(find.textContaining('organized on this device'), findsOneWidget);
-  });
-
-  testWidgets('shows an identification warning and raw OCR after AI failure', (
-    tester,
-  ) async {
-    const ocrText = '11:44 & @ © ue - ll > Os\nఇ నీ ప్రేమ ధార';
-    const draft = ScannedSongDraft(
-      title: '',
-      body: ocrText,
-      imagePath: '/missing/test-photo.jpg',
-      aiFallback: true,
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [databaseProvider.overrideWithValue(testDatabase)],
-        child: MaterialApp(home: CustomSongEditorScreen(scannedDraft: draft)),
-      ),
-    );
-    await tester.pump();
-
-    expect(find.text('Couldn’t identify a song'), findsOneWidget);
-    expect(find.textContaining('The OCR text is shown below'), findsOneWidget);
-    expect(find.text(ocrText), findsOneWidget);
-    expect(find.text('Enter the song title'), findsOneWidget);
-  });
-}
-
-class _FakeSongScanService implements SongScanService {
-  _FakeSongScanService({
-    this.status = OnDeviceAiStatus.available,
-    this.failRecognition = false,
-  });
-
-  final bool failRecognition;
-
-  final OnDeviceAiStatus status;
-  var recognizeCalls = 0;
-  var downloadCalls = 0;
-
-  @override
-  Stream<String> get aiProgress => const Stream.empty();
-
-  @override
-  Future<String> recognize(String imagePath) async {
-    recognizeCalls++;
-    if (failRecognition) throw StateError('Extraction denied or unavailable');
-    return 'తెలుగు పాట శీర్షిక\nమొదటి పాట పంక్తి';
-  }
-
-  @override
-  Future<OnDeviceAiStatus> getAiStatus() async => status;
-
-  @override
-  Future<void> downloadAiModel() async {
-    downloadCalls++;
-  }
-
-  @override
-  Future<ScannedSongDraft> structure(String recognizedText) async {
-    return const ScannedSongDraft(
-      title: 'తెలుగు పాట శీర్షిక',
-      englishTitle: 'Telugu Paata Sheershika',
-      body: 'తెలుగు పాట శీర్షిక\nమొదటి పాట పంక్తి',
-      englishBody: 'Telugu paata sheershika\nModati paata pankthi',
-      aiEnhanced: true,
-    );
-  }
+      expect(find.text('Original photo'), findsOneWidget);
+      expect(find.text('Read from image'), findsNothing);
+      expect(find.textContaining('Gemma'), findsNothing);
+      expect(find.text('Lyrics'), findsOneWidget);
+      expect(
+        find.text('Optional when keeping the original photo'),
+        findsOneWidget,
+      );
+    },
+  );
 }

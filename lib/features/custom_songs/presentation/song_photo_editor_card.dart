@@ -6,16 +6,10 @@ class SongPhotoEditorCard extends StatelessWidget {
   const SongPhotoEditorCard({
     super.key,
     required this.imagePath,
-    required this.reading,
-    required this.progressLabel,
-    required this.onRead,
     required this.onRemove,
   });
 
   final String imagePath;
-  final bool reading;
-  final String progressLabel;
-  final VoidCallback onRead;
   final VoidCallback? onRemove;
 
   @override
@@ -49,19 +43,6 @@ class SongPhotoEditorCard extends StatelessWidget {
               onPressed: onRemove,
               icon: const Icon(Icons.delete_outline),
               label: const Text('Remove'),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: FilledButton.icon(
-              onPressed: reading ? null : onRead,
-              icon: reading
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.document_scanner_outlined),
-              label: Text(reading ? progressLabel : 'Read from image'),
             ),
           ),
         ],

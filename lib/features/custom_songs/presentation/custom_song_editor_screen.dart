@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../collections/presentation/add_to_list_sheet.dart';
@@ -12,7 +11,6 @@ import '../../songs/data/song_repository.dart';
 import '../../songs/presentation/song_providers.dart';
 import '../data/local_song_draft.dart';
 import '../data/scanned_song_draft.dart';
-import '../data/song_scan_service.dart';
 import 'song_photo_editor_card.dart';
 
 final localSongDraftStoreProvider = Provider<LocalSongDraftStore>((ref) {
@@ -47,17 +45,11 @@ class _CustomSongEditorScreenState
   var _draftError = false;
   var _songUnavailable = false;
   var _songChanged = false;
-  var _readingImage = false;
-  String _scanProgress = 'Reading text from the photo…';
-  String? _scanError;
   var _detailsExpanded = false;
   var _draftLoading = false;
   var _draftRecovered = false;
   var _draftChanged = false;
   var _draftCompleted = false;
-  var _draftIsScanned = false;
-  var _draftAiEnhanced = false;
-  var _draftAiFallback = false;
   Future<void>? _draftInitialization;
   String? _newImagePath;
   String? _existingImagePath;
@@ -83,9 +75,6 @@ class _CustomSongEditorScreenState
       _authorController.text = draft.author ?? '';
       _newImagePath = draft.imagePath;
       _initialized = true;
-      _draftIsScanned = draft.body.trim().isNotEmpty;
-      _draftAiEnhanced = draft.aiEnhanced;
-      _draftAiFallback = draft.aiFallback;
       _draftLoading = true;
       _draftInitialization = _saveIncomingDraft(draft);
       unawaited(_draftInitialization);
@@ -112,174 +101,6 @@ class _CustomSongEditorScreenState
       _bodyController.selection = TextSelection.collapsed(offset: text.length);
     });
     _scheduleDraftSave();
-  }
-
-  Future<void> _readFromImage() async {
-    final imagePath = _activeImagePath;
-    if (imagePath == null || _readingImage || _saving || _draftLoading) return;
-    setState(() {
-      _readingImage = true;
-      _scanProgress = 'Reading text from the photo…';
-      _scanError = null;
-    });
-    try {
-      final service = ref.read(songScanServiceProvider);
-      final recognizedText = await service.recognize(imagePath);
-      if (recognizedText.trim().isEmpty) {
-        if (!mounted) return;
-        setState(() {
-          _scanError = 'No readable lyrics found. Try a clearer photo or enter the lyrics yourself.';
-        });
-        return;
-      }
-
-      var draft = createScannedSongDraft(recognizedText, aiFallback: true);
-      var aiAvailable = false;
-      String? aiMessage;
-      OnDeviceAiStatus aiStatus;
-      try {
-        aiStatus = await service.getAiStatus();
-      } catch (_) {
-        aiStatus = OnDeviceAiStatus.unavailable;
-      }
-      if (aiStatus == OnDeviceAiStatus.downloadable) {
-        final acceptedTerms = await _confirmGemmaTerms();
-        if (!mounted) return;
-        if (acceptedTerms) {
-          setState(
-            () => _scanProgress = 'Getting the song AI model from Google Play…',
-          );
-          try {
-            await service.downloadAiModel();
-            aiAvailable = true;
-          } catch (error) {
-            debugPrint('Could not get the Gemma asset pack: $error');
-            aiMessage = 'Couldn’t prepare song AI. The OCR text is shown below; check it and add the title before saving.';
-          }
-        } else {
-          aiMessage = 'AI setup was skipped. The OCR text is shown below; check it and add the title before saving.';
-        }
-      } else if (aiStatus == OnDeviceAiStatus.downloading) {
-        setState(
-          () => _scanProgress = 'Getting the song AI model from Google Play…',
-        );
-        try {
-          await service.downloadAiModel();
-          aiAvailable = true;
-        } catch (error) {
-          debugPrint('Could not get the Gemma asset pack: $error');
-          aiMessage = 'Couldn’t prepare song AI. The OCR text is shown below; check it and add the title before saving.';
-        }
-      } else if (aiStatus == OnDeviceAiStatus.available) {
-        aiAvailable = true;
-      } else {
-        aiMessage = 'Google Play couldn’t provide song AI. The OCR text is shown below; check it and add the title before saving.';
-      }
-      if (aiAvailable) {
-        if (mounted) {
-          setState(() => _scanProgress = 'Starting on-device AI…');
-        }
-        final progressSubscription = service.aiProgress.listen((progress) {
-          if (mounted) setState(() => _scanProgress = progress);
-        });
-        try {
-          draft = await service.structure(recognizedText);
-        } catch (error) {
-          debugPrint('On-device song structuring failed: $error');
-          aiMessage = 'Couldn’t organize this song. The OCR text is shown below; check it and add the title before saving.';
-        } finally {
-          unawaited(progressSubscription.cancel());
-        }
-      }
-      if (!mounted) return;
-      setState(() {
-        _titleController.text = draft.title;
-        _englishTitleController.text = draft.englishTitle ?? '';
-        _bodyController.text = draft.body;
-        _englishBodyController.text = draft.englishBody ?? '';
-        if (draft.author?.trim().isNotEmpty ?? false) {
-          _authorController.text = draft.author!;
-        }
-        _draftIsScanned = true;
-        _draftAiEnhanced = draft.aiEnhanced;
-        _draftAiFallback = draft.aiFallback;
-        _scanError = aiMessage;
-        _detailsExpanded = true;
-      });
-      _scheduleDraftSave();
-    } catch (error) {
-      debugPrint('Song photo text recognition failed: $error');
-      if (!mounted) return;
-      setState(() {
-        _scanError = 'Couldn’t read this photo. Try another image or enter the lyrics yourself.';
-      });
-    } finally {
-      if (mounted) setState(() => _readingImage = false);
-    }
-  }
-
-  Future<bool> _confirmGemmaTerms() async {
-    var accepted = false;
-    return await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => StatefulBuilder(
-            builder: (context, setDialogState) => AlertDialog(
-              title: const Text('Get on-device song AI?'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Google Play will download the Gemma model once (about 584 MB). It runs on this device; scanned text isn’t sent to a server. A Wi-Fi connection may be needed.',
-                  ),
-                  Wrap(
-                    children: [
-                      TextButton(
-                        onPressed: () => launchUrl(
-                          Uri.parse('https://ai.google.dev/gemma/terms'),
-                          mode: LaunchMode.externalApplication,
-                        ),
-                        child: const Text('Gemma terms'),
-                      ),
-                      TextButton(
-                        onPressed: () => launchUrl(
-                          Uri.parse(
-                            'https://ai.google.dev/gemma/prohibited_use_policy',
-                          ),
-                          mode: LaunchMode.externalApplication,
-                        ),
-                        child: const Text('Use policy'),
-                      ),
-                    ],
-                  ),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: accepted,
-                    onChanged: (value) =>
-                        setDialogState(() => accepted = value ?? false),
-                    title: const Text(
-                      'I agree to the Gemma Terms of Use and Prohibited Use Policy.',
-                    ),
-                    controlAffinity: ListTileControlAffinity.leading,
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('Not now'),
-                ),
-                FilledButton(
-                  onPressed: accepted
-                      ? () => Navigator.pop(dialogContext, true)
-                      : null,
-                  child: const Text('Continue'),
-                ),
-              ],
-            ),
-          ),
-        ) ??
-        false;
   }
 
   @override
@@ -352,9 +173,6 @@ class _CustomSongEditorScreenState
           ? null
           : draft.imagePath;
       _detailsExpanded = draft.detailsExpanded;
-      _draftIsScanned = draft.isScanned;
-      _draftAiEnhanced = draft.aiEnhanced;
-      _draftAiFallback = draft.aiFallback;
       _draftRecovered = true;
       _initialized = true;
     }
@@ -411,9 +229,6 @@ class _CustomSongEditorScreenState
     femaleVideoUrl: _femaleVideoUrlController.text,
     imagePath: _activeImagePath,
     detailsExpanded: _detailsExpanded,
-    isScanned: _draftIsScanned,
-    aiEnhanced: _draftAiEnhanced,
-    aiFallback: _draftAiFallback,
   );
 
   Future<void> _saveIncomingDraft(ScannedSongDraft scannedDraft) async {
@@ -431,9 +246,6 @@ class _CustomSongEditorScreenState
           femaleVideoUrl: '',
           imagePath: scannedDraft.imagePath,
           detailsExpanded: true,
-          isScanned: scannedDraft.body.trim().isNotEmpty,
-          aiEnhanced: scannedDraft.aiEnhanced,
-          aiFallback: scannedDraft.aiFallback,
         ),
       );
       final previousImage = previous?.imagePath;
@@ -486,9 +298,6 @@ class _CustomSongEditorScreenState
       _newImagePath = null;
       _draftRecovered = false;
       _draftChanged = false;
-      _draftIsScanned = false;
-      _draftAiEnhanced = false;
-      _draftAiFallback = false;
       _detailsExpanded = false;
       _draftCompleted = false;
     });
@@ -611,12 +420,9 @@ class _CustomSongEditorScreenState
 
   Widget _buildEditor() {
     return PopScope(
-      canPop:
-          _leaving ||
-          _draftCompleted ||
-          (!_draftChanged && !_saving && !_readingImage),
+      canPop: _leaving || _draftCompleted || (!_draftChanged && !_saving),
       onPopInvokedWithResult: (didPop, result) async {
-        if (didPop || _saving || _readingImage) return;
+        if (didPop || _saving) return;
         await _persistDraft();
         if (!mounted) return;
         if (_draftError) {
@@ -635,15 +441,7 @@ class _CustomSongEditorScreenState
         });
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            _isEditing
-                ? 'Edit song'
-                : _draftIsScanned
-                ? 'Review scanned lyrics'
-                : 'Add a song',
-          ),
-        ),
+        appBar: AppBar(title: Text(_isEditing ? 'Edit song' : 'Add a song')),
         body: Form(
           key: _formKey,
           child: ListView(
@@ -677,37 +475,15 @@ class _CustomSongEditorScreenState
                     title: const Text('Unfinished song recovered'),
                     subtitle: const Text('Continue where you left off.'),
                     trailing: TextButton(
-                      onPressed: _saving || _readingImage
-                          ? null
-                          : _discardDraft,
+                      onPressed: _saving ? null : _discardDraft,
                       child: const Text('Discard'),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
               ],
-              if (_draftIsScanned) ...[
-                Card(
-                  color: Theme.of(context).colorScheme.secondaryContainer,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: _draftAiFallback
-                        ? const ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: Icon(Icons.warning_amber_rounded),
-                            title: Text('Couldn’t identify a song'),
-                            subtitle: Text(
-                              'The OCR text is shown below. Add the title and '
-                              'check the lyrics before saving.',
-                            ),
-                          )
-                        : Text(_scanReviewMessage),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
               TextFormField(
-                enabled: !_saving && !_draftLoading && !_readingImage,
+                enabled: !_saving && !_draftLoading,
                 controller: _titleController,
                 decoration: const InputDecoration(
                   labelText: 'Song title',
@@ -721,10 +497,7 @@ class _CustomSongEditorScreenState
               if (_activeImagePath case final imagePath?) ...[
                 SongPhotoEditorCard(
                   imagePath: imagePath,
-                  reading: _readingImage,
-                  progressLabel: _scanProgress,
-                  onRead: _readFromImage,
-                  onRemove: _readingImage || _saving || _draftLoading
+                  onRemove: _saving || _draftLoading
                       ? null
                       : () => setState(() {
                           _newImagePath = null;
@@ -732,25 +505,10 @@ class _CustomSongEditorScreenState
                           _scheduleDraftSave();
                         }),
                 ),
-                if (_scanError case final error?) ...[
-                  const SizedBox(height: 8),
-                  Card(
-                    color: Theme.of(context).colorScheme.errorContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        error,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onErrorContainer,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 16),
               ],
               TextFormField(
-                enabled: !_saving && !_draftLoading && !_readingImage,
+                enabled: !_saving && !_draftLoading,
                 controller: _bodyController,
                 decoration: InputDecoration(
                   labelText: 'Lyrics',
@@ -785,7 +543,7 @@ class _CustomSongEditorScreenState
                 ),
                 children: [
                   TextFormField(
-                    enabled: !_saving && !_draftLoading && !_readingImage,
+                    enabled: !_saving && !_draftLoading,
                     controller: _englishTitleController,
                     decoration: const InputDecoration(
                       labelText: 'English title',
@@ -796,7 +554,7 @@ class _CustomSongEditorScreenState
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    enabled: !_saving && !_draftLoading && !_readingImage,
+                    enabled: !_saving && !_draftLoading,
                     controller: _englishBodyController,
                     decoration: const InputDecoration(
                       labelText: 'English lyrics',
@@ -810,7 +568,7 @@ class _CustomSongEditorScreenState
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    enabled: !_saving && !_draftLoading && !_readingImage,
+                    enabled: !_saving && !_draftLoading,
                     controller: _authorController,
                     decoration: const InputDecoration(
                       labelText: 'Author or source',
@@ -821,7 +579,7 @@ class _CustomSongEditorScreenState
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    enabled: !_saving && !_draftLoading && !_readingImage,
+                    enabled: !_saving && !_draftLoading,
                     controller: _maleVideoUrlController,
                     decoration: const InputDecoration(
                       labelText: 'Male practice video',
@@ -834,7 +592,7 @@ class _CustomSongEditorScreenState
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    enabled: !_saving && !_draftLoading && !_readingImage,
+                    enabled: !_saving && !_draftLoading,
                     controller: _femaleVideoUrlController,
                     decoration: const InputDecoration(
                       labelText: 'Female practice video',
@@ -854,8 +612,7 @@ class _CustomSongEditorScreenState
         bottomNavigationBar: SafeArea(
           minimum: const EdgeInsets.all(16),
           child: FilledButton.icon(
-            onPressed:
-                _saving || _readingImage || _draftLoading || _songUnavailable
+            onPressed: _saving || _draftLoading || _songUnavailable
                 ? null
                 : _save,
             icon: _saving
@@ -889,19 +646,6 @@ class _CustomSongEditorScreenState
     return uri != null && uri.hasScheme && isYoutube
         ? null
         : 'Enter a valid YouTube link';
-  }
-
-  String get _scanReviewMessage {
-    if (_draftAiEnhanced) {
-      return 'The lyrics were organized on this device. Check every field and '
-          'line break before saving.';
-    }
-    if (_activeImagePath != null) {
-      return 'The original photo will be kept. Add a title and check the '
-          'photo before saving.';
-    }
-    return 'Scanned text can contain mistakes. Check the title, line breaks, '
-        'and lyrics before saving.';
   }
 
   String? get _activeImagePath {
