@@ -29,7 +29,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.47.0"
+          flutter-version: "3.47.7"
           channel: stable
           cache: true
 
@@ -44,6 +44,15 @@ jobs:
 
       - name: Test
         run: flutter test
+
+      - name: Upload golden failure images
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-golden-failures
+          path: test/qa/failures/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Test release tooling
         run: python -m unittest discover -s test/tool -p "test_*.py"
