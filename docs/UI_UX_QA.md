@@ -31,7 +31,12 @@ contrast, TalkBack traversal or full-screen usability. Reader goldens load the
 real bundled NotoSansTelugu font (including English) and were visually reviewed
 at 320×568 / 200% in both themes. Regenerate only with intentional visual
 changes using `flutter test --update-goldens test/qa/reader_golden_test.dart`;
-pin Flutter 3.47.7 / Dart 3.13.5 and macOS for these baseline images. Existing tests cover
+pin Flutter 3.47.7 / Dart 3.13.5. Baselines live in `test/qa/goldens/macos/`
+and `test/qa/goldens/linux/`: the same bundled variable font renders different
+weights across these hosts, so each platform keeps an exact pixel comparison.
+Regenerate and review images on the corresponding host; do not replace one
+platform's images with another's. CI uploads golden failure images for review.
+Existing tests cover
 custom editing, list dialogs/detail/add-to-list, reader interactions, import
 codec and export content; they are not full visual/accessibility coverage.
 

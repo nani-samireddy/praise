@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,7 +42,9 @@ void main() {
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(const ValueKey('reader-golden')),
-        matchesGoldenFile('goldens/reader_${brightness.name}_200.png'),
+        matchesGoldenFile(
+          'goldens/${Platform.operatingSystem}/reader_${brightness.name}_200.png',
+        ),
       );
     });
   }
