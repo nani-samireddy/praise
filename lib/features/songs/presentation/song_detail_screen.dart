@@ -24,6 +24,7 @@ import '../../../shared/presentation/action_sheet.dart';
 import '../../../shared/presentation/export_preview.dart';
 import '../data/song_sharing_service.dart';
 import 'formatted_lyrics.dart';
+import 'lyrics_reading_surface.dart';
 import 'chord_transposer.dart';
 import 'metronome_controller.dart';
 import 'song_providers.dart';
@@ -652,19 +653,16 @@ class _SongControlsPanel extends StatelessWidget {
                         LyricsDisplayMode.both,
                         LyricsDisplayMode.primary,
                         LyricsDisplayMode.english,
-                        LyricsDisplayMode.lineByLine,
                       ],
                       valueLabel: (value) => switch (value) {
                         LyricsDisplayMode.primary => 'Original only',
                         LyricsDisplayMode.english => 'English only',
                         LyricsDisplayMode.both => 'Sections',
-                        LyricsDisplayMode.lineByLine => 'Line by line',
                       },
                       valueIcon: (value) => switch (value) {
                         LyricsDisplayMode.primary => Icons.lyrics_outlined,
                         LyricsDisplayMode.english => Icons.translate_outlined,
                         LyricsDisplayMode.both => Icons.view_agenda_outlined,
-                        LyricsDisplayMode.lineByLine => Icons.compare_arrows,
                       },
                       onChanged: onDisplayModeChanged,
                     ),
@@ -1197,7 +1195,7 @@ class _SongReaderState extends ConsumerState<_SongReader> {
         ref
             .watch(featureEnabledProvider(FeatureKey.adaptiveSongControls))
             .valueOrNull ??
-        false;
+        true;
     if (adaptiveSongControlsEnabled != _adaptiveControlsStarted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _syncAdaptiveControls(adaptiveSongControlsEnabled);
@@ -1218,8 +1216,6 @@ class _SongReaderState extends ConsumerState<_SongReader> {
         displayMode != LyricsDisplayMode.english || englishBody == null;
     final showEnglish =
         englishBody != null && displayMode != LyricsDisplayMode.primary;
-    final showLineByLine =
-        displayMode == LyricsDisplayMode.lineByLine && englishBody != null;
     final controlsAlignment = _controlsAlignment(adaptiveSongControlsEnabled);
 
     return GestureDetector(
@@ -1361,81 +1357,78 @@ class _SongReaderState extends ConsumerState<_SongReader> {
                     ),
                   ],
                   const SizedBox(height: 24),
+                  if (hasPrimaryLyrics || showEnglish)
+                    LyricsReadingSurface(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (showPrimary && hasPrimaryLyrics)
+                            _LyricsSection(
+                              label: showEnglish ? 'Telugu lyrics' : 'Lyrics',
+                              body: widget.song.body,
+                              fontSize: _fontSize,
+                              fontFamily: teluguFont.fontFamily,
+                              expandCounts: repeatsEnabled && _expandCounts,
+                              structuredJson: arrangement.usableJson,
+                              transposeSemitones: widget.transposeSemitones,
+                              showChords:
+                                  arrangement.chordsAvailable(
+                                    chordDisplayEnabled,
+                                  ) &&
+                                  _showChords,
+                              showGuitarShapes:
+                                  chordDisplayEnabled &&
+                                  capoShapesEnabled &&
+                                  _showGuitarShapes,
+                              showHarmonyParts:
+                                  arrangement.harmonyAvailable(
+                                    harmonyEnabled,
+                                  ) &&
+                                  _showHarmonyParts,
+                            ),
+                          if (showEnglish) ...[
+                            if (showPrimary && hasPrimaryLyrics)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 28),
+                                child: Divider(height: 1),
+                              ),
+                            _LyricsSection(
+                              label: 'English lyrics',
+                              body: englishBody,
+                              fontSize: _fontSize,
+                              fontFamily: null,
+                              expandCounts: repeatsEnabled && _expandCounts,
+                              structuredJson: hasStructuredTransliteration
+                                  ? arrangement.usableJson
+                                  : null,
+                              showTransliterationOnly:
+                                  hasStructuredTransliteration,
+                              transposeSemitones: widget.transposeSemitones,
+                              showChords:
+                                  arrangement.chordsAvailable(
+                                    chordDisplayEnabled,
+                                  ) &&
+                                  _showChords,
+                              showGuitarShapes:
+                                  chordDisplayEnabled &&
+                                  capoShapesEnabled &&
+                                  _showGuitarShapes,
+                              showHarmonyParts:
+                                  arrangement.harmonyAvailable(
+                                    harmonyEnabled,
+                                  ) &&
+                                  _showHarmonyParts,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   if (videosEnabled &&
                       (widget.song.maleVideoUrl != null ||
                           widget.song.femaleVideoUrl != null)) ...[
+                    const SizedBox(height: 28),
                     _PracticeVideos(song: widget.song),
                     const SizedBox(height: 28),
-                  ],
-                  if (showLineByLine && hasPrimaryLyrics)
-                    _LineByLineLyricsSection(
-                      primaryBody: widget.song.body,
-                      englishBody: englishBody,
-                      structuredJson: hasStructuredTransliteration
-                          ? arrangement.usableJson
-                          : null,
-                      fontSize: _fontSize,
-                      primaryFontFamily: teluguFont.fontFamily,
-                      expandCounts: _expandCounts,
-                      transposeSemitones: widget.transposeSemitones,
-                      showChords:
-                          arrangement.chordsAvailable(chordDisplayEnabled) &&
-                          _showChords,
-                      showGuitarShapes:
-                          chordDisplayEnabled &&
-                          capoShapesEnabled &&
-                          _showGuitarShapes,
-                      showHarmonyParts:
-                          arrangement.harmonyAvailable(harmonyEnabled) &&
-                          _showHarmonyParts,
-                    ),
-                  if (!showLineByLine && showPrimary && hasPrimaryLyrics)
-                    _LyricsSection(
-                      label: showEnglish ? 'Telugu lyrics' : 'Lyrics',
-                      body: widget.song.body,
-                      fontSize: _fontSize,
-                      fontFamily: teluguFont.fontFamily,
-                      expandCounts: repeatsEnabled && _expandCounts,
-                      structuredJson: arrangement.usableJson,
-                      transposeSemitones: widget.transposeSemitones,
-                      showChords:
-                          arrangement.chordsAvailable(chordDisplayEnabled) &&
-                          _showChords,
-                      showGuitarShapes:
-                          chordDisplayEnabled &&
-                          capoShapesEnabled &&
-                          _showGuitarShapes,
-                      showHarmonyParts:
-                          arrangement.harmonyAvailable(harmonyEnabled) &&
-                          _showHarmonyParts,
-                    ),
-                  if (!showLineByLine && showEnglish) ...[
-                    const SizedBox(height: 32),
-                    if (showPrimary && hasPrimaryLyrics)
-                      Divider(color: colorScheme.outlineVariant),
-                    const SizedBox(height: 20),
-                    _LyricsSection(
-                      label: 'English lyrics',
-                      body: englishBody,
-                      fontSize: _fontSize,
-                      fontFamily: null,
-                      expandCounts: repeatsEnabled && _expandCounts,
-                      structuredJson: hasStructuredTransliteration
-                          ? arrangement.usableJson
-                          : null,
-                      showTransliterationOnly: hasStructuredTransliteration,
-                      transposeSemitones: widget.transposeSemitones,
-                      showChords:
-                          arrangement.chordsAvailable(chordDisplayEnabled) &&
-                          _showChords,
-                      showGuitarShapes:
-                          chordDisplayEnabled &&
-                          capoShapesEnabled &&
-                          _showGuitarShapes,
-                      showHarmonyParts:
-                          arrangement.harmonyAvailable(harmonyEnabled) &&
-                          _showHarmonyParts,
-                    ),
                   ],
                   _SongNotesCard(
                     key: ValueKey(widget.song.id),
@@ -2207,69 +2200,6 @@ class _LyricsSection extends StatelessWidget {
                   expandCounts: expandCounts,
                 ),
         ),
-      ],
-    );
-  }
-}
-
-class _LineByLineLyricsSection extends StatelessWidget {
-  const _LineByLineLyricsSection({
-    required this.primaryBody,
-    required this.englishBody,
-    this.structuredJson,
-    required this.fontSize,
-    required this.primaryFontFamily,
-    required this.expandCounts,
-    this.transposeSemitones = 0,
-    this.showChords = false,
-    this.showGuitarShapes = false,
-    this.showHarmonyParts = false,
-  });
-
-  final String primaryBody;
-  final String englishBody;
-  final String? structuredJson;
-  final double fontSize;
-  final String? primaryFontFamily;
-  final bool expandCounts;
-  final int transposeSemitones;
-  final bool showChords;
-  final bool showGuitarShapes;
-  final bool showHarmonyParts;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Line by line',
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.1,
-          ),
-        ),
-        const SizedBox(height: 32),
-        structuredJson != null
-            ? StructuredLyrics(
-                json: structuredJson!,
-                fontSize: fontSize,
-                fontFamily: primaryFontFamily,
-                expandCounts: expandCounts,
-                showTransliteration: true,
-                transposeSemitones: transposeSemitones,
-                showChords: showChords,
-                showGuitarShapes: showGuitarShapes,
-                showHarmonyParts: showHarmonyParts,
-              )
-            : BilingualFormattedLyrics(
-                primaryBody: primaryBody,
-                englishBody: englishBody,
-                fontSize: fontSize,
-                primaryFontFamily: primaryFontFamily,
-                expandCounts: expandCounts,
-              ),
       ],
     );
   }

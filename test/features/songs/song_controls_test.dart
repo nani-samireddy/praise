@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:async';
 import 'dart:ui' show Tristate;
 
 import 'package:flutter/material.dart';
@@ -49,7 +48,7 @@ String arrangement({
 });
 
 void main() {
-  test('availability requires usable content, separately from preferences', () {
+  test('availability requires usable content', () {
     for (final source in [
       null,
       '',
@@ -69,17 +68,6 @@ void main() {
     expect(content.shapesAvailable(true, false), isFalse);
     expect(content.harmonyAvailable(true), isTrue);
     expect(content.harmonyAvailable(false), isFalse);
-    for (final role in PrimaryRole.values) {
-      final preferences = roleDefaults(role);
-      expect(
-        content.chordsAvailable(preferences.contains(FeatureKey.chordDisplay)),
-        role != PrimaryRole.singer,
-      );
-      expect(
-        content.harmonyAvailable(preferences.contains(FeatureKey.harmony)),
-        isTrue,
-      );
-    }
     for (final capo in [-1, 13, 1.5, '2']) {
       expect(SongArrangement.parse(arrangement(capo: capo)).capo, 0);
     }
@@ -115,15 +103,6 @@ void main() {
         updatedAt: now,
         isDeleted: false,
       );
-      final preferences = {
-        for (final feature in FeatureKey.values)
-          feature: StreamController<bool>.broadcast(sync: true),
-      };
-      addTearDown(() async {
-        for (final controller in preferences.values) {
-          await controller.close();
-        }
-      });
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -140,8 +119,7 @@ void main() {
             ),
             for (final feature in FeatureKey.values)
               featureEnabledProvider(feature).overrideWith((ref) async* {
-                yield feature != FeatureKey.adaptiveSongControls;
-                yield* preferences[feature]!.stream;
+                yield true;
               }),
           ],
           child: const MaterialApp(home: SongDetailScreen(songId: 'song')),
@@ -192,17 +170,6 @@ void main() {
         find.text('Guitar chord shapes'),
         scenario.key == 'capo and harmony' ? findsOneWidget : findsNothing,
       );
-      // Singer preferences hide chord tools without affecting ordinary lyrics.
-      for (final feature in FeatureKey.values) {
-        preferences[feature]!.add(
-          roleDefaults(PrimaryRole.singer).contains(feature),
-        );
-      }
-      await tester.pumpAndSettle();
-      expect(find.text('Show chords'), findsNothing);
-      expect(find.text('Transpose'), findsNothing);
-      expect(find.text('Guitar chord shapes'), findsNothing);
-      expect(find.text('Metronome'), findsNothing);
       expect(tester.takeException(), isNull);
       semantics.dispose();
       await tester.pumpWidget(const SizedBox());

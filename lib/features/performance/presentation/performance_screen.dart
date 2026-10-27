@@ -8,6 +8,7 @@ import '../../settings/data/settings_repository.dart';
 import '../../settings/data/telugu_font.dart';
 import '../../settings/presentation/settings_providers.dart';
 import '../../songs/presentation/formatted_lyrics.dart';
+import '../../songs/presentation/lyrics_reading_surface.dart';
 import '../../songs/presentation/song_providers.dart';
 import 'performance_session.dart';
 
@@ -206,32 +207,31 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen>
                           ?.copyWith(fontFamily: font.fontFamily),
                     ),
                     const SizedBox(height: 24),
-                    if (mode == LyricsDisplayMode.lineByLine && hasEnglish)
-                      BilingualFormattedLyrics(
-                        primaryBody: value.body,
-                        englishBody: english,
-                        fontSize: fontSize,
-                        primaryFontFamily: font.fontFamily,
-                        expandCounts: false,
-                      )
-                    else ...[
-                      if (primary)
-                        FormattedLyrics(
-                          body: value.body,
-                          fontSize: fontSize,
-                          fontFamily: font.fontFamily,
-                          expandCounts: false,
+                    if (value.body.trim().isNotEmpty || hasEnglish)
+                      LyricsReadingSurface(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (primary)
+                              FormattedLyrics(
+                                body: value.body,
+                                fontSize: fontSize,
+                                fontFamily: font.fontFamily,
+                                expandCounts: false,
+                              ),
+                            if (hasEnglish &&
+                                mode != LyricsDisplayMode.primary) ...[
+                              const SizedBox(height: 24),
+                              FormattedLyrics(
+                                body: english,
+                                fontSize: fontSize,
+                                fontFamily: null,
+                                expandCounts: false,
+                              ),
+                            ],
+                          ],
                         ),
-                      if (hasEnglish && mode != LyricsDisplayMode.primary) ...[
-                        const SizedBox(height: 24),
-                        FormattedLyrics(
-                          body: english,
-                          fontSize: fontSize,
-                          fontFamily: null,
-                          expandCounts: false,
-                        ),
-                      ],
-                    ],
+                      ),
                     if (value.imagePath != null)
                       Image.file(
                         File(value.imagePath!),

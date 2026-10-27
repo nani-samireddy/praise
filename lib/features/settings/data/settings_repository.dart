@@ -3,7 +3,7 @@ import 'package:drift/drift.dart';
 import '../../../core/database/app_database.dart';
 import 'telugu_font.dart';
 
-enum LyricsDisplayMode { primary, english, both, lineByLine }
+enum LyricsDisplayMode { primary, english, both }
 
 abstract interface class SettingsRepository {
   Stream<String?> watchThemeMode();

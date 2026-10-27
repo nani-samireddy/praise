@@ -123,6 +123,8 @@ void main() {
           .value,
       isFalse,
     );
+    await tester.ensureVisible(find.text('Show chords'));
+    await _pumpFrames(tester);
     await tester.tap(find.text('Show chords'));
     await _pumpFrames(tester);
     expect(
@@ -134,6 +136,10 @@ void main() {
       isTrue,
     );
     expect(find.text('Guitar chord shapes'), findsOneWidget);
+    await tester.ensureVisible(
+      find.byTooltip('Lyrics display: Sections. Tap to change.'),
+    );
+    await _pumpFrames(tester);
     await tester.tap(
       find.byTooltip('Lyrics display: Sections. Tap to change.'),
     );
@@ -146,11 +152,19 @@ void main() {
       find.byTooltip('Lyrics display: English only. Tap to change.'),
     );
     await _pumpFrames(tester);
-    expect(
-      settingsRepository.selectedDisplayMode,
-      LyricsDisplayMode.lineByLine,
+    expect(settingsRepository.selectedDisplayMode, LyricsDisplayMode.both);
+    expect(find.text('Line by line'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Hide controls'),
+      -200,
+      scrollable: find
+          .descendant(
+            of: find.byType(CustomScrollView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
     );
-    await tester.ensureVisible(find.text('Hide controls'));
+    await _pumpFrames(tester);
     await tester.tap(find.text('Hide controls'));
     await _pumpFrames(tester);
     expect(

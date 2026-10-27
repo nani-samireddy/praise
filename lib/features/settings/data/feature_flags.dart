@@ -25,73 +25,6 @@ enum FeatureKey {
   adaptiveSongControls,
 }
 
-class FeatureDefinition {
-  const FeatureDefinition(this.key, this.label, this.description);
-  final FeatureKey key;
-  final String label;
-  final String description;
-}
-
-const featureDefinitions = <FeatureDefinition>[
-  FeatureDefinition(
-    FeatureKey.practiceVideos,
-    'Practice videos',
-    'Play linked YouTube recordings.',
-  ),
-  FeatureDefinition(
-    FeatureKey.metronome,
-    'Metronome',
-    'Keep a steady beat while you practice.',
-  ),
-  FeatureDefinition(
-    FeatureKey.repeatExpansion,
-    'Show full lyrics',
-    'Expand repeated sections.',
-  ),
-  FeatureDefinition(
-    FeatureKey.chordDisplay,
-    'Show chords',
-    'Show chord names above the lyrics.',
-  ),
-  FeatureDefinition(
-    FeatureKey.chordTranspose,
-    'Transpose chords',
-    'Change the chord key while reading.',
-  ),
-  FeatureDefinition(
-    FeatureKey.capoShapes,
-    'Guitar shapes',
-    'Show playable shapes for songs with a capo.',
-  ),
-  FeatureDefinition(
-    FeatureKey.harmony,
-    'Harmony parts',
-    'Practice vocal harmony lines.',
-  ),
-  FeatureDefinition(
-    FeatureKey.adaptiveSongControls,
-    'Adaptive song controls',
-    'Move song controls to the easier side while you hold your phone.',
-  ),
-];
-
-Set<FeatureKey> roleDefaults(PrimaryRole role) {
-  final enabled = <FeatureKey>{
-    FeatureKey.practiceVideos,
-    FeatureKey.repeatExpansion,
-    FeatureKey.harmony,
-  };
-  if (role != PrimaryRole.singer) {
-    enabled.addAll({
-      FeatureKey.chordDisplay,
-      FeatureKey.chordTranspose,
-      FeatureKey.metronome,
-      FeatureKey.capoShapes,
-    });
-  }
-  return enabled;
-}
-
 class FeatureSettingsStore {
   FeatureSettingsStore(this.database);
   final AppDatabase database;
@@ -119,20 +52,11 @@ class FeatureSettingsStore {
     }
     return null;
   });
-  Stream<bool> watchFeature(FeatureKey feature) => watch(key(feature)).map(
-    (v) => v == null ? feature != FeatureKey.adaptiveSongControls : v == 'true',
-  );
+  // All tools are available for every role. Legacy saved switches are ignored.
+  Stream<bool> watchFeature(FeatureKey feature) => Stream.value(true);
 
-  /// Applying a role deliberately replaces all customized feature switches.
   Future<void> complete(PrimaryRole role) => database.transaction(() async {
-    final defaults = roleDefaults(role);
     await set(roleKey, role.name);
-    for (final feature in featureDefinitions) {
-      await set(
-        key(feature.key),
-        defaults.contains(feature.key) ? 'true' : 'false',
-      );
-    }
     await set(onboardingKey, 'true');
   });
 

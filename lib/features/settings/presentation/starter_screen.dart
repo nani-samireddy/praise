@@ -86,8 +86,8 @@ class _StarterScreenState extends ConsumerState<StarterScreen> {
                       const SizedBox(height: 12),
                       Text(
                         widget.changeRole
-                            ? 'Continuing replaces all your feature switches, including custom choices, with defaults for the selected role. Cancel keeps your current settings.'
-                            : 'Choose how you use Praise. You can change these features later in Settings.',
+                            ? 'Choose the role that best describes you. All tools remain available for every role.'
+                            : 'Choose how you use Praise. All tools are available for every role.',
                       ),
                       const SizedBox(height: 28),
                       for (final role in PrimaryRole.values)

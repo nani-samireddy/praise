@@ -12,7 +12,6 @@ import '../data/settings_repository.dart';
 import '../data/telugu_font.dart';
 import 'settings_providers.dart';
 import 'feature_providers.dart';
-import '../data/feature_flags.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -72,23 +71,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               title: const Text('Your role'),
               subtitle: Text(
                 ref.watch(primaryRoleProvider).valueOrNull?.label ??
-                    'Choose a role to personalize your features',
+                    'Choose how you use Praise',
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/starter?change=true'),
-            ),
-          ),
-          const SizedBox(height: 20),
-          const _SectionTitle('Features'),
-          Card(
-            child: Column(
-              children: [
-                for (var i = 0; i < featureDefinitions.length; i++) ...[
-                  _FeatureTile(definition: featureDefinitions[i]),
-                  if (i < featureDefinitions.length - 1)
-                    const Divider(height: 1, indent: 56),
-                ],
-              ],
             ),
           ),
           const SizedBox(height: 20),
@@ -253,10 +239,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           value: LyricsDisplayMode.both,
                           label: Text('Sections'),
                         ),
-                        ButtonSegment(
-                          value: LyricsDisplayMode.lineByLine,
-                          label: Text('Line by line'),
-                        ),
                       ],
                       selected: {displayMode},
                       showSelectedIcon: false,
@@ -415,28 +397,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _FeatureTile extends ConsumerWidget {
-  const _FeatureTile({required this.definition});
-  final FeatureDefinition definition;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final enabled =
-        ref.watch(featureEnabledProvider(definition.key)).valueOrNull ?? true;
-    return SwitchListTile(
-      secondary: const Icon(Icons.toggle_on_outlined),
-      title: Text(definition.label),
-      subtitle: Text(definition.description),
-      value: enabled,
-      onChanged: (value) => ref
-          .read(featureSettingsStoreProvider)
-          .set(
-            ref.read(featureSettingsStoreProvider).key(definition.key),
-            value.toString(),
-          ),
     );
   }
 }

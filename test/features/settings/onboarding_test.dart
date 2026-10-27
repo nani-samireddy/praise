@@ -14,40 +14,38 @@ import 'package:praise/features/settings/presentation/starter_screen.dart';
 
 void main() {
   test(
-    'role change replaces custom switches and commits one complete state',
+    'all tools stay enabled for every role and legacy saved switches',
     () async {
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(db.close);
       final store = FeatureSettingsStore(db);
-      await store.set(store.key(FeatureKey.adaptiveSongControls), 'true');
-      await store.complete(PrimaryRole.singer);
-      expect(await store.watchRole().first, PrimaryRole.singer);
-
-      expect(await store.watchOnboarding().first, isTrue);
       for (final feature in FeatureKey.values) {
-        expect(
-          await store.watchFeature(feature).first,
-          roleDefaults(PrimaryRole.singer).contains(feature),
-        );
+        await store.set(store.key(feature), 'false');
+        expect(await store.watchFeature(feature).first, isTrue);
       }
-      await store.complete(PrimaryRole.musician);
-      expect(await store.watchFeature(FeatureKey.metronome).first, isTrue);
-      expect(PrimaryRole.worshipLeader.label, 'Worship leader');
+      for (final role in PrimaryRole.values) {
+        await store.complete(role);
+        expect(await store.watchRole().first, role);
+        expect(await store.watchOnboarding().first, isTrue);
+        for (final feature in FeatureKey.values) {
+          expect(await store.watchFeature(feature).first, isTrue);
+        }
+      }
     },
   );
 
-  test('failed role save rolls back role, switches and onboarding', () async {
+  test('failed role save rolls back role and onboarding', () async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     final store = FeatureSettingsStore(db);
     await store.complete(PrimaryRole.singer);
+    await store.reset();
     await db.customStatement(
-      "CREATE TRIGGER reject_feature BEFORE INSERT ON app_metadata WHEN NEW.key = 'feature_metronome_enabled' BEGIN SELECT RAISE(ABORT, 'test failure'); END",
+      "CREATE TRIGGER reject_onboarding BEFORE INSERT ON app_metadata WHEN NEW.key = 'setting_onboarding_complete' BEGIN SELECT RAISE(ABORT, 'test failure'); END",
     );
     await expectLater(store.complete(PrimaryRole.musician), throwsA(anything));
     expect(await store.watchRole().first, PrimaryRole.singer);
-    expect(await store.watchFeature(FeatureKey.metronome).first, isFalse);
-    expect(await store.watchOnboarding().first, isTrue);
+    expect(await store.watchOnboarding().first, isFalse);
   });
 
   for (final size in [
@@ -149,6 +147,9 @@ void main() {
       await tester.tap(find.byTooltip('Cancel role change'));
       await tester.pumpAndSettle();
       expect(router.routeInformationProvider.value.uri.path, '/settings');
+      expect(find.text('Features'), findsNothing);
+      expect(find.byType(SwitchListTile), findsNothing);
+      expect(find.text('Appearance'), findsOneWidget);
       router.go('/starter?change=true');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Musician'));
